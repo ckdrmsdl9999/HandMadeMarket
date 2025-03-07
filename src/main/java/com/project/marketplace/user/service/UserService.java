@@ -5,6 +5,7 @@ import com.project.marketplace.user.dto.UserSignInDto;
 import com.project.marketplace.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,9 +16,11 @@ import java.util.List;
 public class UserService {
 
     private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
 
     public void insertUser(UserDto user) {
-
+        // 비밀번호 암호화
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
 
         userMapper.insertUser(user);
 
