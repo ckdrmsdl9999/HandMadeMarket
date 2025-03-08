@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.project.marketplace.product.mapper.ProductMapper">
+
+    <!-- 상품 등록 -->
+    <insert id="insertProduct" parameterType="com.project.marketplace.product.dto.ProductDto">
+        <selectKey keyProperty="productId" resultType="long" order="AFTER">
+            SELECT currval(pg_get_serial_sequence('products', 'product_id'))
+        </selectKey>
+        INSERT INTO products (
+        product_name,
+        category,
+        price,
+        is_sold_out,
+        quantity,
+        sales_count,
+        main_image
+        ) VALUES (
+        #{productName},
+        #{category},
+        #{price},
+        #{isSoldOut},
+        #{quantity},
+        #{salesCount},
+        #{mainImage}
+        )
+    </insert>
+
+    <!-- 상품 ID로 상품 조회 -->
+    <select id="findById" resultType="com.project.marketplace.product.dto.ProductDto">
+        SELECT
+        product_id as productId,
+        product_name as productName,
+        category,
+        price,
+        is_sold_out as isSoldOut,
+        quantity,
+        sales_count as salesCount,
+        main_image as mainImage
+        FROM
+        products
+        WHERE
+        product_id = #{productId}
+    </select>
+
+    <!-- 모든 상품 조회 -->
+    <select id="findAll" resultType="com.project.marketplace.product.dto.ProductDto">
+        SELECT
+        product_id as productId,
+        product_name as productName,
+        category,
+        price,
+        is_sold_out as isSoldOut,
+        quantity,
+        sales_count as salesCount,
+        main_image as mainImage
+        FROM
+        products
+        ORDER BY
+        product_id DESC
+    </select>
+
+    <!-- 카테고리별 상품 조회 -->
+    <select id="findByCategory" resultType="com.project.marketplace.product.dto.ProductDto">
+        SELECT
+        product_id as productId,
+        product_name as productName,
+        category,
+        price,
+        is_sold_out as isSoldOut,
+        quantity,
+        sales_count as salesCount,
+        main_image as mainImage
+        FROM
+        products
+        WHERE
+        category = #{category}
+        ORDER BY
+        product_id DESC
+    </select>
+
+    <!-- 상품명으로 상품 검색 -->
+    <select id="searchByName" resultType="com.project.marketplace.product.dto.ProductDto">
+        SELECT
+        product_id as productId,
+        product_name as productName,
+        category,
+        price,
+        is_sold_out as isSoldOut,
+        quantity,
+        sales_count as salesCount,
+        main_image as mainImage
+        FROM
+        products
+        WHERE
+        product_name LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY
+        product_id DESC
+    </select>
+
+    <!-- 상품 수정 -->
+    <update id="updateProduct" parameterType="com.project.marketplace.product.dto.ProductDto">
+        UPDATE products
+        SET
+        product_name = #{productName},
+        category = #{category},
+        price = #{price},
+        is_sold_out = #{isSoldOut},
+        quantity = #{quantity},
+        main_image = #{mainImage}
+        WHERE
+        product_id = #{productId}
+    </update>
+
+    <!-- 상품 재고 업데이트 -->
+    <update id="updateQuantity">
+        UPDATE products
+        SET
+        quantity = quantity + #{quantity},
+        is_sold_out = CASE WHEN (quantity + #{quantity}) <= 0 THEN true ELSE false END
+        WHERE
+        product_id = #{productId}
+    </update>
+
+    <!-- 상품 판매 수량 업데이트 -->
+    <update id="updateSalesCount">
+        UPDATE products
+        SET
+        sales_count = sales_count + #{quantity}
+        WHERE
+        product_id = #{productId}
+    </update>
+
+    <!-- 상품 삭제 -->
+    <delete id="deleteProduct">
+        DELETE FROM products
+        WHERE
+        product_id = #{productId}
+    </delete>
+
+    <!-- 인기 상품 조회 (판매 수량 기준) -->
+    <select id="findPopularProducts" resultType="com.project.marketplace.product.dto.ProductDto">
+        SELECT
+        product_id as productId,
+        product_name as productName,
+        category,
+        price,
+        is_sold_out as isSoldOut,
+        quantity,
+        sales_count as salesCount,
+        main_image as mainImage
+        FROM
+        products
+        ORDER BY
+        sales_count DESC
+        LIMIT #{limit}
+    </select>
+</mapper>
