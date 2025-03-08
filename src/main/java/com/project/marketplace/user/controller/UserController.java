@@ -21,7 +21,6 @@ public class UserController {
 
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody  UserDto userDto) {
-        System.out.println(userDto);
         userService.insertUser(userDto);
         return ResponseEntity.status(HttpStatus.OK).body("계정생성 성공");
     }
@@ -29,14 +28,12 @@ public class UserController {
     @PostMapping("/signin")
     public ResponseEntity<?> signin(@RequestBody UserSignInDto signInDto, HttpSession session) {
         userService.checkoutUser(signInDto);
-        System.out.print("hi~~");
         return ResponseEntity.status(HttpStatus.OK).body("로그인성공");
     }
 
     @GetMapping("/logout")
     public ResponseEntity<?> logout(HttpSession session) {
         session.invalidate();
-        System.out.print("로그아웃 성공");
         return ResponseEntity.status(HttpStatus.OK).body("로그아웃성공");
     }
 
@@ -92,6 +89,8 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("삭제할 사용자를 찾을 수 없습니다");
         }
     }
+
+
 }
 
 
