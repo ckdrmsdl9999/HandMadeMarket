@@ -7,11 +7,22 @@ import java.util.List;
 
 @Mapper
 public interface OrderMapper {
-    /**
-     * 새 주문을 등록합니다.
-     */
-    int insertOrder(OrderDto orderDto);
 
 
+    void insertOrder(OrderDto orderDto);
 
+
+    OrderDto selectOrderById(Long orderId);
+    OrderDto selectOrderByOrderNumber(String orderNumber);
+    List<OrderDto> selectOrdersByUserId(Long userId);
+    List<OrderDto> selectAllOrders();
+
+
+    void updateOrderStatus(Long orderId, String orderStatus);
+
+
+    void updateOrder(OrderDto orderDto);
+
+
+    void deleteOrder(Long orderId);
 }

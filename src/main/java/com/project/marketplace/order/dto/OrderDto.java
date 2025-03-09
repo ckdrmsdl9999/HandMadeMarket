@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderDto {
+public class OrderDto {//쿠폰 선착순 100명 이런식으로 추가고려
 
     private Long orderId;              // 주문 ID
     private Long userId;               // 주문자 ID
@@ -22,7 +22,6 @@ public class OrderDto {
     private String recipientName;      // 수령인 이름
     private String recipientPhone;     // 수령인 연락처
     private String shippingAddress;    // 배송지 주소
-    private String paymentMethod;      // 결제 방법
 
 
 }
