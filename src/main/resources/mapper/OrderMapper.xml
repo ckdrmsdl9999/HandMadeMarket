@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.project.marketplace.order.mapper.OrderMapper">
+
+    <!-- 주문 생성 -->
+    <insert id="insertOrder" parameterType="com.project.marketplace.order.dto.OrderDto" useGeneratedKeys="true" keyProperty="orderId">
+        INSERT INTO orders (
+        user_id,
+        order_number,
+        order_status,
+        total_amount,
+        order_date,
+        recipient_name,
+        recipient_phone,
+        shipping_address
+        ) VALUES (
+        #{userId},
+        #{orderNumber},
+        #{orderStatus},
+        #{totalAmount},
+        #{orderDate},
+        #{recipientName},
+        #{recipientPhone},
+        #{shippingAddress}
+        )
+    </insert>
+
+    <!-- 주문 ID로 조회 -->
+    <select id="selectOrderById" parameterType="Long" resultType="com.project.marketplace.order.dto.OrderDto">
+        SELECT
+        order_id as orderId,
+        user_id as userId,
+        order_number as orderNumber,
+        order_status as orderStatus,
+        total_amount as totalAmount,
+        order_date as orderDate,
+        recipient_name as recipientName,
+        recipient_phone as recipientPhone,
+        shipping_address as shippingAddress
+        FROM
+        orders
+        WHERE
+        order_id = #{orderId}
+    </select>
+
+    <!-- 주문번호로 조회 -->
+    <select id="selectOrderByOrderNumber" parameterType="String" resultType="com.project.marketplace.order.dto.OrderDto">
+        SELECT
+        order_id as orderId,
+        user_id as userId,
+        order_number as orderNumber,
+        order_status as orderStatus,
+        total_amount as totalAmount,
+        order_date as orderDate,
+        recipient_name as recipientName,
+        recipient_phone as recipientPhone,
+        shipping_address as shippingAddress
+        FROM
+        orders
+        WHERE
+        order_number = #{orderNumber}
+    </select>
+
+    <!-- 사용자 ID로 조회 -->
+    <select id="selectOrdersByUserId" parameterType="Long" resultType="com.project.marketplace.order.dto.OrderDto">
+        SELECT
+        order_id as orderId,
+        user_id as userId,
+        order_number as orderNumber,
+        order_status as orderStatus,
+        total_amount as totalAmount,
+        order_date as orderDate,
+        recipient_name as recipientName,
+        recipient_phone as recipientPhone,
+        shipping_address as shippingAddress
+        FROM
+        orders
+        WHERE
+        user_id = #{userId}
+        ORDER BY
+        order_date DESC
+    </select>
+
+    <!-- 모든 주문 조회 -->
+    <select id="selectAllOrders" resultType="com.project.marketplace.order.dto.OrderDto">
+        SELECT
+        order_id as orderId,
+        user_id as userId,
+        order_number as orderNumber,
+        order_status as orderStatus,
+        total_amount as totalAmount,
+        order_date as orderDate,
+        recipient_name as recipientName,
+        recipient_phone as recipientPhone,
+        shipping_address as shippingAddress
+        FROM
+        orders
+        ORDER BY
+        order_date DESC
+    </select>
+
+    <!-- 주문 상태 업데이트 -->
+    <update id="updateOrderStatus">
+        UPDATE
+        orders
+        SET
+        order_status = #{param2}
+        WHERE
+        order_id = #{param1}
+    </update>
+
+    <!-- 주문 정보 업데이트 -->
+    <update id="updateOrder" parameterType="com.project.marketplace.order.dto.OrderDto">
+        UPDATE
+        orders
+        SET
+        order_status = #{orderStatus},
+        total_amount = #{totalAmount},
+        recipient_name = #{recipientName},
+        recipient_phone = #{recipientPhone},
+        shipping_address = #{shippingAddress}
+        WHERE
+        order_id = #{orderId}
+    </update>
+
+    <!-- 주문 삭제 -->
+    <delete id="deleteOrder" parameterType="Long">
+        DELETE FROM
+        orders
+        WHERE
+        order_id = #{orderId}
+    </delete>
+
+</mapper>
