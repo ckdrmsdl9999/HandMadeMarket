@@ -57,9 +57,13 @@
 - Kibana
 
 #### Monitoring
-
+- Zipkin
+- Jmeter
 - Prometheus
 - Grafana
+
+####etc
+mybatis우선개발->JPA으로전환예정
 
 ### Deployment
 
