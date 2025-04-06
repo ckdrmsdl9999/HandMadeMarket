@@ -44,6 +44,7 @@
 - Spring Data Redis
 - mybatis
 - Websocket
+- Jmeter
 
 #### Data Storage & Processing
 
@@ -55,12 +56,18 @@
 - ElasticSearch
 - Logstash
 - Kibana
+  
+#### Authentication
+- Oauth2, JWT인증
 
 #### Monitoring
 - Zipkin
 - Jmeter
 - Prometheus
 - Grafana
+
+####Frontend
+-React
 
 ####etc
 mybatis우선개발->JPA으로전환예정
