@@ -2,67 +2,71 @@ package com.project.marketplace.user.service;
 
 import com.project.marketplace.user.dto.UserDto;
 import com.project.marketplace.user.dto.UserSignInDto;
-import com.project.marketplace.user.mapper.UserMapper;
+import com.project.marketplace.user.entity.User;
+import com.project.marketplace.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class UserService {
 
-    private final UserMapper userMapper;
+    private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public void insertUser(UserDto user) {
-        // 비밀번호 암호화
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-
-        userMapper.insertUser(user);
-
+    public void insertUser(UserDto userDto) {
+        userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
+        userRepository.save(userDto.toEntity());
     }
 
     public UserDto checkoutUser(UserSignInDto userSignInDto) {
-        UserDto user = userMapper.findByUsername(userSignInDto.getUserName()).orElse(null);
-        if (user == null || !user.getPassword().equals(userSignInDto.getPassword())) {
+        Optional<User> userOpt = userRepository.findByUserName(userSignInDto.getUserName());
+
+        if (userOpt.isEmpty() || !passwordEncoder.matches(userSignInDto.getPassword(), userOpt.get().getPassword())) {
             throw new RuntimeException("아이디 또는 비밀번호가 일치하지 않습니다");
         }
-        return user;
+
+        return UserDto.fromEntity(userOpt.get());
     }
 
-    // ID로 사용자 조회
     public UserDto getUserById(Long userId) {
-        return userMapper.findById(userId).orElse(null);
+        return userRepository.findById(userId)
+                .map(UserDto::fromEntity)
+                .orElse(null);
     }
 
-    // 모든 사용자 목록 조회
     public List<UserDto> getAllUsers() {
-        return userMapper.findAll();
+        return userRepository.findAll().stream()
+                .map(UserDto::fromEntity)
+                .collect(Collectors.toList());
     }
 
-    // 사용자 정보 업데이트
     public boolean updateUser(UserDto userDto) {
-        int result = userMapper.updateUser(userDto);
-        return result > 0;
+        if (!userRepository.existsById(userDto.getUserId())) {
+            return false;
+        }
+        userRepository.save(userDto.toEntity());
+        return true;
     }
 
-    // 사용자 역할만 업데이트
     public boolean updateUserRole(Long userId, String role) {
-        int result = userMapper.updateRole(userId, role);
-        return result > 0;
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) return false;
+
+        User user = userOpt.get();
+        user.setRole(role);
+        userRepository.save(user);
+        return true;
     }
 
-    // 사용자 삭제
     public boolean deleteUser(Long userId) {
-        int result = userMapper.deleteUser(userId);
-        return result > 0;
+        if (!userRepository.existsById(userId)) return false;
+        userRepository.deleteById(userId);
+        return true;
     }
-
-
-
-
 }
