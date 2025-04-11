@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: marketuser
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/marketplace
+    username: postgres
+    password: 12345678
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8081
+
+logging:
+  level:
+    com.project.marketplace: DEBUG
+    org.mybatis: DEBUG
