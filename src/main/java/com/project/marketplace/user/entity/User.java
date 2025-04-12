@@ -19,12 +19,21 @@ public class User {
     @Column(nullable = false, unique = true)
     private String userName;
 
-    @Column(nullable = false)
+//    @Column(nullable = false)
+    @Column
     private String password;
 
     @Column(nullable = false)
     private String role; // (USER, ADMIN)
 
+    // OAuth2 관련 필드 추가
+    @Column
+    private String email;
 
+    @Column
+    private String provider; // local, naver
+
+    @Column
+    private String providerId; // OAuth 제공자의 ID
 
 }
