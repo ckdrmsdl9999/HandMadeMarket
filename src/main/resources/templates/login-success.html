@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>로그인 성공</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+<h1>네이버 로그인 성공!</h1>
+<p th:text="'환영합니다, ' + ${userName} + '님!'"></p>
+<p>JWT 토큰이 발급되었습니다.</p>
+<p th:text="'토큰: ' + ${token}"></p>
+
+<h3>이 토큰을 사용하여 API를 호출할 수 있습니다:</h3>
+<code>
+    Authorization: Bearer <span th:text="${token}"></span>
+</code>
+
+<div style="margin-top: 20px;">
+    <a href="/">홈으로 돌아가기</a>
+</div>
+</body>
+</html>

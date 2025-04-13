@@ -7,8 +7,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.Collection;
 import java.util.Map;
@@ -21,21 +21,40 @@ public class OAuthController {
 
     @GetMapping("/loginSuccess")
     public String loginSuccess(@AuthenticationPrincipal OAuth2User oauth2User,
-                               RedirectAttributes redirectAttributes,
+                               Model model,
                                Authentication authentication) {
 
-        // OAuth2User에서 사용자 정보 추출
-        Map<String, Object> attributes = oauth2User.getAttributes();
-        Map<String, Object> response = (Map<String, Object>) attributes.get("response");
-        String email = (String) response.get("email");
+        // oauth2User가 null인 경우 처리 (직접 URL 접속 시)
+//        if (oauth2User == null) {
+//            System.out.println("oauth2User is null!");
+//            return "redirect:/"; // 홈페이지로 리다이렉트
+//        }
+        System.out.println("oauth2User attributes: " + oauth2User.getAttributes());
 
-        // JWT 토큰 생성
-        String token = jwtTokenProvider.createToken(email,
-                (Collection<? extends GrantedAuthority>) authentication.getAuthorities());
+        try {
+            // OAuth2User에서 사용자 정보 추출
+            Map<String, Object> attributes = oauth2User.getAttributes();
+            Map<String, Object> response = (Map<String, Object>) attributes.get("response");
+            String email = (String) response.get("email");
 
-        // 리다이렉트할 URL에 토큰 추가
-        redirectAttributes.addAttribute("token", token);
+            // JWT 토큰 생성
+            String token = jwtTokenProvider.createToken(email,
+                    (Collection<? extends GrantedAuthority>) authentication.getAuthorities());
 
-        return "redirect:/"; // 홈페이지로 리다이렉트
+            // 모델에 토큰 추가
+            model.addAttribute("token", token);
+            model.addAttribute("userName", response.get("name"));
+
+            return "login-success"; // 뷰 이름 반환
+        } catch (Exception e) {
+            // 예외 처리
+            return "redirect:/";
+        }
+    }
+
+    // 홈 페이지
+    @GetMapping("/")
+    public String home() {
+        return "home"; // home.html 템플릿 반환
     }
 }
