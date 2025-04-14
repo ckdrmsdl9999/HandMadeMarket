@@ -24,21 +24,21 @@ public class OAuthController {
                                Model model,
                                Authentication authentication) {
 
-        // oauth2User가 null인 경우 처리 (직접 URL 접속 시)
-//        if (oauth2User == null) {
-//            System.out.println("oauth2User is null!");
-//            return "redirect:/"; // 홈페이지로 리다이렉트
-//        }
+//         oauth2User가 null인 경우 처리 (직접 URL 접속 시)
+        if (oauth2User == null) {
+            System.out.println("oauth2User is null!");
+            return "redirect:/"; // 홈페이지로 리다이렉트
+        }
         System.out.println("oauth2User attributes: " + oauth2User.getAttributes());
 
         try {
             // OAuth2User에서 사용자 정보 추출
             Map<String, Object> attributes = oauth2User.getAttributes();
             Map<String, Object> response = (Map<String, Object>) attributes.get("response");
-            String email = (String) response.get("email");
+            String mobile = (String) response.get("mobile");
 
             // JWT 토큰 생성
-            String token = jwtTokenProvider.createToken(email,
+            String token = jwtTokenProvider.createToken(mobile,
                     (Collection<? extends GrantedAuthority>) authentication.getAuthorities());
 
             // 모델에 토큰 추가
