@@ -27,8 +27,14 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         OAuth2UserService<OAuth2UserRequest, OAuth2User> delegate = new DefaultOAuth2UserService();
         OAuth2User oAuth2User = delegate.loadUser(userRequest);
 
+        System.out.println("Access Token: " + userRequest.getAccessToken().getTokenValue());
+        System.out.println("Token Type: " + userRequest.getAccessToken().getTokenType().getValue());
+        System.out.println("Expires At: " + userRequest.getAccessToken().getExpiresAt());
+
         // 로그인 서비스 구분 (naver)
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
+
+
 
         // OAuth2 로그인 진행 시 키가 되는 필드값 (PK)
         String userNameAttributeName = userRequest.getClientRegistration()
@@ -49,7 +55,6 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
             // 신규 사용자면 정보 저장
             User user = User.builder()
                     .userName(userName)
-                    .email(email)
                     .provider(registrationId)
                     .providerId(providerId)
                     .role("USER") // 기본 권한
