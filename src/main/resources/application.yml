@@ -46,6 +46,7 @@ logging:
   level:
     com.project.marketplace: DEBUG
     org.mybatis: DEBUG
+    org.springframework.security: DEBUG
 
 # JWT 설정 추가
 jwt:
