@@ -28,8 +28,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
 
-
-
         log.info("OAuth2 인증 성공!");
         System.out.println("희기카드!!");
         OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
