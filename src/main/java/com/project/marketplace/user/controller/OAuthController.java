@@ -1,6 +1,5 @@
 package com.project.marketplace.user.controller;
 
-//import com.project.marketplace.security.JwtTokenProvider;
 import com.project.marketplace.user.entity.User;
 import com.project.marketplace.user.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
@@ -14,7 +13,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -25,11 +23,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.client.RestTemplate;
-
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -38,7 +32,6 @@ import java.util.Optional;
 @Slf4j
 public class OAuthController {
 
-    //    private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
 
     @GetMapping("/loginSuccess")
@@ -58,10 +51,6 @@ public class OAuthController {
             Map<String, Object> attributes = oauth2User.getAttributes();
             Map<String, Object> response = (Map<String, Object>) attributes.get("response");
             String mobile = (String) response.get("mobile");
-
-//            // JWT 토큰 생성
-//            String token = jwtTokenProvider.createToken(mobile,
-//                    (Collection<? extends GrantedAuthority>) authentication.getAuthorities());
 
             // 모델에 토큰 추가
 //            model.addAttribute("token", token);
@@ -131,11 +120,31 @@ public class OAuthController {
                 }
             }
 
-            // DB에 토큰이 없는 경우 기존 로직으로 fallback (호환성 유지)
-            return "stored_access_token"; // 실제 구현 시에는 이 부분 수정 필요
+            // DB에 토큰이 없는 경우 null 반환
+            log.warn("사용자의 액세스 토큰을 찾을 수 없습니다: provider={}, providerId={}", provider, providerId);
+            return null;
         }
         return null;
     }
+
+    private void clearTokenInDatabase(String accessToken) {
+        try {
+            // 액세스 토큰으로 사용자 찾기
+            Optional<User> userOpt = userRepository.findByAccessToken(accessToken);
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                user.setAccessToken(null);
+                user.setTokenExpiresAt(null);
+                userRepository.save(user);
+                log.info("사용자 토큰 정보 삭제 완료: userId={}", user.getUserId());
+            } else {
+                log.warn("해당 액세스 토큰을 가진 사용자를 찾을 수 없습니다");
+            }
+        } catch (Exception e) {
+            log.error("DB에서 토큰 삭제 중 오류", e);
+        }
+    }
+
 
     private boolean revokeNaverToken(String accessToken) {
         try {
@@ -169,23 +178,7 @@ public class OAuthController {
         }
     }
 
-    /**
-     * DB에서 해당 토큰 정보 제거
-     */
-    private void clearTokenInDatabase(String accessToken) {
-        try {
-            // 해당 토큰을 가진 사용자 찾기
-            userRepository.findAll().stream()
-                    .filter(user -> accessToken.equals(user.getAccessToken()))
-                    .forEach(user -> {
-                        user.setAccessToken(null);
-                        user.setTokenExpiresAt(null);
-                        userRepository.save(user);
-                    });
-        } catch (Exception e) {
-            log.error("DB에서 토큰 삭제 중 오류", e);
-        }
-    }
+
 
     private void clearLocalAuthentication(HttpServletRequest request, HttpServletResponse response) {
         // 1. Spring Security 컨텍스트 정리
