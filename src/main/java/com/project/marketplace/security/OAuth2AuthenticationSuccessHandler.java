@@ -22,6 +22,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Slf4j
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
+
     private final UserRepository userRepository;
 
     @Override
@@ -29,7 +30,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                                         Authentication authentication) throws IOException, ServletException {
 
         log.info("OAuth2 인증 성공!");
-        System.out.println("희기카드!!");
         OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
         OAuth2User oAuth2User = oauthToken.getPrincipal();
         String registrationId = oauthToken.getAuthorizedClientRegistrationId();
@@ -46,20 +46,18 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             // 필요한 정보 추출
             String providerId = (String) response_attr.get("id");
             String name = (String) response_attr.get("name");
-            String email = (String) response_attr.get("email");
             String mobile = (String) response_attr.get("mobile");
 
             // 세션에 필요한 정보 저장
             HttpSession session = request.getSession(true);
             session.setAttribute("name", response_attr.get("name"));
-            session.setAttribute("email", response_attr.get("email"));
             session.setAttribute("providerId", response_attr.get("id"));
             session.setAttribute("provider", registrationId);
             session.setAttribute("mobile", response_attr.get("mobile"));
 
 
             // DB에 사용자 정보 저장 또는 업데이트
-            saveOrUpdateUser(registrationId, providerId, name, email);
+            saveOrUpdateUser(registrationId, providerId, name);
 
             log.info("세션에 사용자 정보 저장 완료: {}", name);
             log.info("DB에 사용자 정보 저장 완료: {}", name);
@@ -76,7 +74,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         response.sendRedirect("/loginSuccess");
     }
 
-    private void saveOrUpdateUser(String provider, String providerId, String name, String email) {
+    private void saveOrUpdateUser(String provider, String providerId, String name) {
         try {
             // 기존 사용자 조회 (providerId와 provider로 검색)
             Optional<User> existingUser = userRepository.findByProviderAndProviderId(provider, providerId);
@@ -85,9 +83,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                 // 기존 사용자 정보 업데이트
                 User user = existingUser.get();
                 // 필요한 정보 업데이트 (이름, 이메일 등)
-                if (email != null) {
-                    user.setEmail(email);
-                }
+
+                user.setUserName(name);
+
                 userRepository.save(user);
                 log.info("기존 사용자 정보 업데이트: {}", name);
             } else {
@@ -97,7 +95,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
                 User newUser = User.builder()
                         .userName(userName)
-                        .email(email)
                         .provider(provider)
                         .providerId(providerId)
                         .role("USER") // 기본 권한
