@@ -21,7 +21,7 @@ public class ProductService {
     public List<ProductDto> getAllProducts() {
         return productRepository.findAll()
                 .stream()
-                .map(this::toDto)
+                .map(ProductDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
@@ -29,14 +29,14 @@ public class ProductService {
     public ProductDto getProductById(Long productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다. ID: " + productId));
-        return toDto(product);
+        return ProductDto.fromEntity(product);
     }
 
     @Transactional(readOnly = true)
     public List<ProductDto> getProductsByCategory(String category) {
         return productRepository.findByCategory(category)
                 .stream()
-                .map(this::toDto)
+                .map(ProductDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
@@ -44,13 +44,13 @@ public class ProductService {
     public List<ProductDto> searchProductsByName(String keyword) {
         return productRepository.findByNameContaining(keyword)
                 .stream()
-                .map(this::toDto)
+                .map(ProductDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
     @Transactional
     public Long createProduct(ProductDto dto) {
-        Product product = toEntity(dto);
+        Product product = ProductDto.toEntity(dto);
         if (product.getSalesCount() == null) product.setSalesCount(0);
         if (product.getQuantity() == null) product.setQuantity(0);
         product.setIsSoldOut(product.getQuantity() <= 0);
@@ -95,7 +95,7 @@ public class ProductService {
     public List<ProductDto> getPopularProducts(int limit) {
         return productRepository.findPopularProducts(PageRequest.of(0, limit))
                 .stream()
-                .map(this::toDto)
+                .map(ProductDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
@@ -107,33 +107,5 @@ public class ProductService {
                 .orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다."));
         product.setSalesCount(product.getSalesCount() + quantity);
         productRepository.save(product);
-    }
-
-    // ------------------ DTO <-> Entity 변환 ------------------
-
-    private ProductDto toDto(Product product) {
-        return ProductDto.builder()
-                .productId(product.getId())
-                .productName(product.getName())
-                .category(product.getCategory())
-                .price(product.getPrice())
-                .isSoldOut(product.getIsSoldOut())
-                .quantity(product.getQuantity())
-                .salesCount(product.getSalesCount())
-                .mainImage(product.getDescription())
-                .build();
-    }
-
-    private Product toEntity(ProductDto dto) {
-        return Product.builder()
-                .id(dto.getProductId())
-                .name(dto.getProductName())
-                .category(dto.getCategory())
-                .price(dto.getPrice())
-                .isSoldOut(dto.getIsSoldOut())
-                .quantity(dto.getQuantity())
-                .salesCount(dto.getSalesCount())
-                .description(dto.getMainImage())
-                .build();
     }
 }
