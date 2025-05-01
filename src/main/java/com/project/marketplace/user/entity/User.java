@@ -2,6 +2,8 @@ package com.project.marketplace.user.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 
 @Entity
 @Table(name = "users") // 실제 DB 테이블명에 맞게 수정
@@ -35,5 +37,11 @@ public class User {
 
     @Column
     private String providerId; // OAuth 제공자의 ID
+
+    @Column
+    private String accessToken;
+
+    @Column
+    private LocalDateTime tokenExpiresAt;
 
 }
