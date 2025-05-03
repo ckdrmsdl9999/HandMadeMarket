@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>수제상품 마켓플레이스 - 상품 상세</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #3c5087;
+            text-decoration: none;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+        }
+
+        .nav-menu li {
+            margin-left: 25px;
+        }
+
+        .nav-menu a {
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-menu a:hover {
+            color: #3c5087;
+        }
+
+        .nav-menu .login-btn {
+            background-color: #3c5087;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .nav-menu .login-btn:hover {
+            background-color: #2d3b63;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .product-detail {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .product-images {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .main-image {
+            width: 100%;
+            height: 400px;
+            background-color: #f1f1f1;
+            background-image: url('https://via.placeholder.com/600x400');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .thumbnail-images {
+            display: flex;
+            padding: 10px;
+            gap: 10px;
+        }
+
+        .thumbnail {
+            width: 80px;
+            height: 80px;
+            background-color: #f1f1f1;
+            background-size: cover;
+            background-position: center;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: transform 0.2s;
+        }
+
+        .thumbnail:hover {
+            transform: scale(1.05);
+        }
+
+        .product-info {
+            flex: 1;
+            min-width: 300px;
+            padding: 30px;
+        }
+
+        .product-title {
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .product-creator {
+            color: #666;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .product-price {
+            font-size: 24px;
+            font-weight: bold;
+            color: #3c5087;
+            margin-bottom: 20px;
+        }
+
+        .product-description {
+            margin-bottom: 30px;
+            color: #555;
+        }
+
+        .product-options {
+            margin-bottom: 30px;
+        }
+
+        .option-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .option-select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .quantity-btn {
+            width: 40px;
+            height: 40px;
+            background-color: #f1f1f1;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .quantity-btn:hover {
+            background-color: #e5e5e5;
+        }
+
+        .quantity-input {
+            width: 60px;
+            height: 40px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 16px;
+            margin: 0 10px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .buy-now-btn, .add-to-cart-btn {
+            flex: 1;
+            padding: 15px 0;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .buy-now-btn {
+            background-color: #3c5087;
+            color: white;
+        }
+
+        .buy-now-btn:hover {
+            background-color: #2d3b63;
+        }
+
+        .add-to-cart-btn {
+            background-color: white;
+            color: #3c5087;
+            border: 1px solid #3c5087;
+        }
+
+        .add-to-cart-btn:hover {
+            background-color: #f5f5f5;
+        }
+
+        .product-meta {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            font-size: 14px;
+            color: #777;
+        }
+
+        .product-meta p {
+            margin-bottom: 5px;
+        }
+
+        .product-details-tabs {
+            margin-top: 50px;
+        }
+
+        .tabs-nav {
+            display: flex;
+            list-style: none;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 30px;
+        }
+
+        .tab-item {
+            padding: 15px 30px;
+            cursor: pointer;
+            font-weight: 500;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab-item.active {
+            color: #3c5087;
+            border-bottom-color: #3c5087;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px 0;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .similar-products {
+            margin-top: 60px;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .section-title h2 {
+            color: #3c5087;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 30px;
+        }
+
+        .product-card {
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .product-card-img {
+            height: 200px;
+            background-color: #f1f1f1;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .product-card-info {
+            padding: 20px;
+        }
+
+        .product-card-title {
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .product-card-creator {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .product-card-price {
+            font-weight: bold;
+            color: #3c5087;
+        }
+
+        .footer {
+            background-color: #2d3b63;
+            color: white;
+            padding: 40px 0;
+            margin-top: 60px;
+        }
+
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+        }
+
+        .footer-section {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 20px;
+            font-size: 18px;
+            color: #f1f1f1;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+
+        .footer-links a {
+            color: #ccc;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        .copyright {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ccc;
+            width: 100%;
+        }
+
+        /* 모달 스타일 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            color: #333;
+        }
+
+        .close-modal {
+            font-size: 24px;
+            color: #777;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        .modal-body {
+            margin-bottom: 30px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .continue-shopping {
+            background-color: white;
+            color: #3c5087;
+            border: 1px solid #3c5087;
+        }
+
+        .continue-shopping:hover {
+            background-color: #f5f5f5;
+        }
+
+        .go-to-cart {
+            background-color: #3c5087;
+            color: white;
+            border: none;
+        }
+
+        .go-to-cart:hover {
+            background-color: #2d3b63;
+        }
+
+        /* 반응형 스타일 */
+        @media (max-width: 768px) {
+            .product-detail {
+                flex-direction: column;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .tabs-nav {
+                flex-wrap: wrap;
+            }
+
+            .tab-item {
+                padding: 10px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- 헤더 -->
+<header class="header">
+    <div class="header-container">
+        <a href="/" class="logo">수제품 마켓</a>
+        <ul class="nav-menu">
+            <li><a href="/">홈</a></li>
+            <li><a href="/shop">쇼핑하기</a></li>
+            <li><a href="/sellers">작가소개</a></li>
+            <li><a href="/about">스토리</a></li>
+            <li><a href="/contact">고객센터</a></li>
+            <li><a href="/login" class="login-btn">로그인</a></li>
+        </ul>
+    </div>
+</header>
+
+<!-- 메인 컨텐츠 -->
+<div class="container">
+    <!-- 상품 상세 정보 -->
+    <div class="product-detail">
+        <div class="product-images">
+            <div class="main-image"></div>
+            <div class="thumbnail-images">
+                <div class="thumbnail" style="background-image: url('https://via.placeholder.com/80x80')"></div>
+                <div class="thumbnail" style="background-image: url('https://via.placeholder.com/80x80')"></div>
+                <div class="thumbnail" style="background-image: url('https://via.placeholder.com/80x80')"></div>
+                <div class="thumbnail" style="background-image: url('https://via.placeholder.com/80x80')"></div>
+            </div>
+        </div>
+
+        <div class="product-info">
+            <h1 class="product-title">손뜨개 머플러 - 겨울 컬렉션</h1>
+            <p class="product-creator">by <strong>실이야기</strong></p>
+            <p class="product-price">35,000원</p>
+
+            <div class="product-description">
+                <p>100% 프리미엄 메리노 울로 제작된 손뜨개 머플러입니다. 자연스러운 색감과 부드러운 터치감으로 겨울철 포근함을 선사합니다. 모든 제품은 수작업으로 1-2주의 제작 기간이 소요됩니다.</p>
+            </div>
+
+            <div class="product-options">
+                <label for="color-option" class="option-label">색상 선택</label>
+                <select id="color-option" class="option-select">
+                    <option value="navy">네이비 블루</option>
+                    <option value="burgundy">버건디 레드</option>
+                    <option value="ivory">아이보리</option>
+                    <option value="gray">그레이</option>
+                </select>
+
+                <label for="size-option" class="option-label">사이즈 선택</label>
+                <select id="size-option" class="option-select">
+                    <option value="s">S (160cm)</option>
+                    <option value="m">M (180cm)</option>
+                    <option value="l">L (200cm)</option>
+                </select>
+            </div>
+
+            <div class="quantity-section">
+                <label class="option-label">수량</label>
+                <div class="quantity-control">
+                    <button class="quantity-btn" onclick="decreaseQuantity()">-</button>
+                    <input type="text" class="quantity-input" id="quantity" value="1" readonly>
+                    <button class="quantity-btn" onclick="increaseQuantity()">+</button>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="add-to-cart-btn" onclick="addToCart()">장바구니 담기</button>
+                <button class="buy-now-btn" onclick="buyNow()">바로 구매하기</button>
+            </div>
+
+            <div class="product-meta">
+                <p><strong>배송정보:</strong> 주문 후 제작되는 상품으로 출고까지 1-2주 소요</p>
+                <p><strong>카테고리:</strong> 겨울용품, 니트제품, 머플러</p>
+                <p><strong>태그:</strong> #손뜨개 #겨울필수품 #수공예 #선물추천</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 상품 상세 탭 -->
+    <div class="product-details-tabs">
+        <ul class="tabs-nav">
+            <li class="tab-item active" onclick="openTab(event, 'product-description')">상품 상세설명</li>
+            <li class="tab-item" onclick="openTab(event, 'shipping-info')">배송/교환/반품 안내</li>
+            <li class="tab-item" onclick="openTab(event, 'reviews')">구매후기</li>
+            <li class="tab-item" onclick="openTab(event, 'qna')">Q&A</li>
+        </ul>
+
+        <div id="product-description" class="tab-content active">
+            <h3>상품 상세 설명</h3>
+            <p>100% 프리미엄 메리노 울로 제작된 손뜨개 머플러입니다. 자연스러운 색감과 부드러운 터치감으로 겨울철 포근함을 선사합니다.</p>
+
+            <h4>제품 특징</h4>
+            <ul>
+                <li>엄선된 고급 메리노 울 100% 사용</li>
+                <li>따뜻함과 통기성을 모두 갖춘 이중 짜임</li>
+                <li>알러지를 최소화한 친환경 가공</li>
+                <li>섬세한 수작업 마감처리</li>
+            </ul>
+
+            <h4>관리 방법</h4>
+            <p>드라이 클리닝을 권장합니다. 불가피하게 물세탁이 필요한 경우, 중성세제를 사용해 손세탁하고 그늘에서 자연 건조하세요.</p>
+        </div>
+
+        <div id="shipping-info" class="tab-content">
+            <h3>배송 안내</h3>
+            <p>주문 후 제작되는 상품으로 출고까지 1-2주 소요됩니다. 배송은 CJ대한통운을 통해 이루어지며, 배송비는 3,000원입니다. (5만원 이상 구매 시 무료배송)</p>
+
+            <h3>교환/반품 안내</h3>
+            <p>상품 수령일로부터 7일 이내에 교환/반품이 가능합니다. 단, 고객 변심으로 인한 교환/반품의 경우 왕복 배송비를 부담하셔야 합니다.</p>
+
+            <h4>교환/반품이 불가능한 경우</h4>
+            <ul>
+                <li>고객의 책임으로 상품이 훼손된 경우</li>
+                <li>상품 수령 후 7일이 경과한 경우</li>
+                <li>주문제작 상품의 특성상 제작이 시작된 이후</li>
+            </ul>
+        </div>
+
+        <div id="reviews" class="tab-content">
+            <h3>구매후기</h3>
+            <p>아직 작성된 구매후기가 없습니다. 첫 번째 구매후기를 작성해보세요!</p>
+            <!-- 구매후기 작성 폼이나 리스트가 들어갈 자리 -->
+        </div>
+
+        <div id="qna" class="tab-content">
+            <h3>Q&A</h3>
+            <p>상품에 대해 궁금한 점이 있으신가요? 질문을 남겨주시면 판매자가 답변해드립니다.</p>
+            <!-- Q&A 폼이나 리스트가 들어갈 자리 -->
+        </div>
+    </div>
+
+    <!-- 비슷한 상품 추천 -->
+    <div class="similar-products">
+        <div class="section-title">
+            <h2>이런 상품은 어떠세요?</h2>
+            <p>이 상품을 본 고객들이 함께 구매한 제품</p>
+        </div>
+
+        <div class="product-grid">
+            <div class="product-card">
+                <div class="product-card-img" style="background-image: url('https://via.placeholder.com/300x300')"></div>
+                <div class="product-card-info">
+                    <h3 class="product-card-title">손뜨개 모자</h3>
+                    <p class="product-card-creator">by 실이야기</p>
+                    <p class="product-card-price">28,000원</p>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-card-img" style="background-image: url('https://via.placeholder.com/300x300')"></div>
+                <div class="product-card-info">
+                    <h3 class="product-card-title">울 장갑</h3>
+                    <p class="product-card-creator">by 실이야기</p>
+                    <p class="product-card-price">22,000원</p>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-card-img" style="background-image: url('https://via.placeholder.com/300x300')"></div>
+                <div class="product-card-info">
+                    <h3 class="product-card-title">니트 쿠션 커버</h3>
+                    <p class="product-card-creator">by 몽실살롱</p>
+                    <p class="product-card-price">18,000원</p>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-card-img" style="background-image: url('https://via.placeholder.com/300x300')"></div>
+                <div class="product-card-info">
+                    <h3 class="product-card-title">양말 세트</h3>
+                    <p class="product-card-creator">by 코지홈</p>
+                    <p class="product-card-price">15,000원</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 장바구니 담기 성공 모달 -->
+<div class="modal" id="cart-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">장바구니에 상품이 담겼습니다</h3>
+            <button class="close-modal" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>선택하신 상품이 장바구니에 성공적으로 담겼습니다.</p>
+            <p>장바구니로 이동하시겠습니까?</p>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn continue-shopping" onclick="closeModal()">쇼핑 계속하기</button>
+            <button class="modal-btn go-to-cart" onclick="goToCart()">장바구니 보기</button>
+        </div>
+    </div>
+</div>
+
+<!-- 푸터 -->
+<footer class="footer">
+    <div class="footer-container">
+        <div class="footer-section">
+            <h3>수제품 마켓</h3>
+            <p>장인의 손길이 담긴 특별한 제품을 만나보세요.</p>
+        </div>
+
+        <div class="footer-section">
+            <h3>고객 지원</h3>
+            <ul class="footer-links">
+                <li><a href="#">자주 묻는 질문</a></li>
+                <li><a href="#">교환 및 환불 정책</a></li>
+                <li><a href="#">배송 안내</a></li>
+                <li><a href="#">문의하기</a></li>
+            </ul>
+        </div>
+
+        <div class="footer-section">
+            <h3>회사 정보</h3>
+            <ul class="footer-links">
+                <li><a href="#">회사 소개</a></li>
+                <li><a href="#">작가 입점 안내</a></li>
+                <li><a href="#">이용약관</a></li>
+                <li><a href="#">개인정보처리방침</a></li>
+            </ul>
+        </div>
+
+        <div class="copyright">
+            <p>&copy; 2025 수제품 마켓. All Rights Reserved.</p>
+        </div>
+    </div>
+</footer>
+
+<script>
+    // 수량 조절 함수
+    function decreaseQuantity() {
+        let quantity = parseInt(document.getElementById('quantity').value);
+        if (quantity > 1) {
+            document.getElementById('quantity').value = quantity - 1;
+        }
+    }
+
+    function increaseQuantity() {
+        let quantity = parseInt(document.getElementById('quantity').value);
+        document.getElementById('quantity').value = quantity + 1;
+    }
+
+    // 탭 전환 함수
+    function openTab(evt, tabId) {
+        // 모든 탭 내용 숨기기
+        let tabContents = document.getElementsByClassName('tab-content');
+        for (let i = 0; i < tabContents.length; i++) {
+            tabContents[i].classList.remove('active');
+        }
+
+        // 모든 탭 버튼 비활성화
+        let tabItems = document.getElementsByClassName('tab-item');
+        for (let i = 0; i < tabItems.length; i++) {
+            tabItems[i].classList.remove('active');
+        }
+
+        // 선택한 탭 내용 보이기
+        document.getElementById(tabId).classList.add('active');
+
+        // 선택한 탭 버튼 활성화
+        evt.currentTarget.classList.add('active');
+    }
+
+    // 썸네일 이미지 클릭 시 메인 이미지 변경
+    let thumbnails = document.getElementsByClassName('thumbnail');
+    for (let i = 0; i < thumbnails.length; i++) {
+        thumbnails[i].addEventListener('click', function() {
+            document.querySelector('.main-image').style.backgroundImage = this.style.backgroundImage;
+        });
+    }
+
+    // 장바구니 담기 함수
+    function addToCart() {
+        let quantity = document.getElementById('quantity').value;
+        let color = document.getElementById('color-option').value;
+        let size = document.getElementById('size-option').value;
+
+        // 여기서 실제로 장바구니에 추가하는 API 호출 등을 수행
+        console.log(`장바구니에 추가: 수량=${quantity}, 색상=${color}, 사이즈=${size}`);
+    }
+</script>
