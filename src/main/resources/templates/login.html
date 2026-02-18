@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HandMade Market | Login</title>
+    <style>
+        :root {
+            --bg: #f0f4fb;
+            --ink: #1f2430;
+            --muted: #5d6677;
+            --surface: #ffffff;
+            --line: #dfe6f1;
+            --brand: #03c75a;
+            --brand-dark: #00ab4d;
+            --soft: #eef4ff;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Pretendard", "Noto Sans KR", sans-serif;
+            color: var(--ink);
+            background: linear-gradient(135deg, #deebff 0%, #f7fbff 45%, #e6fff3 100%);
+            display: grid;
+            place-items: center;
+            padding: 16px;
+        }
+
+        .panel {
+            width: 100%;
+            max-width: 470px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 28px 22px;
+            box-shadow: 0 16px 40px rgba(39, 75, 122, 0.14);
+        }
+
+        .title {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.2px;
+        }
+
+        .desc {
+            margin-top: 10px;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .status {
+            margin-top: 18px;
+            background: var(--soft);
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 14px;
+            color: #274c82;
+        }
+
+        .naver-btn {
+            width: 100%;
+            margin-top: 20px;
+            border: 0;
+            border-radius: 12px;
+            background: var(--brand);
+            color: #fff;
+            padding: 14px 16px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .naver-btn:hover {
+            background: var(--brand-dark);
+        }
+
+        .links {
+            margin-top: 16px;
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .link {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .link:hover {
+            color: var(--ink);
+        }
+    </style>
+</head>
+<body>
+<section class="panel">
+    <h1 class="title">로그인</h1>
+    <p class="desc">
+        현재 프로젝트는 네이버 OAuth2 로그인을 사용합니다.
+        버튼 클릭 시 <code>/oauth2/authoriztion/naver</code> 경로를 통해 인증을 시작합니다.
+    </p>
+
+    <div class="status" th:if="${isLoggedIn}">
+        이미 로그인된 상태입니다.
+        <span th:text="${displayName}">user</span> 님으로 인증되어 있습니다.
+    </div>
+
+    <a class="naver-btn" th:href="@{/oauth2/authoriztion/naver}">네이버로 로그인</a>
+
+    <div class="links">
+        <a class="link" th:href="@{/}">홈으로 이동</a>
+        <a class="link" th:href="@{/oauth2/authorization/naver}">정식 OAuth 경로</a>
+    </div>
+</section>
+</body>
+</html>

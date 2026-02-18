@@ -28,11 +28,18 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     @Override
     @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
+        // 어떤 OAuth2UserService 구현체가 실제로 호출되는지 확인하기 위한 로그
+        log.info("[OAuth2] loadUser called - serviceClass={}, registrationId={}",
+                this.getClass().getName(),
+                userRequest.getClientRegistration().getRegistrationId());
+
         OAuth2UserService<OAuth2UserRequest, OAuth2User> delegate = new DefaultOAuth2UserService();
         OAuth2User oAuth2User = delegate.loadUser(userRequest);
 
         // 액세스 토큰 정보
         String accessToken = userRequest.getAccessToken().getTokenValue();
+        String clientRegistration = userRequest.getClientRegistration().toString();
+        String additionalParameters = userRequest.getAdditionalParameters().toString();
         String tokenType = userRequest.getAccessToken().getTokenType().getValue();
         LocalDateTime expiresAt = null;
 
@@ -44,9 +51,11 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
             );
         }
 
-        System.out.println("Access Token: " + accessToken);
-        System.out.println("Token Type: " + tokenType);
-        System.out.println("Expires At: " + expiresAt);
+        System.out.println("Access Token2: " + accessToken);
+        System.out.println("Token Type2: " + tokenType);
+        System.out.println("Expires At2: " + expiresAt);
+        System.out.println("clientRegistration2: " + clientRegistration);
+        System.out.println("additionalParameters2: " + additionalParameters);
 
         // 로그인 서비스 구분 (naver)
         String registrationId = userRequest.getClientRegistration().getRegistrationId();

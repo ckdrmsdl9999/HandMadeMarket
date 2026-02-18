@@ -39,6 +39,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         Map<String, Object> attributes = oAuth2User.getAttributes();
         log.debug("OAuth2 User attributes: {}", attributes);
+        log.debug("Oauth2token :{} ", oauthToken);
 
         // 네이버 로그인 정보 추출
         if ("naver".equals(registrationId) && attributes.containsKey("response")) {
