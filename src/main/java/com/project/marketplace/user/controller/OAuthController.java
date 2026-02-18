@@ -283,8 +283,8 @@ public class OAuthController {//일단 만들어보자구
 
         model.addAttribute("authName", authentication.getName());
 
-        if (authentication instanceof OAuth2AuthenticationToken oauthToken
-                && oauthToken.getPrincipal() instanceof OAuth2User oauth2User) {
+        if (authentication instanceof OAuth2AuthenticationToken oauthToken) {
+            OAuth2User oauth2User = oauthToken.getPrincipal();
             model.addAttribute("provider", oauthToken.getAuthorizedClientRegistrationId());
 
             Map<String, Object> attributes = oauth2User.getAttributes();

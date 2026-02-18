@@ -101,6 +101,13 @@
             font-size: 16px;
         }
 
+        .hero-actions {
+            margin-top: 18px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
         .grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -144,6 +151,12 @@
         .list li {
             margin-bottom: 6px;
         }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 28px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -161,6 +174,10 @@
     <section class="hero">
         <h1>장인의 손길을 바로 만나는 마켓</h1>
         <p>네이버 OAuth 로그인으로 빠르게 시작하고, 홈에서 바로 로그인 상태를 확인하세요.</p>
+        <div class="hero-actions">
+            <a class="btn btn-primary" th:href="@{/login}">로그인 페이지</a>
+            <a class="btn btn-ghost" th:href="@{/oauth2/authoriztion/naver}">네이버 로그인 시작</a>
+        </div>
     </section>
 
     <section class="grid">
@@ -189,6 +206,7 @@
                 <li><code>/login</code> 로그인 화면</li>
                 <li><code>/oauth2/authoriztion/naver</code> 프론트에서 사용 중인 로그인 경로(호환)</li>
                 <li><code>/oauth2/authorization/naver</code> Spring Security 정식 OAuth2 경로</li>
+                <li><code>/loginSuccess</code> 로그인 성공 후 사용자 정보 확인 페이지</li>
             </ul>
         </article>
     </section>
