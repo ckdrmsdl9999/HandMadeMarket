@@ -99,6 +99,21 @@
         .link:hover {
             color: var(--ink);
         }
+
+        .logout-wrap {
+            margin-top: 12px;
+        }
+
+        .logout-btn {
+            width: 100%;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 12px;
+            background: #fff;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--ink);
+        }
     </style>
 </head>
 <body>
@@ -114,7 +129,12 @@
         <span th:text="${displayName}">user</span> 님으로 인증되어 있습니다.
     </div>
 
-    <a class="naver-btn" th:href="@{/oauth2/authoriztion/naver}">네이버로 로그인</a>
+    <a class="naver-btn" th:if="${!isLoggedIn}" th:href="@{/oauth2/authoriztion/naver}">네이버로 로그인</a>
+    <a class="naver-btn" th:if="${isLoggedIn}" th:href="@{/}">홈으로 돌아가기</a>
+
+    <form class="logout-wrap" th:if="${isLoggedIn}" th:action="@{/logout/naver}" method="post">
+        <button class="logout-btn" type="submit">로그아웃</button>
+    </form>
 
     <div class="links">
         <a class="link" th:href="@{/}">홈으로 이동</a>
