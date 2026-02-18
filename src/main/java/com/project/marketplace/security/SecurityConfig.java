@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.authentication.OAuth2LoginAuthenticationProvider;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -19,7 +20,7 @@ public class SecurityConfig {
 
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler oauth2AuthenticationSuccessHandler;
-
+//    private final OAuth2LoginAuthenticationProvider oAuth2LoginAuthenticationProvider;
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -29,19 +30,27 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/loginSuccess", "/api/auth/**", "/oauth2/**", "/logout/naver").permitAll()
-                        .anyRequest().authenticated())
-                .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .userService(customOAuth2UserService))
-                        .successHandler(oauth2AuthenticationSuccessHandler)
-//                        .defaultSuccessUrl("/loginSuccess", false)
+                        .anyRequest().permitAll())
+                        .oauth2Login(
+                                oauth2 -> oauth2
+                                .redirectionEndpoint(redirection -> redirection//추가9-15
+                                                .baseUri("/login/oauth2/code/naver")
+                                )//추가9-15
+
+
+//                        .baseUri("/oauth2/callback"))//추가9-15
+//                        .userInfoEndpoint(userInfo -> userInfo//0125주석
+//                                .userService(customOAuth2UserService))//0125주석
+//                        .successHandler(oauth2AuthenticationSuccessHandler)//0125주석
+
                 )
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl("/")
-                        .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID"));
+
+//                .logout(logout -> logout
+//                        .logoutUrl("/logout")
+//                        .logoutSuccessUrl("/")
+//                        .invalidateHttpSession(true)
+//                        .deleteCookies("JSESSIONID"))
+        ;
 
 
         return http.build();

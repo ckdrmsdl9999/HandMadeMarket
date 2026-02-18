@@ -12,6 +12,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,21 +31,75 @@ import java.util.Optional;
 @Controller
 @RequiredArgsConstructor
 @Slf4j
-public class OAuthController {
+public class OAuthController {//일단 만들어보자구
 
     private final UserRepository userRepository;
 
     @GetMapping("/loginSuccess")
-    public String loginSuccess(@AuthenticationPrincipal OAuth2User oauth2User,
-                               Model model,
-                               Authentication authentication) {
-
-//         oauth2User가 null인 경우 처리 (직접 URL 접속 시)
+    public String loginSuccess(@AuthenticationPrincipal OAuth2User oauth2User, Model model, Authentication authentication) {
+    // oauth2User가 null인 경우 처리 (직접 URL 접속 시)
         if (oauth2User == null) {
             System.out.println("oauth2User is null!");
             return "redirect:/"; // 홈페이지로 리다이렉트
         }
-        System.out.println("oauth2User attributes: " + oauth2User.getAttributes());
+        System.out.println("oauth2User attributes(/loginsuccess): " + oauth2User.getAttributes());
+
+        try {
+            // OAuth2User에서 사용자 정보 추출
+            Map<String, Object> attributes = oauth2User.getAttributes();
+            Map<String, Object> response = (Map<String, Object>) attributes.get("response");
+            String mobile = (String) response.get("mobile");
+            String code = (String) response.get("code");
+            String token = (String) response.get("access_token");
+            // 모델에 토큰 추가
+           model.addAttribute("code", code);
+            model.addAttribute("token", token);
+            model.addAttribute("userName", response.get("name"));
+
+            return "login-success"; // 뷰 이름 반환
+        } catch (Exception e) {
+            // 예외 처리
+            return "redirect:/";
+        }
+    }
+//
+//
+//    @GetMapping("/login/oauth2/code/naver")
+//    public String loginSuccess2(@AuthenticationPrincipal OAuth2User oauth2User, Model model, Authentication authentication) {
+//        //oauth2User가 null인 경우 처리 (직접 URL 접속 시)
+//        if (oauth2User == null) {
+//            System.out.println("oauth2User is null!이요");
+//            return "redirect:/"; // 홈페이지로 리다이렉트
+//        }
+//        System.out.println("oauth2User attributes(//login/oauth2/code/naver): " + oauth2User.getAttributes());
+//
+//        try {
+//            // OAuth2User에서 사용자 정보 추출
+//            Map<String, Object> attributes = oauth2User.getAttributes();
+//            Map<String, Object> response = (Map<String, Object>) attributes.get("response");
+//            String mobile = (String) response.get("mobile");
+//            String code = (String) response.get("code");
+//            String token = (String) response.get("token");
+//            System.out.println(code+"이구만요");
+//            // 모델에 토큰 추가
+//            model.addAttribute("token", token);
+//            model.addAttribute("userName", response.get("name"));
+//
+//            return "login-success"; // 뷰 이름 반환
+//        } catch (Exception e) {
+//            // 예외 처리
+//            return "redirect:/";
+//        }
+//    }
+
+    @GetMapping("/oauth2/callback")
+    public String loginSuccess3(@AuthenticationPrincipal OAuth2User oauth2User, Model model, Authentication authentication) {
+    //  oauth2User가 null인 경우 처리 (직접 URL 접속 시)
+        if (oauth2User == null) {
+            System.out.println("oauth2User is null!");
+            return "redirect:/"; // 홈페이지로 리다이렉트
+        }
+        System.out.println("oauth2User attributes(callback): " + oauth2User.getAttributes());
 
         try {
             // OAuth2User에서 사용자 정보 추출
@@ -63,10 +118,24 @@ public class OAuthController {
         }
     }
 
+    @GetMapping("/login")
+    public String login(Model model, Authentication authentication) {
+        addAuthInfoToModel(model, authentication);
+        return "login";
+    }
+
+    @GetMapping("/oauth2/authoriztion/naver")
+    public String redirectTypoOAuthPath() {
+        // 기존 프론트에서 사용 중인 오타 경로를 정식 OAuth2 경로로 연결
+        return "redirect:/oauth2/authorization/naver";
+    }
+
     @GetMapping("/")
-    public String home(){
+    public String home(Model model, Authentication authentication){
+        addAuthInfoToModel(model, authentication);
         return "home";
     }
+
 
     @PostMapping("/logout/naver")
     public String logoutNaver(HttpServletRequest request, HttpServletResponse response) {
@@ -198,5 +267,37 @@ public class OAuthController {
 
         // 4. 토큰 블랙리스트에 추가 (옵션)
         // tokenBlacklistService.addToBlacklist(accessToken);
+    }
+
+    private void addAuthInfoToModel(Model model, Authentication authentication) {
+        boolean isLoggedIn = authentication != null
+                && authentication.isAuthenticated()
+                && !(authentication instanceof AnonymousAuthenticationToken)
+                && !"anonymousUser".equals(authentication.getPrincipal());
+
+        model.addAttribute("isLoggedIn", isLoggedIn);
+
+        if (!isLoggedIn) {
+            return;
+        }
+
+        model.addAttribute("authName", authentication.getName());
+
+        if (authentication instanceof OAuth2AuthenticationToken oauthToken
+                && oauthToken.getPrincipal() instanceof OAuth2User oauth2User) {
+            model.addAttribute("provider", oauthToken.getAuthorizedClientRegistrationId());
+
+            Map<String, Object> attributes = oauth2User.getAttributes();
+            Object responseObj = attributes.get("response");
+            if (responseObj instanceof Map<?, ?> response) {
+                Object name = response.get("name");
+                Object email = response.get("email");
+                model.addAttribute("displayName", name != null ? name : authentication.getName());
+                model.addAttribute("email", email);
+                return;
+            }
+        }
+
+        model.addAttribute("displayName", authentication.getName());
     }
 }
