@@ -6,14 +6,17 @@
     <title>HandMade Market | Login</title>
     <style>
         :root {
-            --bg: #f0f4fb;
-            --ink: #1f2430;
-            --muted: #5d6677;
+            --bg: #f4f7fd;
+            --ink: #0f1729;
+            --muted: #5e6778;
             --surface: #ffffff;
-            --line: #dfe6f1;
-            --brand: #03c75a;
-            --brand-dark: #00ab4d;
-            --soft: #eef4ff;
+            --line: #dde4f0;
+            --brand-blue: #3566ff;
+            --brand-blue-dark: #224fd6;
+            --naver: #03c75a;
+            --naver-dark: #00aa4d;
+            --accent: #ff6f2c;
+            --shadow: 0 16px 40px rgba(28, 58, 125, 0.14);
         }
 
         * {
@@ -23,52 +26,172 @@
         body {
             margin: 0;
             min-height: 100vh;
-            font-family: "Pretendard", "Noto Sans KR", sans-serif;
+            font-family: "SUIT", "Pretendard", "Noto Sans KR", sans-serif;
             color: var(--ink);
-            background: linear-gradient(135deg, #deebff 0%, #f7fbff 45%, #e6fff3 100%);
+            background:
+                    radial-gradient(circle at 8% 6%, rgba(53, 102, 255, 0.18), transparent 26%),
+                    radial-gradient(circle at 94% 0%, rgba(255, 111, 44, 0.14), transparent 22%),
+                    var(--bg);
+        }
+
+        .container {
+            width: min(1140px, 100% - 28px);
+            margin: 0 auto;
+        }
+
+        .utility-bar {
+            border-bottom: 1px solid var(--line);
+            background: #fff;
+        }
+
+        .utility-inner {
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .utility-links {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+        }
+
+        .utility-links a,
+        .utility-links button {
+            border: 0;
+            background: none;
+            color: var(--muted);
+            font-size: 13px;
+            padding: 0;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .top {
+            min-height: 76px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .brand {
+            text-decoration: none;
+            color: var(--ink);
+            font-size: 30px;
+            font-weight: 900;
+            letter-spacing: -0.7px;
+        }
+
+        .brand em {
+            color: var(--brand-blue);
+            font-style: normal;
+        }
+
+        .home-link {
+            text-decoration: none;
+            color: #fff;
+            background: linear-gradient(145deg, var(--brand-blue) 0%, var(--brand-blue-dark) 100%);
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .layout {
             display: grid;
-            place-items: center;
-            padding: 16px;
+            grid-template-columns: 1.12fr 0.88fr;
+            gap: 16px;
+            padding: 8px 0 42px;
+        }
+
+        .hero {
+            border-radius: 18px;
+            padding: 28px;
+            color: #fff;
+            background: linear-gradient(126deg, #365cf4 0%, #2c84ff 52%, #3abff5 100%);
+            box-shadow: var(--shadow);
+            display: grid;
+            gap: 14px;
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-size: 34px;
+            line-height: 1.22;
+            letter-spacing: -0.3px;
+        }
+
+        .hero p {
+            margin: 0;
+            opacity: 0.95;
+            line-height: 1.7;
+            font-size: 15px;
+        }
+
+        .chips {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .chip {
+            border: 1px solid rgba(255, 255, 255, 0.78);
+            border-radius: 999px;
+            padding: 7px 11px;
+            font-size: 12px;
+            font-weight: 700;
         }
 
         .panel {
-            width: 100%;
-            max-width: 470px;
             background: var(--surface);
             border: 1px solid var(--line);
             border-radius: 18px;
-            padding: 28px 22px;
-            box-shadow: 0 16px 40px rgba(39, 75, 122, 0.14);
+            box-shadow: var(--shadow);
+            padding: 24px 22px;
+            display: grid;
+            gap: 12px;
+        }
+
+        .eyebrow {
+            margin: 0;
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
         }
 
         .title {
             margin: 0;
             font-size: 28px;
             font-weight: 800;
-            letter-spacing: -0.2px;
+            letter-spacing: -0.4px;
         }
 
         .desc {
-            margin-top: 10px;
+            margin: 0;
             color: var(--muted);
             line-height: 1.6;
+            font-size: 14px;
         }
 
         .status {
-            margin-top: 18px;
-            background: var(--soft);
+            margin-top: 2px;
+            background: #edf3ff;
+            border: 1px solid #d3e1ff;
             border-radius: 10px;
             padding: 12px;
             font-size: 14px;
             color: #274c82;
         }
 
-        .naver-btn {
+        .btn {
             width: 100%;
-            margin-top: 20px;
             border: 0;
             border-radius: 12px;
-            background: var(--brand);
             color: #fff;
             padding: 14px 16px;
             font-size: 16px;
@@ -79,12 +202,34 @@
             text-align: center;
         }
 
-        .naver-btn:hover {
-            background: var(--brand-dark);
+        .btn-naver {
+            margin-top: 8px;
+            background: linear-gradient(145deg, var(--naver) 0%, var(--naver-dark) 100%);
+        }
+
+        .btn-primary {
+            margin-top: 4px;
+            background: linear-gradient(145deg, var(--brand-blue) 0%, var(--brand-blue-dark) 100%);
+        }
+
+        .btn-ghost {
+            border: 1px solid var(--line);
+            color: var(--ink);
+            background: #fff;
+            margin-top: 4px;
+        }
+
+        .meta {
+            margin-top: 4px;
+            padding-top: 10px;
+            border-top: 1px dashed var(--line);
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.65;
         }
 
         .links {
-            margin-top: 16px;
+            margin-top: 2px;
             display: flex;
             justify-content: space-between;
             gap: 8px;
@@ -96,50 +241,99 @@
             font-size: 14px;
         }
 
-        .link:hover {
-            color: var(--ink);
+        @media (max-width: 960px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .hero h1 {
+                font-size: 29px;
+            }
         }
 
-        .logout-wrap {
-            margin-top: 12px;
-        }
+        @media (max-width: 640px) {
+            .utility-inner > span {
+                display: none;
+            }
 
-        .logout-btn {
-            width: 100%;
-            border: 1px solid var(--line);
-            border-radius: 12px;
-            padding: 12px;
-            background: #fff;
-            cursor: pointer;
-            font-weight: 600;
-            color: var(--ink);
+            .brand {
+                font-size: 26px;
+            }
+
+            .panel {
+                padding: 20px 16px;
+            }
         }
     </style>
 </head>
 <body>
-<section class="panel">
-    <h1 class="title">로그인</h1>
-    <p class="desc">
-        현재 프로젝트는 네이버 OAuth2 로그인을 사용합니다.
-        버튼 클릭 시 <code>/oauth2/authoriztion/naver</code> 경로를 통해 인증을 시작합니다.
-    </p>
+<header class="utility-bar">
+    <div class="container utility-inner">
+        <span>홈 화면과 동일한 로그인 동선을 제공합니다.</span>
+        <nav class="utility-links">
+            <a th:href="@{/}">홈</a>
+            <a th:href="@{/loginSuccess}">내 정보</a>
+            <form th:if="${isLoggedIn}" th:action="@{/logout/naver}" method="post">
+                <button type="submit">로그아웃</button>
+            </form>
+        </nav>
+    </div>
+</header>
 
-    <div class="status" th:if="${isLoggedIn}">
-        이미 로그인된 상태입니다.
-        <span th:text="${displayName}">user</span> 님으로 인증되어 있습니다.
+<div class="container">
+    <div class="top">
+        <a class="brand" th:href="@{/}">HandMade <em>Market</em></a>
+        <a class="home-link" th:href="@{/}">홈으로 이동</a>
     </div>
 
-    <a class="naver-btn" th:if="${!isLoggedIn}" th:href="@{/oauth2/authoriztion/naver}">네이버로 로그인</a>
-    <a class="naver-btn" th:if="${isLoggedIn}" th:href="@{/}">홈으로 돌아가기</a>
+    <main class="layout">
+        <section class="hero">
+            <h1>로그인 후 맞춤 추천과<br>빠른 구매 동선을 바로 사용하세요</h1>
+            <p>
+                현재 인증은 네이버 OAuth2로 연결됩니다.
+                홈 화면과 동일하게 <code>/oauth2/authoriztion/naver</code> 경로를 지원합니다.
+            </p>
+            <div class="chips">
+                <span class="chip">OAuth2</span>
+                <span class="chip">Naver</span>
+                <span class="chip">Thymeleaf</span>
+                <span class="chip">Session Ready</span>
+            </div>
+        </section>
 
-    <form class="logout-wrap" th:if="${isLoggedIn}" th:action="@{/logout/naver}" method="post">
-        <button class="logout-btn" type="submit">로그아웃</button>
-    </form>
+        <section class="panel">
+            <p class="eyebrow">LOGIN CENTER</p>
+            <h1 class="title">계정 로그인</h1>
+            <p class="desc">
+                버튼 클릭 시 네이버 인증 페이지로 이동합니다.
+                로그인 이후 홈에서 사용자 상태를 바로 확인할 수 있습니다.
+            </p>
 
-    <div class="links">
-        <a class="link" th:href="@{/}">홈으로 이동</a>
-        <a class="link" th:href="@{/oauth2/authorization/naver}">정식 OAuth 경로</a>
-    </div>
-</section>
+            <div class="status" th:if="${isLoggedIn}">
+                이미 로그인되어 있습니다.
+                <strong th:text="${displayName}">user</strong> 님 계정이 연결되어 있습니다.
+            </div>
+
+            <a class="btn btn-naver" th:if="${!isLoggedIn}" th:href="@{/oauth2/authoriztion/naver}">네이버로 로그인</a>
+            <a class="btn btn-primary" th:if="${isLoggedIn}" th:href="@{/loginSuccess}">내 인증 정보 보기</a>
+
+            <form th:if="${isLoggedIn}" th:action="@{/logout/naver}" method="post">
+                <button class="btn btn-ghost" type="submit">로그아웃</button>
+            </form>
+
+            <div class="meta">
+                <span th:if="${isLoggedIn}" th:text="'인증 방식: ' + (provider != null ? provider : 'unknown')">인증 방식</span><br th:if="${isLoggedIn}">
+                <span th:if="${isLoggedIn and email != null}" th:text="'이메일: ' + ${email}">이메일</span><br th:if="${isLoggedIn and email != null}">
+                <span th:if="${isLoggedIn}" th:text="'인증 이름: ' + ${authName}">인증 이름</span>
+                <span th:if="${!isLoggedIn}">현재 비로그인 상태입니다.</span>
+            </div>
+
+            <div class="links">
+                <a class="link" th:href="@{/oauth2/authorization/naver}">정식 OAuth 경로</a>
+                <a class="link" th:href="@{/}">홈으로</a>
+            </div>
+        </section>
+    </main>
+</div>
 </body>
 </html>

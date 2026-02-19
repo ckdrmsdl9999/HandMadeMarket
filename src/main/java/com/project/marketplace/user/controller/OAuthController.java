@@ -126,7 +126,6 @@ public class OAuthController {//일단 만들어보자구
 
     @GetMapping("/oauth2/authoriztion/naver")
     public String redirectTypoOAuthPath() {
-        // 기존 프론트에서 사용 중인 오타 경로를 정식 OAuth2 경로로 연결
         return "redirect:/oauth2/authorization/naver";
     }
 
@@ -284,6 +283,7 @@ public class OAuthController {//일단 만들어보자구
         model.addAttribute("authName", authentication.getName());
 
         if (authentication instanceof OAuth2AuthenticationToken oauthToken) {
+
             OAuth2User oauth2User = oauthToken.getPrincipal();
             model.addAttribute("provider", oauthToken.getAuthorizedClientRegistrationId());
 
@@ -297,6 +297,7 @@ public class OAuthController {//일단 만들어보자구
                 return;
             }
         }
+
 
         model.addAttribute("displayName", authentication.getName());
     }
