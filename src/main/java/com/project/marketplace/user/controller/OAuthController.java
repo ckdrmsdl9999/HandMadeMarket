@@ -120,18 +120,23 @@ public class OAuthController {//일단 만들어보자구
 
     @GetMapping("/login")
     public String login(Model model, Authentication authentication) {
+        // 이유: 로그인 페이지에서도 로그인 여부/이름을 보여주기 위해 모델 데이터가 필요함.
+        // 역할: login.html이 사용하는 인증 상태 데이터를 공통 함수로 주입.
         addAuthInfoToModel(model, authentication);
         return "login";
     }
 
     @GetMapping("/oauth2/authoriztion/naver")
     public String redirectTypoOAuthPath() {
-        // 기존 프론트에서 사용 중인 오타 경로를 정식 OAuth2 경로로 연결
+        // 이유: 프론트에서 오타 경로(authoriztion)를 이미 사용 중이라 즉시 깨질 수 있음.
+        // 역할: 오타 경로 요청을 Spring Security 정식 경로(authorization)로 안전하게 리다이렉트.
         return "redirect:/oauth2/authorization/naver";
     }
 
     @GetMapping("/")
     public String home(Model model, Authentication authentication){
+        // 이유: 홈 화면도 로그인 상태 기반으로 버튼/문구를 분기해야 함.
+        // 역할: home.html이 필요한 인증 사용자 정보를 동일 규칙으로 세팅.
         addAuthInfoToModel(model, authentication);
         return "home";
     }
@@ -270,6 +275,8 @@ public class OAuthController {//일단 만들어보자구
     }
 
     private void addAuthInfoToModel(Model model, Authentication authentication) {
+        // 이유: 홈/로그인 화면에서 중복으로 인증 상태 계산하는 코드를 줄이기 위함.
+        // 역할: 화면 분기에 필요한 공통 모델(isLoggedIn, displayName, provider, email)을 구성.
         boolean isLoggedIn = authentication != null
                 && authentication.isAuthenticated()
                 && !(authentication instanceof AnonymousAuthenticationToken)
@@ -284,6 +291,8 @@ public class OAuthController {//일단 만들어보자구
         model.addAttribute("authName", authentication.getName());
 
         if (authentication instanceof OAuth2AuthenticationToken oauthToken) {
+            // 이유: Java 17에서 불필요한 instanceof 패턴 매칭이 컴파일 오류를 유발했음.
+            // 역할: OAuth2 principal을 명시적으로 꺼내 사용자 attribute(response)를 안전하게 조회.
             OAuth2User oauth2User = oauthToken.getPrincipal();
             model.addAttribute("provider", oauthToken.getAuthorizedClientRegistrationId());
 
@@ -298,6 +307,8 @@ public class OAuthController {//일단 만들어보자구
             }
         }
 
+        // 이유: OAuth2 응답 구조가 예상과 다를 때도 화면 표시가 비어 보이지 않아야 함.
+        // 역할: 최소 표시값으로 authentication name을 displayName에 대체 세팅.
         model.addAttribute("displayName", authentication.getName());
     }
 }

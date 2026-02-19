@@ -100,10 +100,14 @@
             color: var(--ink);
         }
 
+        /* // 이유: 로그인 상태에서만 로그아웃 버튼을 분리 배치하기 위해 추가.
+           // 역할: 로그아웃 폼의 상단 간격을 보장해 버튼 충돌 방지. */
         .logout-wrap {
             margin-top: 12px;
         }
 
+        /* // 이유: 네이버 로그인 버튼과 시각적 우선순위를 분리하려고 보조 스타일 적용.
+           // 역할: 로그인 상태 전용 로그아웃 버튼 UI를 제공. */
         .logout-btn {
             width: 100%;
             border: 1px solid var(--line);
@@ -129,9 +133,15 @@
         <span th:text="${displayName}">user</span> 님으로 인증되어 있습니다.
     </div>
 
+    <!-- // 이유: 비로그인 상태에서는 인증 시작 버튼이 필요함.
+         // 역할: /oauth2/authoriztion/naver 경로로 OAuth 로그인 시작. -->
     <a class="naver-btn" th:if="${!isLoggedIn}" th:href="@{/oauth2/authoriztion/naver}">네이버로 로그인</a>
+    <!-- // 이유: 이미 로그인한 사용자에게 중복 로그인 대신 이동 동선을 제공.
+         // 역할: 홈으로 복귀하는 기본 CTA 역할. -->
     <a class="naver-btn" th:if="${isLoggedIn}" th:href="@{/}">홈으로 돌아가기</a>
 
+    <!-- // 이유: 로그인 페이지에서도 즉시 세션 종료가 가능해야 테스트/운영이 편함.
+         // 역할: 현재 인증 사용자를 /logout/naver로 로그아웃 처리. -->
     <form class="logout-wrap" th:if="${isLoggedIn}" th:action="@{/logout/naver}" method="post">
         <button class="logout-btn" type="submit">로그아웃</button>
     </form>
