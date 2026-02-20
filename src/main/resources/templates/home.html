@@ -324,11 +324,21 @@
             gap: 12px;
             animation-delay: 0.24s;
         }
+        /* 현재 레이아웃에서 줄바꿈 설정만으로도 안정적이라 최소 너비 강제 해제 규칙은 비활성화해 단순화한다. */
+        /* .login-panel > * {
+            min-width: 0;
+        } */
 
         .login-panel h3 {
             margin: 0;
             font-size: 18px;
             line-height: 1.35;
+        }
+        /* 긴 닉네임, 이메일, 인증 이름이 있어도 패널 너비 안에서 자동 줄바꿈되게 한다. */
+        .login-panel h3,
+        .login-panel p,
+        .login-meta span {
+            overflow-wrap: anywhere;
         }
 
         .login-panel p {
@@ -336,6 +346,11 @@
             color: var(--muted);
             font-size: 14px;
             line-height: 1.6;
+        }
+        /* form 기본 여백으로 버튼 정렬이 어긋나지 않도록 여백을 제거하고 너비를 맞춘다. */
+        .login-panel form {
+            margin: 0;
+            width: 100%;
         }
 
         .cta-btn {
