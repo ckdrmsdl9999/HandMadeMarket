@@ -2,7 +2,6 @@ package com.project.marketplace.order.controller;
 
 import com.project.marketplace.order.dto.OrderDto;
 import com.project.marketplace.order.service.OrderService;
-import com.project.marketplace.product.dto.ProductDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
