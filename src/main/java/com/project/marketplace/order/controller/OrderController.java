@@ -66,6 +66,7 @@ public class OrderController {
     public ResponseEntity<List<OrderDto>> getAllOrders() {
         List<OrderDto> orders = orderService.getAllOrders();
         return ResponseEntity.ok(orders);
+
     }
 
     /**

@@ -62,35 +62,6 @@ public class OAuthController {//일단 만들어보자구
             return "redirect:/";
         }
     }
-//
-//
-//    @GetMapping("/login/oauth2/code/naver")
-//    public String loginSuccess2(@AuthenticationPrincipal OAuth2User oauth2User, Model model, Authentication authentication) {
-//        //oauth2User가 null인 경우 처리 (직접 URL 접속 시)
-//        if (oauth2User == null) {
-//            System.out.println("oauth2User is null!이요");
-//            return "redirect:/"; // 홈페이지로 리다이렉트
-//        }
-//        System.out.println("oauth2User attributes(//login/oauth2/code/naver): " + oauth2User.getAttributes());
-//
-//        try {
-//            // OAuth2User에서 사용자 정보 추출
-//            Map<String, Object> attributes = oauth2User.getAttributes();
-//            Map<String, Object> response = (Map<String, Object>) attributes.get("response");
-//            String mobile = (String) response.get("mobile");
-//            String code = (String) response.get("code");
-//            String token = (String) response.get("token");
-//            System.out.println(code+"이구만요");
-//            // 모델에 토큰 추가
-//            model.addAttribute("token", token);
-//            model.addAttribute("userName", response.get("name"));
-//
-//            return "login-success"; // 뷰 이름 반환
-//        } catch (Exception e) {
-//            // 예외 처리
-//            return "redirect:/";
-//        }
-//    }
 
     @GetMapping("/oauth2/callback")
     public String loginSuccess3(@AuthenticationPrincipal OAuth2User oauth2User, Model model, Authentication authentication) {
