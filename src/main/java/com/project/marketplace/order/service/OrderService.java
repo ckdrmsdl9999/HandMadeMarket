@@ -2,6 +2,7 @@ package com.project.marketplace.order.service;
 
 import com.project.marketplace.order.dto.OrderDto;
 import com.project.marketplace.order.entity.Order;
+import com.project.marketplace.order.entity.OrderStatus;
 import com.project.marketplace.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,7 +31,7 @@ public class OrderService{
 
         // 주문 상태 초기화
         if (orderDto.getOrderStatus() == null) {
-            orderDto.setOrderStatus("PENDING");
+            orderDto.setOrderStatus(OrderStatus.PENDING);
         }
 
         // 주문 일시 설정
@@ -92,7 +93,7 @@ public class OrderService{
         // 상태 변경 시 대상 주문을 조회해 엔티티를 수정하고 JPA dirty checking으로 반영한다.
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다. ID: " + orderId));
-        order.setOrderStatus(orderStatus);
+        order.setOrderStatus(OrderStatus.PENDING);
     }
 
     /**
