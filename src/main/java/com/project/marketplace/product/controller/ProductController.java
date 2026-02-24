@@ -72,13 +72,10 @@ public class ProductController {
     public ResponseEntity<Void> updateProduct(
             @PathVariable Long productId,
             @RequestBody ProductDto productDto) {
-
-        ProductDto existingProduct = productService.getProductById(productId);
-        if (existingProduct == null) {
-            return ResponseEntity.notFound().build();
+        // 컨트롤러의 사전 조회를 제거하고 경로 ID와 본문 ID 일치만 검증해 서비스 단 조회로 중복 쿼리를 줄였다.
+        if (!productId.equals(productDto.getProductId())) {
+            return ResponseEntity.badRequest().build();
         }
-
-        productDto.setProductId(productId);
         productService.updateProduct(productDto);
 
         return ResponseEntity.ok().build();
@@ -89,11 +86,7 @@ public class ProductController {
      */
     @DeleteMapping("/{productId}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long productId) {
-        ProductDto existingProduct = productService.getProductById(productId);
-        if (existingProduct == null) {
-            return ResponseEntity.notFound().build();
-        }
-
+        // 삭제 전 사전 조회를 제거해 불필요한 조회를 줄이고 서비스 단일 경로로 처리하도록 변경했다.
         productService.deleteProduct(productId);
         return ResponseEntity.noContent().build();
     }
