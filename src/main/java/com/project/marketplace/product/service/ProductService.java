@@ -27,9 +27,10 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public ProductDto getProductById(Long productId) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다. ID: " + productId));
-        return ProductDto.fromEntity(product);
+        // Order 서비스와 조회 실패 처리 규칙을 맞추기 위해 예외 대신 null을 반환하도록 변경했다.
+        return productRepository.findById(productId)
+                .map(ProductDto::fromEntity)
+                .orElse(null);
     }
 
     @Transactional(readOnly = true)
