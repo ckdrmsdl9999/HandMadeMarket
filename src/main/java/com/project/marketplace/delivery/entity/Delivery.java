@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 public class Delivery {
 
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -21,6 +22,8 @@ public class Delivery {
     private String status;
 
     private LocalDateTime createdAt;
+
+
 
 
 }
