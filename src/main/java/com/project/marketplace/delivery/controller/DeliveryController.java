@@ -19,31 +19,29 @@ public class DeliveryController {
 
     @PostMapping
     public DeliveryUpdateResponseDto createDelivery(@RequestBody DeliveryUpdateRequestDto requestDto) {
-        Delivery savedDelivery = deliveryService.saveDelivery(toEntity(requestDto));
-        return DeliveryUpdateResponseDto.fromEntity(savedDelivery);
+        // 컨트롤러가 엔티티를 직접 다루지 않도록 서비스 DTO 메서드로 위임한다.
+        return deliveryService.saveDeliveryWithDto(requestDto);
     }
 
 
     @GetMapping
     public List<DeliveryUpdateResponseDto> getAllDeliveries() {
-        return deliveryService.findAllDelivery().stream()
-                .map(DeliveryUpdateResponseDto::fromEntity)
-                .collect(Collectors.toList());
+        // 목록 조회도 서비스에서 DTO로 변환한 결과를 그대로 반환한다.
+        return deliveryService.findAllDeliveryWithDto();
     }
 
 
     @GetMapping("/{id}")
     public DeliveryUpdateResponseDto getOneDelivery(@PathVariable Long id) {
-        Delivery delivery = deliveryService.findByIdDelivery(id)
-                .orElseThrow(() -> new RuntimeException("Delivery not found"));
-        return DeliveryUpdateResponseDto.fromEntity(delivery);
+        // 단건 조회도 컨트롤러에서 엔티티 변환 없이 DTO 응답만 반환한다.
+        return deliveryService.findByIdDeliveryWithDto(id);
     }
 
 
     @PutMapping("/{id}")
     public DeliveryUpdateResponseDto updateDelivery(@PathVariable Long id, @RequestBody DeliveryUpdateRequestDto requestDto) {
-        Delivery updatedDelivery = deliveryService.updateDelivery(id, toEntity(requestDto));
-        return DeliveryUpdateResponseDto.fromEntity(updatedDelivery);
+        // 수정 처리도 DTO 입력을 그대로 서비스로 넘겨 엔티티 의존을 줄인다.
+        return deliveryService.updateDeliveryWithDto(id, requestDto);
     }
 
     @DeleteMapping("/{id}")
