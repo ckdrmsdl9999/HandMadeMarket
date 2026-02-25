@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import org.springframework.security.oauth2.core.OAuth2Error;
 
 @Service
 @RequiredArgsConstructor
@@ -39,7 +40,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         // 액세스 토큰 정보
         String accessToken = userRequest.getAccessToken().getTokenValue();
         String clientRegistration = userRequest.getClientRegistration().toString();
-        String additionalParameters = userRequest.getAdditionalParameters().toString();
+       String additionalParameters = userRequest.getAdditionalParameters().toString();
         String tokenType = userRequest.getAccessToken().getTokenType().getValue();
         LocalDateTime expiresAt = null;
 
@@ -50,27 +51,58 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                     ZoneId.systemDefault()
             );
         }
+//
+//        System.out.println("Access Token2: " + accessToken);
+//        System.out.println("Token Type2: " + tokenType);
+//        System.out.println("Expires At2: " + expiresAt);
+//        System.out.println("clientRegistration2: " + clientRegistration);
+//        System.out.println("additionalParameters2: " + additionalParameters);
 
-        System.out.println("Access Token2: " + accessToken);
-        System.out.println("Token Type2: " + tokenType);
-        System.out.println("Expires At2: " + expiresAt);
-        System.out.println("clientRegistration2: " + clientRegistration);
-        System.out.println("additionalParameters2: " + additionalParameters);
 
-        // 로그인 서비스 구분 (naver)
+//        log.debug("[OAuth2] token metadata - type={}, expiresAt={}, registration={}",
+//                tokenType, expiresAt, clientRegistration);
+
+        log.debug("[OAuth2] token debug - accessToken={}, additionalParameters={}, type={}, expiresAt={}, registration={}",
+                accessToken, additionalParameters, tokenType, expiresAt, clientRegistration);
+
+        // 로그인 서비스 구분 (naver,google등..)
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
-
+//
         // OAuth2 로그인 진행 시 키가 되는 필드값 (PK)
         String userNameAttributeName = userRequest.getClientRegistration()
                 .getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName();
 
-        // 네이버는 response 안에 사용자 정보가 있음
+
+//        // 네이버는 response 안에 사용자 정보가 있음
+//        Map<String, Object> attributes = oAuth2User.getAttributes();
+//        Map<String, Object> response = (Map<String, Object>) attributes.get("response");
+
+        //response/providerId 필수값 검증 추가
         Map<String, Object> attributes = oAuth2User.getAttributes();
-        Map<String, Object> response = (Map<String, Object>) attributes.get("response");
+        Object responseObject = attributes.get("response");
+        if (!(responseObject instanceof Map<?, ?> responseRaw)) {
+            throw new OAuth2AuthenticationException(
+                    new OAuth2Error("invalid_user_info"),
+                    "OAuth2 사용자 정보(response)를 찾을 수 없습니다."
+            );
+        }
+        @SuppressWarnings("unchecked")
+        Map<String, Object> response = (Map<String, Object>) responseRaw;
 
         String providerId = (String) response.get("id");
+        if (providerId == null || providerId.isBlank()) {
+            throw new OAuth2AuthenticationException(
+                    new OAuth2Error("invalid_user_info"),
+                    "OAuth2 사용자 식별자(providerId)가 없습니다."
+            );
+        }
+
+//      String providerId = (String) response.get("id");
         String email = (String) response.get("email");
-        String userName = "naver_" + providerId;
+        //String userName = "naver_" + providerId;
+
+        //하드코딩제거
+        String userName = registrationId + "_" + providerId;
 
         // 이미 가입된 사용자인지 확인
         Optional<User> userOptional = userRepository.findByProviderAndProviderId(registrationId, providerId);

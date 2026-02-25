@@ -39,9 +39,9 @@ public class SecurityConfig {
 
 
 //                        .baseUri("/oauth2/callback"))//추가9-15
-//                        .userInfoEndpoint(userInfo -> userInfo//0125주석
-//                                .userService(customOAuth2UserService))//0125주석
-//                        .successHandler(oauth2AuthenticationSuccessHandler)//0125주석
+                        .userInfoEndpoint(userInfo -> userInfo//0125주석
+                                .userService(customOAuth2UserService))//
+                        .successHandler(oauth2AuthenticationSuccessHandler)//0125주석
 
                 )
 
