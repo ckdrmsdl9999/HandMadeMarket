@@ -37,8 +37,6 @@ public class SecurityConfig {
                                                 .baseUri("/login/oauth2/code/naver")
                                 )//추가9-15
 
-
-//                        .baseUri("/oauth2/callback"))//추가9-15
                         .userInfoEndpoint(userInfo -> userInfo//0125주석
                                 .userService(customOAuth2UserService))//
                         .successHandler(oauth2AuthenticationSuccessHandler)//0125주석
