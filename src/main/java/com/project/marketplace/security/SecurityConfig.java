@@ -35,21 +35,16 @@ public class SecurityConfig {
                                 .loginPage("/login")
                                 .redirectionEndpoint(redirection -> redirection//추가9-15
                                                 .baseUri("/login/oauth2/code/naver")
-                                )//추가9-15
+                                )//
 
 
-//                        .baseUri("/oauth2/callback"))//추가9-15
                         .userInfoEndpoint(userInfo -> userInfo//0125주석
                                 .userService(customOAuth2UserService))//
                         .successHandler(oauth2AuthenticationSuccessHandler)//0125주석
 
                 )
 
-//                .logout(logout -> logout
-//                        .logoutUrl("/logout")
-//                        .logoutSuccessUrl("/")
-//                        .invalidateHttpSession(true)
-//                        .deleteCookies("JSESSIONID"))
+
         ;
 
 
