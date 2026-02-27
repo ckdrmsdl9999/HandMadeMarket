@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -34,6 +35,11 @@ import java.util.Optional;
 public class OAuthController {//일단 만들어보자구
 
     private final UserRepository userRepository;
+    // 네이버 토큰 해제 호출과 로그인 설정값을 일치시키기 위해 클라이언트 정보를 yml에서 주입받는다.
+    @Value("${spring.security.oauth2.client.registration.naver.client-id}")
+    private String naverClientId;
+    @Value("${spring.security.oauth2.client.registration.naver.client-secret}")
+    private String naverClientSecret;
 
     @GetMapping("/loginSuccess")
     public String loginSuccess(@AuthenticationPrincipal OAuth2User oauth2User, Model model, Authentication authentication) {
@@ -129,28 +135,27 @@ public class OAuthController {//일단 만들어보자구
 
     @PostMapping("/logout/naver")
     public String logoutNaver(HttpServletRequest request, HttpServletResponse response) {
+        boolean naverLogoutSuccess = true;
         try {
-            // 네이버 액세스 토큰 가져오기
+            // 액세스 토큰이 없더라도 로컬 로그아웃은 항상 수행되게 해서 로그아웃 버튼이 실패처럼 보이지 않게 바꿨다.
             String accessToken = getAccessTokenFromAuth();
-            if (accessToken == null) {
-                return "redirect:/?error=token_not_found";
-            }
-
-            // 네이버 토큰 삭제 요청
-            boolean naverLogoutSuccess = revokeNaverToken(accessToken);
-
-            // 로컬 인증 정보 삭제
-            clearLocalAuthentication(request, response);
-
-            if (naverLogoutSuccess) {
-                return "redirect:/?logout=success";
+            // 토큰 없음으로 즉시 리턴하면 세션 정리가 빠져 로그아웃이 남아 보일 수 있어 기존 분기를 비활성화한다.
+//            if (accessToken == null) {
+//                return "redirect:/?error=token_not_found";
+//            }
+            if (accessToken != null && !accessToken.isBlank()) {
+                naverLogoutSuccess = revokeNaverToken(accessToken);
             } else {
-                return "redirect:/?logout=partial";
+                log.warn("액세스 토큰이 없어 네이버 토큰 해제는 건너뛰고 로컬 로그아웃만 수행합니다.");
             }
         } catch (Exception e) {
             log.error("네이버 로그아웃 처리 중 오류 발생", e);
-            return "redirect:/?error=logout_failed";
+            naverLogoutSuccess = false;
+        } finally {
+            clearLocalAuthentication(request, response);
         }
+
+        return naverLogoutSuccess ? "redirect:/?logout=success" : "redirect:/?logout=partial";
     }
 
     private String getAccessTokenFromAuth() {
@@ -161,7 +166,13 @@ public class OAuthController {//일단 만들어보자구
 
             // 사용자 정보에서 providerId 추출
             Map<String, Object> attributes = oauth2User.getAttributes();
-            Map<String, Object> response = (Map<String, Object>) attributes.get("response");
+            // response 구조가 비정상이면 토큰 조회를 중단해 로그아웃 플로우가 예외로 끊기지 않게 한다.
+            Object responseObject = attributes.get("response");
+            if (!(responseObject instanceof Map<?, ?> responseRaw)) {
+                return null;
+            }
+            @SuppressWarnings("unchecked")
+            Map<String, Object> response = (Map<String, Object>) responseRaw;
             String providerId = (String) response.get("id");
 
             // 인증 정보에서 provider 값 가져오기 (네이버)
@@ -211,9 +222,12 @@ public class OAuthController {//일단 만들어보자구
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
             MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+            // 네이버 토큰 해제 요청이 환경별로 안정적으로 동작하도록 클라이언트 정보를 설정값에서 읽어 사용한다.
             params.add("grant_type", "delete");
-            params.add("client_id", "tjdb79ERpbO7fZ0lmU7N");  // 설정에서 가져옴
-            params.add("client_secret", "LzBHj360fR");  // 설정에서 가져옴
+//            params.add("client_id", "tjdb79ERpbO7fZ0lmU7N");
+//            params.add("client_secret", "LzBHj360fR");
+            params.add("client_id", naverClientId);
+            params.add("client_secret", naverClientSecret);
             params.add("access_token", accessToken);
             params.add("service_provider", "NAVER");
 
@@ -240,8 +254,8 @@ public class OAuthController {//일단 만들어보자구
 
 
     private void clearLocalAuthentication(HttpServletRequest request, HttpServletResponse response) {
-        // 1. Spring Security 컨텍스트 정리
-//        SecurityContextHolder.clearContext();
+        // 세션 무효화 직전에 SecurityContext를 지워 동일 요청/리다이렉트 구간에서 인증이 남아 보이는 문제를 막는다.
+        SecurityContextHolder.clearContext();
 
         // 2. 세션 무효화
         HttpSession session = request.getSession(false);
@@ -255,7 +269,13 @@ public class OAuthController {//일단 만들어보자구
         cookie.setPath("/");
         response.addCookie(cookie);
 
-        // 4. 토큰 블랙리스트에 추가 (옵션)
+        // 4. 세션 쿠키도 함께 제거해 브라우저 기준 로그인 흔적을 즉시 정리한다.
+        Cookie sessionCookie = new Cookie("JSESSIONID", null);
+        sessionCookie.setMaxAge(0);
+        sessionCookie.setPath("/");
+        response.addCookie(sessionCookie);
+
+        // 5. 토큰 블랙리스트에 추가 (옵션)
         // tokenBlacklistService.addToBlacklist(accessToken);
     }
 
