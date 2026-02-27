@@ -45,16 +45,36 @@ public class OAuthController {//일단 만들어보자구
         System.out.println("oauth2User attributes(/loginsuccess): " + oauth2User.getAttributes());
 
         try {
-            // OAuth2User에서 사용자 정보 추출
+
             Map<String, Object> attributes = oauth2User.getAttributes();
-            Map<String, Object> response = (Map<String, Object>) attributes.get("response");
-            String mobile = (String) response.get("mobile");
-            String code = (String) response.get("code");
-            String token = (String) response.get("access_token");
-            // 모델에 토큰 추가
-           model.addAttribute("code", code);
-            model.addAttribute("token", token);
+            Object responseObject = attributes.get("response");
+            if (!(responseObject instanceof Map<?, ?> responseRaw)) {
+                return "redirect:/";
+            }
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> response = (Map<String, Object>) responseRaw;
+
+            String provider = "naver";
+            if (authentication instanceof OAuth2AuthenticationToken oauthToken) {
+                provider = oauthToken.getAuthorizedClientRegistrationId();
+            }
+            String providerId = (String) response.get("id");
+
             model.addAttribute("userName", response.get("name"));
+            model.addAttribute("email", response.get("email"));
+            model.addAttribute("mobile", response.get("mobile"));
+            model.addAttribute("provider", provider);
+            model.addAttribute("providerId", providerId);
+
+            // OAuth2 로그인 시 저장된 사용자 토큰을 조회해서 성공 화면에서 확인 가능하게 한다.
+            if (providerId != null && !providerId.isBlank()) {
+                userRepository.findByProviderAndProviderId(provider, providerId)
+                        .ifPresent(user -> {
+                            model.addAttribute("token", user.getAccessToken());
+                            model.addAttribute("tokenExpiresAt", user.getTokenExpiresAt());
+                        });
+            }
 
             return "login-success"; // 뷰 이름 반환
         } catch (Exception e) {
