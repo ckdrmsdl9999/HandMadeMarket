@@ -1,6 +1,7 @@
 package com.project.marketplace.product.entity;
 
 
+import com.project.marketplace.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -42,4 +43,9 @@ public class Product {
     // 품절 여부
     @Column(nullable = false)
     private Boolean isSoldOut;
+
+    // 상품 생성자(판매자) 정보를 상품에 연결해 사용자-상품 연관관계가 DB에 반영되도록 필드를 추가했다.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seller_id")
+    private User seller;
 }

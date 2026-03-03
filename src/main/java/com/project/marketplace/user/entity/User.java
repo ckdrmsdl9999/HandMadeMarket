@@ -1,7 +1,10 @@
 package com.project.marketplace.user.entity;
+import com.project.marketplace.product.entity.Product;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.time.LocalDateTime;
 
 
@@ -43,5 +46,10 @@ public class User {
 
     @Column
     private LocalDateTime tokenExpiresAt;
+
+    // 판매자가 등록한 상품을 사용자 기준으로 조회할 수 있게 하려고 상품 컬렉션 연관을 추가했다.
+    @Builder.Default
+    @OneToMany(mappedBy = "seller")
+    private List<Product> products = new ArrayList<>();
 
 }
