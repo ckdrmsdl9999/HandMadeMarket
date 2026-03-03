@@ -19,6 +19,9 @@ public class ProductDto {
     private Integer quantity;      // 재고
     private Integer salesCount;    // 판매 수량
     private String mainImage;      // 메인 이미지 경로
+    // 상품 응답에서 판매자 식별값과 이름을 함께 내려주기 위해 판매자 필드를 추가했다.
+    private Long sellerId;         // 판매자 ID
+    private String sellerName;     // 판매자 이름
 
 
     public static ProductDto fromEntity(Product product) {
@@ -31,6 +34,9 @@ public class ProductDto {
                 .quantity(product.getQuantity())
                 .salesCount(product.getSalesCount())
                 .mainImage(product.getDescription())
+                // 연관된 판매자 정보를 DTO로 노출해 프론트에서 상품 작성자 정보를 바로 사용할 수 있게 했다.
+                .sellerId(product.getSeller() != null ? product.getSeller().getUserId() : null)
+                .sellerName(product.getSeller() != null ? product.getSeller().getUserName() : null)
                 .build();
     }
 

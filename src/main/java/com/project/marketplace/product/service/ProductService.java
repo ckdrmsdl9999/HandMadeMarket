@@ -3,6 +3,8 @@ package com.project.marketplace.product.service;
 import com.project.marketplace.product.dto.ProductDto;
 import com.project.marketplace.product.entity.Product;
 import com.project.marketplace.product.repository.ProductRepository;
+import com.project.marketplace.user.entity.User;
+import com.project.marketplace.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,7 @@ import java.util.stream.Collectors;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public List<ProductDto> getAllProducts() {
@@ -51,10 +54,20 @@ public class ProductService {
 
     @Transactional
     public Long createProduct(ProductDto dto) {
+        // 상품 등록 시 sellerId로 사용자 엔티티를 연결해 상품-판매자 FK가 누락되지 않도록 했다.
+        if (dto.getSellerId() == null) {
+            throw new RuntimeException("판매자 ID는 필수입니다.");
+        }
+        // sellerId를 실제 사용자 엔티티로 조회해 연관관계 무결성을 보장한다.
+        User seller = userRepository.findById(dto.getSellerId())
+                .orElseThrow(() -> new RuntimeException("판매자를 찾을 수 없습니다. ID: " + dto.getSellerId()));
+
         Product product = ProductDto.toEntity(dto);
         if (product.getSalesCount() == null) product.setSalesCount(0);
         if (product.getQuantity() == null) product.setQuantity(0);
         product.setIsSoldOut(product.getQuantity() <= 0);
+        // 생성 시점에 판매자 연관관계를 설정해 추후 사용자 기준 상품 조회가 가능하도록 했다.
+        product.setSeller(seller);
         return productRepository.save(product).getId();
     }
 
@@ -69,6 +82,13 @@ public class ProductService {
         product.setQuantity(dto.getQuantity());
         product.setDescription(dto.getMainImage());
         product.setIsSoldOut(dto.getQuantity() <= 0);
+        // 수정 요청에 sellerId가 포함되면 판매자 연관관계도 함께 갱신할 수 있게 처리했다.
+        if (dto.getSellerId() != null) {
+            // 전달된 sellerId를 검증해 존재하는 사용자로만 판매자 변경이 되도록 했다.
+            User seller = userRepository.findById(dto.getSellerId())
+                    .orElseThrow(() -> new RuntimeException("판매자를 찾을 수 없습니다. ID: " + dto.getSellerId()));
+            product.setSeller(seller);
+        }
 
         productRepository.save(product);
     }
