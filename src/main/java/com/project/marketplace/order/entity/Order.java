@@ -1,5 +1,6 @@
 package com.project.marketplace.order.entity;
 
+import com.project.marketplace.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,8 +21,12 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long orderId;
 
-    @Column(nullable = false)
-    private Long userId;
+    // 주문자 FK를 단순 ID에서 User 연관객체로 전환해 주문-사용자 관계를 JPA로 일관되게 관리한다.
+//    @Column(nullable = false)
+//    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Column(nullable = false, unique = true, length = 32)
     private String orderNumber;
