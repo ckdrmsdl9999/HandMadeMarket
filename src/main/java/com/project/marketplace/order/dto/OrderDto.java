@@ -29,7 +29,8 @@ public class OrderDto {//쿠폰 선착순 100명 이런식으로 추가고려
     public static OrderDto fromEntity(Order order) {
         return OrderDto.builder()
                 .orderId(order.getOrderId())
-                .userId(order.getUserId())
+                // Order 엔티티가 User 연관객체를 가지도록 바뀌어 DTO의 userId를 연관객체에서 꺼내도록 변경했다.
+                .userId(order.getUser() != null ? order.getUser().getUserId() : null)
                 .orderNumber(order.getOrderNumber())
                 .orderStatus(order.getOrderStatus())
                 .totalAmount(order.getTotalAmount())
@@ -41,9 +42,9 @@ public class OrderDto {//쿠폰 선착순 100명 이런식으로 추가고려
     }
 
     public static Order toEntity(OrderDto dto) {
+        // 사용자 연관관계는 서비스 계층에서 사용자 조회 검증 후 세팅하도록 분리해 무결성을 보장한다.
         return Order.builder()
                 .orderId(dto.getOrderId())
-                .userId(dto.getUserId())
                 .orderNumber(dto.getOrderNumber())
                 .orderStatus(dto.getOrderStatus())
                 .totalAmount(dto.getTotalAmount())

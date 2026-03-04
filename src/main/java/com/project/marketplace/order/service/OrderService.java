@@ -4,6 +4,8 @@ import com.project.marketplace.order.dto.OrderDto;
 import com.project.marketplace.order.entity.Order;
 import com.project.marketplace.order.entity.OrderStatus;
 import com.project.marketplace.order.repository.OrderRepository;
+import com.project.marketplace.user.entity.User;
+import com.project.marketplace.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,8 @@ import java.util.stream.Collectors;
 public class OrderService{
 
     private final OrderRepository orderRepository;
+    // 주문 생성/수정 시 userId를 실제 사용자로 검증해 연관관계 무결성을 보장하기 위해 사용자 저장소를 추가했다.
+    private final UserRepository userRepository;
 
     /**
      * 새로운 주문을 생성합니다.
@@ -39,7 +43,18 @@ public class OrderService{
             orderDto.setOrderDate(LocalDateTime.now());
         }
 
-        Order savedOrder = orderRepository.save(OrderDto.toEntity(orderDto));
+        // 사용자 조회 전에 필수값 누락을 검사해 null ID로 인한 저장소 예외를 명확한 메시지로 바꾼다.
+        if (orderDto.getUserId() == null) {
+            throw new RuntimeException("주문자 ID는 필수입니다.");
+        }
+        // 주문 저장 전에 userId로 사용자 엔티티를 조회해 주문-사용자 FK가 유효한 경우만 저장되게 했다.
+        User user = userRepository.findById(orderDto.getUserId())
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다. ID: " + orderDto.getUserId()));
+        // DTO를 엔티티로 변환한 뒤 사용자 연관관계를 연결해 JPA 매핑을 일관되게 적용한다.
+        Order order = OrderDto.toEntity(orderDto);
+        order.setUser(user);
+
+        Order savedOrder = orderRepository.save(order);
         return savedOrder.getOrderId();
     }
 
@@ -68,7 +83,7 @@ public class OrderService{
      */
     public List<OrderDto> getOrdersByUserId(Long userId) {
         // 사용자 주문 목록을 최신 주문 우선으로 내려주기 위해 정렬 메서드를 사용한다.
-        return orderRepository.findByUserIdOrderByOrderDateDesc(userId)
+        return orderRepository.findByUser_UserIdOrderByOrderDateDesc(userId)
                 .stream()
                 .map(OrderDto::fromEntity)
                 .collect(Collectors.toList());
@@ -104,7 +119,14 @@ public class OrderService{
         // 전체 주문 수정은 기존 엔티티를 기준으로 필요한 필드만 갱신해 의도치 않은 덮어쓰기를 줄인다.
         Order order = orderRepository.findById(orderDto.getOrderId())
                 .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다. ID: " + orderDto.getOrderId()));
-        order.setUserId(orderDto.getUserId());
+        // 주문 수정에서도 주문자 ID 누락을 선제 차단해 잘못된 사용자 연관갱신 요청을 막는다.
+        if (orderDto.getUserId() == null) {
+            throw new RuntimeException("주문자 ID는 필수입니다.");
+        }
+        // 수정 요청의 userId도 사용자 엔티티로 검증해 주문 소유자 연관관계를 안전하게 갱신한다.
+        User user = userRepository.findById(orderDto.getUserId())
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다. ID: " + orderDto.getUserId()));
+        order.setUser(user);
         order.setOrderNumber(orderDto.getOrderNumber());
         order.setOrderStatus(orderDto.getOrderStatus());
         order.setTotalAmount(orderDto.getTotalAmount());

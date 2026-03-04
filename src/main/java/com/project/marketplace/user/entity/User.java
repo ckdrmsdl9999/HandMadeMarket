@@ -1,4 +1,5 @@
 package com.project.marketplace.user.entity;
+import com.project.marketplace.order.entity.Order;
 import com.project.marketplace.product.entity.Product;
 import jakarta.persistence.*;
 import lombok.*;
@@ -51,5 +52,10 @@ public class User {
     @Builder.Default
     @OneToMany(mappedBy = "seller")
     private List<Product> products = new ArrayList<>();
+
+    // 사용자 기준으로 주문 목록을 조회할 수 있도록 주문 컬렉션 연관관계를 추가했다.
+    @Builder.Default
+    @OneToMany(mappedBy = "user")
+    private List<Order> orders = new ArrayList<>();
 
 }
