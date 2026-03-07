@@ -132,6 +132,13 @@ public class OAuthController {//일단 만들어보자구
         return "home";
     }
 
+    // 장바구니 화면에서도 로그인 상태 표시가 필요해 홈과 동일한 인증 모델 주입 후 cart 템플릿을 반환한다.
+    @GetMapping("/cart")
+    public String cart(Model model, Authentication authentication) {
+        addAuthInfoToModel(model, authentication);
+        return "cart";
+    }
+
 
     @PostMapping("/logout/naver")
     public String logoutNaver(HttpServletRequest request, HttpServletResponse response) {

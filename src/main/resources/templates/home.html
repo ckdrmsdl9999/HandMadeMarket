@@ -577,7 +577,8 @@
                 계정
                 <strong>내 정보</strong>
             </a>
-            <a class="header-link" href="#">
+            <!-- 홈에서 바로 장바구니 페이지로 이동할 수 있게 정적 링크를 실제 라우트로 연결한다. -->
+            <a class="header-link" th:href="@{/cart}">
                 장바구니
                 <strong>0</strong>
             </a>
