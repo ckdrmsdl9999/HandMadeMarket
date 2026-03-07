@@ -324,17 +324,14 @@
             gap: 12px;
             animation-delay: 0.24s;
         }
-        /* 현재 레이아웃에서 줄바꿈 설정만으로도 안정적이라 최소 너비 강제 해제 규칙은 비활성화해 단순화한다. */
-        /* .login-panel > * {
-            min-width: 0;
-        } */
+
 
         .login-panel h3 {
             margin: 0;
             font-size: 18px;
             line-height: 1.35;
         }
-        /* 긴 닉네임, 이메일, 인증 이름이 있어도 패널 너비 안에서 자동 줄바꿈되게 한다. */
+
         .login-panel h3,
         .login-panel p,
         .login-meta span {
@@ -347,7 +344,7 @@
             font-size: 14px;
             line-height: 1.6;
         }
-        /* form 기본 여백으로 버튼 정렬이 어긋나지 않도록 여백을 제거하고 너비를 맞춘다. */
+
         .login-panel form {
             margin: 0;
             width: 100%;
@@ -662,8 +659,10 @@
             <h2 class="section-title">오늘의 추천 상품</h2>
             <a href="#">전체 보기</a>
         </div>
-        <div class="product-grid">
-            <a class="product-card" href="#">
+        <!-- 추천 상품 카드를 JS에서 실데이터로 덮어쓸 수 있게 컨테이너 식별자를 추가한다. -->
+        <div class="product-grid" id="home-product-grid">
+            <!-- API 조회 실패 시에도 상세 페이지 이동이 가능하도록 기본 상세 경로를 연결한다. -->
+            <a class="product-card" href="/products/1" th:href="@{/products/{productId}(productId=1)}">
                 <div class="thumb thumb-1">A1</div>
                 <div class="card-body">
                     <span class="badge">무료배송</span>
@@ -671,7 +670,8 @@
                     <p class="price">29,900<small>원</small></p>
                 </div>
             </a>
-            <a class="product-card" href="#">
+
+            <a class="product-card" href="/products/2" th:href="@{/products/{productId}(productId=2)}">
                 <div class="thumb thumb-2">B2</div>
                 <div class="card-body">
                     <span class="badge">오늘출발</span>
@@ -679,7 +679,8 @@
                     <p class="price">18,500<small>원</small></p>
                 </div>
             </a>
-            <a class="product-card" href="#">
+
+            <a class="product-card" href="/products/3" th:href="@{/products/{productId}(productId=3)}">
                 <div class="thumb thumb-3">C3</div>
                 <div class="card-body">
                     <span class="badge">한정수량</span>
@@ -687,7 +688,8 @@
                     <p class="price">42,000<small>원</small></p>
                 </div>
             </a>
-            <a class="product-card" href="#">
+
+            <a class="product-card" href="/products/4" th:href="@{/products/{productId}(productId=4)}">
                 <div class="thumb thumb-4">D4</div>
                 <div class="card-body">
                     <span class="badge">재구매 인기</span>
@@ -695,7 +697,8 @@
                     <p class="price">15,900<small>원</small></p>
                 </div>
             </a>
-            <a class="product-card" href="#">
+
+            <a class="product-card" href="/products/5" th:href="@{/products/{productId}(productId=5)}">
                 <div class="thumb thumb-5">E5</div>
                 <div class="card-body">
                     <span class="badge">베스트</span>
@@ -755,5 +758,68 @@
         </div>
     </section>
 </main>
+<script>
+    // 홈 추천 상품 카드를 API 데이터로 교체해 클릭 시 실제 상품 상세 ID로 이동되게 한다.
+    async function hydrateHomeProducts() {
+        const grid = document.getElementById('home-product-grid');
+        if (!grid) {
+            return;
+        }
+
+        try {
+            let products = await fetchJson('/api/products/popular?limit=5');
+            // 인기 상품 API가 비어 있으면 전체 상품 API로 폴백해 추천 카드 노출을 유지한다.
+            if (!Array.isArray(products) || products.length === 0) {
+                products = await fetchJson('/api/products');
+            }
+
+            if (!Array.isArray(products) || products.length === 0) {
+                return;
+            }
+
+            const cards = Array.from(grid.querySelectorAll('.product-card'));
+            products.slice(0, cards.length).forEach((product, index) => {
+                const card = cards[index];
+                if (!card || !product || !product.productId) {
+                    return;
+                }
+
+                card.href = `/products/${product.productId}`;
+                const nameEl = card.querySelector('.name');
+                const priceEl = card.querySelector('.price');
+                const badgeEl = card.querySelector('.badge');
+
+                if (nameEl) {
+                    nameEl.textContent = product.productName ?? '상품명 미등록';
+                }
+                if (priceEl) {
+                    priceEl.innerHTML = `${formatPriceNumber(product.price)}<small>원</small>`;
+                }
+                if (badgeEl && product.category) {
+                    badgeEl.textContent = product.category;
+                }
+            });
+        } catch (error) {
+            // 조회 실패 시에도 기본 링크 카드가 남아 있어 사용자 이동 동선을 유지한다.
+            console.warn('홈 상품 카드 동기화 실패:', error);
+        }
+    }
+
+    // 홈 화면 fetch 공통 함수를 두어 비정상 응답을 즉시 감지한다.
+    async function fetchJson(url) {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json();
+    }
+
+    // 홈 카드 가격 형식을 한글 로케일로 통일해 숫자 가독성을 맞춘다.
+    function formatPriceNumber(value) {
+        return Number(value ?? 0).toLocaleString('ko-KR');
+    }
+
+    document.addEventListener('DOMContentLoaded', hydrateHomeProducts);
+</script>
 </body>
 </html>

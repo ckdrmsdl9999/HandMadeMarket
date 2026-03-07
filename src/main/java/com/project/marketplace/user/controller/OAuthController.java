@@ -24,6 +24,7 @@ import org.springframework.ui.Model;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.client.RestTemplate;
 import java.util.Map;
@@ -132,11 +133,19 @@ public class OAuthController {//일단 만들어보자구
         return "home";
     }
 
-    // 장바구니 화면에서도 로그인 상태 표시가 필요해 홈과 동일한 인증 모델 주입 후 cart 템플릿을 반환한다.
+    // 장바구니 화면도 홈과 동일한 인증 상태 정보를 사용하도록 모델을 채워 반환한다.
     @GetMapping("/cart")
     public String cart(Model model, Authentication authentication) {
         addAuthInfoToModel(model, authentication);
         return "cart";
+    }
+
+    // 홈 상품 카드에서 전달한 productId를 템플릿에 주입해 상세 페이지가 해당 상품을 조회하도록 연결한다.
+    @GetMapping("/products/{productId}")
+    public String productDetails(@PathVariable Long productId, Model model, Authentication authentication) {
+        addAuthInfoToModel(model, authentication);
+        model.addAttribute("productId", productId);
+        return "productDetails";
     }
 
 
@@ -144,12 +153,9 @@ public class OAuthController {//일단 만들어보자구
     public String logoutNaver(HttpServletRequest request, HttpServletResponse response) {
         boolean naverLogoutSuccess = true;
         try {
-            // 액세스 토큰이 없더라도 로컬 로그아웃은 항상 수행되게 해서 로그아웃 버튼이 실패처럼 보이지 않게 바꿨다.
+
             String accessToken = getAccessTokenFromAuth();
-            // 토큰 없음으로 즉시 리턴하면 세션 정리가 빠져 로그아웃이 남아 보일 수 있어 기존 분기를 비활성화한다.
-//            if (accessToken == null) {
-//                return "redirect:/?error=token_not_found";
-//            }
+
             if (accessToken != null && !accessToken.isBlank()) {
                 naverLogoutSuccess = revokeNaverToken(accessToken);
             } else {
@@ -166,14 +172,13 @@ public class OAuthController {//일단 만들어보자구
     }
 
     private String getAccessTokenFromAuth() {
-        // SecurityContext에서 인증 정보 가져오기
+
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof OAuth2User) {
             OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal();
 
-            // 사용자 정보에서 providerId 추출
+
             Map<String, Object> attributes = oauth2User.getAttributes();
-            // response 구조가 비정상이면 토큰 조회를 중단해 로그아웃 플로우가 예외로 끊기지 않게 한다.
             Object responseObject = attributes.get("response");
             if (!(responseObject instanceof Map<?, ?> responseRaw)) {
                 return null;
@@ -182,13 +187,13 @@ public class OAuthController {//일단 만들어보자구
             Map<String, Object> response = (Map<String, Object>) responseRaw;
             String providerId = (String) response.get("id");
 
-            // 인증 정보에서 provider 값 가져오기 (네이버)
+
             String provider = "naver";
             if (authentication instanceof OAuth2AuthenticationToken) {
                 provider = ((OAuth2AuthenticationToken) authentication).getAuthorizedClientRegistrationId();
             }
 
-            // DB에서 해당 사용자의 토큰 조회
+
             Optional<User> userOpt = userRepository.findByProviderAndProviderId(provider, providerId);
             if (userOpt.isPresent()) {
                 String token = userOpt.get().getAccessToken();
@@ -197,7 +202,7 @@ public class OAuthController {//일단 만들어보자구
                 }
             }
 
-            // DB에 토큰이 없는 경우 null 반환
+
             log.warn("사용자의 액세스 토큰을 찾을 수 없습니다: provider={}, providerId={}", provider, providerId);
             return null;
         }
@@ -206,7 +211,7 @@ public class OAuthController {//일단 만들어보자구
 
     private void clearTokenInDatabase(String accessToken) {
         try {
-            // 액세스 토큰으로 사용자 찾기
+
             Optional<User> userOpt = userRepository.findByAccessToken(accessToken);
             if (userOpt.isPresent()) {
                 User user = userOpt.get();
@@ -229,7 +234,7 @@ public class OAuthController {//일단 만들어보자구
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
             MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-            // 네이버 토큰 해제 요청이 환경별로 안정적으로 동작하도록 클라이언트 정보를 설정값에서 읽어 사용한다.
+
             params.add("grant_type", "delete");
 //            params.add("client_id", "tjdb79ERpbO7fZ0lmU7N");
 //            params.add("client_secret", "LzBHj360fR");
