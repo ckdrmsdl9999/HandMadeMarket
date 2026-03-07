@@ -509,7 +509,8 @@
         }
     </style>
 </head>
-<body>
+<!-- 컨트롤러에서 받은 productId를 body data 속성으로 전달해 JS 초기 조회 기준값으로 사용한다. -->
+<body th:attr="data-product-id=${productId}">
 <!-- 헤더 -->
 <header class="header">
     <div class="header-container">
@@ -530,7 +531,8 @@
     <!-- 상품 상세 정보 -->
     <div class="product-detail">
         <div class="product-images">
-            <div class="main-image"></div>
+            <!-- API에서 받은 대표 이미지 URL을 실시간으로 반영할 수 있게 메인 이미지 요소에 ID를 부여한다. -->
+            <div class="main-image" id="main-image"></div>
             <div class="thumbnail-images">
                 <div class="thumbnail" style="background-image: url('https://via.placeholder.com/80x80')"></div>
                 <div class="thumbnail" style="background-image: url('https://via.placeholder.com/80x80')"></div>
@@ -540,12 +542,14 @@
         </div>
 
         <div class="product-info">
-            <h1 class="product-title">손뜨개 머플러 - 겨울 컬렉션</h1>
-            <p class="product-creator">by <strong>실이야기</strong></p>
-            <p class="product-price">35,000원</p>
+            <!-- 상품명/판매자/가격 텍스트를 API 응답으로 교체할 수 있게 각 노드에 ID를 추가한다. -->
+            <h1 class="product-title" id="product-title">상품을 불러오는 중...</h1>
+            <p class="product-creator">by <strong id="product-seller">판매자 정보 확인중</strong></p>
+            <p class="product-price" id="product-price">0원</p>
 
             <div class="product-description">
-                <p>100% 프리미엄 메리노 울로 제작된 손뜨개 머플러입니다. 자연스러운 색감과 부드러운 터치감으로 겨울철 포근함을 선사합니다. 모든 제품은 수작업으로 1-2주의 제작 기간이 소요됩니다.</p>
+                <!-- 상세 설명 영역을 서버 데이터로 바인딩하기 위해 문단에 ID를 지정한다. -->
+                <p id="product-description-text">상품 상세 정보를 불러오는 중입니다.</p>
             </div>
 
             <div class="product-options">
@@ -574,15 +578,25 @@
                 </div>
             </div>
 
+            <!-- 현재 장바구니 API가 userId 기반이라 상세 페이지에서 바로 사용자 ID를 입력해 담기를 테스트할 수 있게 한다. -->
+            <div class="quantity-section">
+                <label for="cart-user-id" class="option-label">장바구니 사용자 ID</label>
+                <input type="number" id="cart-user-id" class="option-select" min="1" placeholder="예: 1">
+            </div>
+
             <div class="action-buttons">
                 <button class="add-to-cart-btn" onclick="addToCart()">장바구니 담기</button>
                 <button class="buy-now-btn" onclick="buyNow()">바로 구매하기</button>
             </div>
 
+            <!-- 담기/구매 처리 결과를 즉시 보여주기 위해 상세 페이지 상태 메시지 영역을 추가한다. -->
+            <p id="detail-status" style="margin-top: 12px; color: #3c5087; font-size: 14px;"></p>
+
             <div class="product-meta">
-                <p><strong>배송정보:</strong> 주문 후 제작되는 상품으로 출고까지 1-2주 소요</p>
-                <p><strong>카테고리:</strong> 겨울용품, 니트제품, 머플러</p>
-                <p><strong>태그:</strong> #손뜨개 #겨울필수품 #수공예 #선물추천</p>
+                <!-- 상품 메타 정보를 API 응답 기준으로 갱신할 수 있게 메타 문단에 식별자를 부여한다. -->
+                <p id="product-shipping-info"><strong>배송정보:</strong> 주문 후 제작되는 상품으로 출고까지 1-2주 소요</p>
+                <p id="product-category"><strong>카테고리:</strong> 확인중</p>
+                <p id="product-stock"><strong>재고:</strong> 확인중</p>
             </div>
         </div>
     </div>
@@ -740,55 +754,225 @@
 </footer>
 
 <script>
-    // 수량 조절 함수
+    // 상세 페이지 전역 상태에 productId/상품 데이터를 보관해 버튼 액션과 렌더링에서 공통으로 사용한다.
+    const detailState = {
+        productId: null,
+        product: null
+    };
+
+    // 수량 감소 버튼 클릭 시 최소 1개 이하로 내려가지 않게 방어한다.
     function decreaseQuantity() {
-        let quantity = parseInt(document.getElementById('quantity').value);
-        if (quantity > 1) {
-            document.getElementById('quantity').value = quantity - 1;
-        }
+        const quantityInput = document.getElementById('quantity');
+        const quantity = parsePositiveInt(quantityInput.value) || 1;
+        quantityInput.value = String(Math.max(1, quantity - 1));
     }
 
+    // 수량 증가 버튼 클릭 시 즉시 입력값을 올려 장바구니 요청 수량에 반영한다.
     function increaseQuantity() {
-        let quantity = parseInt(document.getElementById('quantity').value);
-        document.getElementById('quantity').value = quantity + 1;
+        const quantityInput = document.getElementById('quantity');
+        const quantity = parsePositiveInt(quantityInput.value) || 1;
+        quantityInput.value = String(quantity + 1);
     }
 
-    // 탭 전환 함수
+    // 탭 전환 로직을 유지해 상세/배송/리뷰/QnA 섹션 노출 동작이 깨지지 않게 한다.
     function openTab(evt, tabId) {
-        // 모든 탭 내용 숨기기
-        let tabContents = document.getElementsByClassName('tab-content');
+        const tabContents = document.getElementsByClassName('tab-content');
         for (let i = 0; i < tabContents.length; i++) {
             tabContents[i].classList.remove('active');
         }
 
-        // 모든 탭 버튼 비활성화
-        let tabItems = document.getElementsByClassName('tab-item');
+        const tabItems = document.getElementsByClassName('tab-item');
         for (let i = 0; i < tabItems.length; i++) {
             tabItems[i].classList.remove('active');
         }
 
-        // 선택한 탭 내용 보이기
         document.getElementById(tabId).classList.add('active');
-
-        // 선택한 탭 버튼 활성화
         evt.currentTarget.classList.add('active');
     }
 
-    // 썸네일 이미지 클릭 시 메인 이미지 변경
-    let thumbnails = document.getElementsByClassName('thumbnail');
-    for (let i = 0; i < thumbnails.length; i++) {
-        thumbnails[i].addEventListener('click', function() {
-            document.querySelector('.main-image').style.backgroundImage = this.style.backgroundImage;
+    // 썸네일 선택 시 메인 이미지를 바꿀 수 있게 이벤트를 초기화해 기존 UX를 유지한다.
+    function bindThumbnailEvents() {
+        const thumbnails = document.getElementsByClassName('thumbnail');
+        for (let i = 0; i < thumbnails.length; i++) {
+            thumbnails[i].addEventListener('click', function () {
+                document.getElementById('main-image').style.backgroundImage = this.style.backgroundImage;
+            });
+        }
+    }
+
+    // 진입 시 path 변수로 전달된 productId를 읽어 상품 API 조회를 수행하고 기본 사용자 ID를 복원한다.
+    async function initializeProductDetails() {
+        const initialUserId = localStorage.getItem('cartUserId');
+        if (parsePositiveInt(initialUserId)) {
+            document.getElementById('cart-user-id').value = initialUserId;
+        }
+
+        detailState.productId = parsePositiveInt(document.body.dataset.productId);
+        bindThumbnailEvents();
+        await loadProductDetail();
+    }
+
+    // 상세 API 응답이 성공하면 상품 UI를 렌더링하고 실패하면 상태 메시지로 원인을 표시한다.
+    async function loadProductDetail() {
+        if (!detailState.productId) {
+            setDetailStatus('잘못된 상품 경로입니다. 홈에서 다시 상품을 선택해주세요.', true);
+            return;
+        }
+
+        try {
+            const product = await requestJson(`/api/products/${detailState.productId}`);
+            detailState.product = product;
+            renderProduct(product);
+            setDetailStatus('상품 정보를 불러왔습니다.');
+        } catch (error) {
+            setDetailStatus(`상품 정보를 불러오지 못했습니다: ${error.message}`, true);
+        }
+    }
+
+    // 상품 DTO를 상세 화면 요소에 반영해 path 기반 상세 페이지가 실제 상품 데이터로 채워지게 한다.
+    function renderProduct(product) {
+        const productName = product?.productName ?? '상품명을 확인할 수 없습니다.';
+        const sellerName = product?.sellerName ?? '핸드메이드 셀러';
+        const category = product?.category ?? '미분류';
+        const price = product?.price ?? 0;
+        const quantity = product?.quantity ?? 0;
+        const soldOut = product?.isSoldOut === true;
+        const rawMain = (product?.mainImage ?? '').trim();
+
+        document.getElementById('product-title').textContent = productName;
+        document.getElementById('product-seller').textContent = sellerName;
+        document.getElementById('product-price').textContent = formatPrice(price);
+        document.getElementById('product-category').innerHTML = `<strong>카테고리:</strong> ${escapeHtml(category)}`;
+        document.getElementById('product-stock').innerHTML = `<strong>재고:</strong> ${soldOut ? '품절' : `${quantity}개`}`;
+        document.getElementById('product-description-text').textContent =
+            rawMain && !isImageUrl(rawMain) ? rawMain : '판매자가 등록한 상세 설명이 아직 없습니다.';
+
+        if (isImageUrl(rawMain)) {
+            document.getElementById('main-image').style.backgroundImage = `url('${rawMain}')`;
+        } else {
+            document.getElementById('main-image').style.backgroundImage = "url('https://via.placeholder.com/600x400?text=HandMade+Product')";
+        }
+
+        // 브라우저 탭 제목을 상품명 기반으로 갱신해 여러 상세 탭을 열어도 식별이 쉽도록 한다.
+        document.title = `${productName} | 수제품 마켓`;
+    }
+
+    // 장바구니 담기 버튼은 userId/productId/quantity를 검증한 뒤 장바구니 API에 실제 항목 추가를 요청한다.
+    async function addToCart(options = {}) {
+        const shouldOpenModal = options.openModal !== false;
+        const userId = parsePositiveInt(document.getElementById('cart-user-id').value);
+        const quantity = parsePositiveInt(document.getElementById('quantity').value);
+
+        if (!detailState.productId) {
+            setDetailStatus('상품 정보를 먼저 불러와 주세요.', true);
+            return false;
+        }
+        if (!userId) {
+            setDetailStatus('장바구니 사용자 ID를 입력해 주세요.', true);
+            return false;
+        }
+        if (!quantity) {
+            setDetailStatus('수량은 1 이상이어야 합니다.', true);
+            return false;
+        }
+
+        try {
+            await requestJson(`/api/carts/${userId}/items`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    productId: detailState.productId,
+                    quantity: quantity
+                })
+            });
+            localStorage.setItem('cartUserId', String(userId));
+            setDetailStatus('장바구니에 담았습니다.');
+            if (shouldOpenModal) {
+                document.getElementById('cart-modal').style.display = 'flex';
+            }
+            return true;
+        } catch (error) {
+            setDetailStatus(`장바구니 담기 실패: ${error.message}`, true);
+            return false;
+        }
+    }
+
+    // 바로구매는 동일한 담기 API를 재사용한 뒤 성공 시 장바구니 페이지로 즉시 이동시킨다.
+    async function buyNow() {
+        const added = await addToCart({ openModal: false });
+        if (added) {
+            goToCart();
+        }
+    }
+
+    // 모달 닫기 버튼 동작을 구현해 담기 완료 후 같은 상세 페이지 탐색을 이어갈 수 있게 한다.
+    function closeModal() {
+        document.getElementById('cart-modal').style.display = 'none';
+    }
+
+    // 장바구니 이동 시 현재 입력된 userId를 쿼리로 넘겨 장바구니 페이지가 동일 사용자 데이터를 즉시 조회하게 한다.
+    function goToCart() {
+        const userId = parsePositiveInt(document.getElementById('cart-user-id').value)
+            || parsePositiveInt(localStorage.getItem('cartUserId'));
+        const query = userId ? `?userId=${userId}` : '';
+        window.location.href = `/cart${query}`;
+    }
+
+    // 상세 페이지 API 호출 공통 처리를 함수화해 HTTP 에러 메시지를 담기/조회 로직에서 일관되게 다룬다.
+    async function requestJson(url, options = {}) {
+        const response = await fetch(url, {
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            ...options
         });
+
+        if (!response.ok) {
+            const body = await response.text();
+            throw new Error(body || `HTTP ${response.status}`);
+        }
+
+        const contentType = response.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+            return response.json();
+        }
+        return null;
     }
 
-    // 장바구니 담기 함수
-    function addToCart() {
-        let quantity = document.getElementById('quantity').value;
-        let color = document.getElementById('color-option').value;
-        let size = document.getElementById('size-option').value;
-
-        // 여기서 실제로 장바구니에 추가하는 API 호출 등을 수행
-        console.log(`장바구니에 추가: 수량=${quantity}, 색상=${color}, 사이즈=${size}`);
+    // userId/수량 검증 규칙을 통일하기 위해 양의 정수 파서를 공용 유틸로 둔다.
+    function parsePositiveInt(value) {
+        const number = Number(value);
+        if (!Number.isInteger(number) || number <= 0) {
+            return null;
+        }
+        return number;
     }
+
+    // 상세 페이지 안내/오류 문구를 한 영역에서 관리해 사용자 피드백을 일관되게 보여준다.
+    function setDetailStatus(message, isError = false) {
+        const status = document.getElementById('detail-status');
+        status.textContent = message;
+        status.style.color = isError ? '#b42318' : '#3c5087';
+    }
+
+    // 메타 정보 문자열이 HTML로 해석되지 않게 최소 이스케이프 처리를 적용한다.
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    // 이미지 URL 여부를 판별해 설명 텍스트와 대표 이미지 바인딩 규칙을 분기한다.
+    function isImageUrl(value) {
+        return /^(https?:)?\/\//i.test(value) || /\.(png|jpg|jpeg|gif|webp|svg)(\?.*)?$/i.test(value);
+    }
+
+    // 가격 출력을 한글 로케일 형식으로 통일해 상세 페이지 수치 가독성을 유지한다.
+    function formatPrice(value) {
+        return `${Number(value ?? 0).toLocaleString('ko-KR')}원`;
+    }
+
+    document.addEventListener('DOMContentLoaded', initializeProductDetails);
 </script>
