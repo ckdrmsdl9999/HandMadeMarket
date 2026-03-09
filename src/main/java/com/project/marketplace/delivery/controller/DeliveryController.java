@@ -5,6 +5,9 @@ import com.project.marketplace.delivery.dto.DeliveryUpdateResponseDto;
 import com.project.marketplace.delivery.entity.Delivery;
 import com.project.marketplace.delivery.service.DeliveryService;
 import lombok.RequiredArgsConstructor;
+// Delivery API 응답의 상태코드를 명시하려고 ResponseEntity와 HttpStatus를 추가한다.
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,36 +20,39 @@ public class DeliveryController {
     private final DeliveryService deliveryService;
 
 
+
     @PostMapping
-    public DeliveryUpdateResponseDto createDelivery(@RequestBody DeliveryUpdateRequestDto requestDto) {
-        // 컨트롤러가 엔티티를 직접 다루지 않도록 서비스 DTO 메서드로 위임한다.
-        return deliveryService.saveDeliveryWithDto(requestDto);
+    public ResponseEntity<DeliveryUpdateResponseDto> createDelivery(@RequestBody DeliveryUpdateRequestDto requestDto) {
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(deliveryService.saveDeliveryWithDto(requestDto));
     }
+
 
 
     @GetMapping
-    public List<DeliveryUpdateResponseDto> getAllDeliveries() {
-        // 목록 조회도 서비스에서 DTO로 변환한 결과를 그대로 반환한다.
-        return deliveryService.findAllDeliveryWithDto();
+    public ResponseEntity<List<DeliveryUpdateResponseDto>> getAllDeliveries() {
+        return ResponseEntity.ok(deliveryService.findAllDeliveryWithDto());
     }
+
 
 
     @GetMapping("/{id}")
-    public DeliveryUpdateResponseDto getOneDelivery(@PathVariable Long id) {
-        // 단건 조회도 컨트롤러에서 엔티티 변환 없이 DTO 응답만 반환한다.
-        return deliveryService.findByIdDeliveryWithDto(id);
+    public ResponseEntity<DeliveryUpdateResponseDto> getOneDelivery(@PathVariable Long id) {
+        return ResponseEntity.ok(deliveryService.findByIdDeliveryWithDto(id));
     }
+
 
 
     @PutMapping("/{id}")
-    public DeliveryUpdateResponseDto updateDelivery(@PathVariable Long id, @RequestBody DeliveryUpdateRequestDto requestDto) {
-        // 수정 처리도 DTO 입력을 그대로 서비스로 넘겨 엔티티 의존을 줄인다.
-        return deliveryService.updateDeliveryWithDto(id, requestDto);
+    public ResponseEntity<DeliveryUpdateResponseDto> updateDelivery(@PathVariable Long id, @RequestBody DeliveryUpdateRequestDto requestDto) {
+        return ResponseEntity.ok(deliveryService.updateDeliveryWithDto(id, requestDto));
     }
 
+
     @DeleteMapping("/{id}")
-    public void deleteDelivery(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteDelivery(@PathVariable Long id) {
         deliveryService.deleteDelivery(id);
+        return ResponseEntity.noContent().build();
     }
 
 
