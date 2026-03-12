@@ -315,7 +315,8 @@
         }
     </style>
 </head>
-<body>
+<!-- 로그인 사용자 ID를 body data 속성으로 내려 장바구니 페이지가 현재 사용자 기준으로만 동작하게 한다. -->
+<body th:attr="data-current-user-id=${currentUserId}">
 <header class="topbar">
     <div class="container topbar-inner">
         <a class="logo" th:href="@{/}">HandMade <em>Market</em></a>
@@ -331,15 +332,9 @@
 <main class="container">
     <section class="panel">
         <h1>장바구니</h1>
-        <p class="desc">현재 프로젝트 API는 <code>/api/carts/{userId}</code> 기반이라 사용자 ID를 입력해 조회합니다.</p>
-        <div class="user-control">
-            <div class="input-group">
-                <label for="user-id-input">사용자 ID</label>
-                <input id="user-id-input" type="number" min="1" placeholder="예: 1">
-            </div>
-            <button id="load-cart-btn" class="btn btn-primary" type="button">장바구니 불러오기</button>
-        </div>
-        <p class="hint">입력한 사용자 ID는 브라우저에 저장되어 다음 접속 때 자동으로 채워집니다.</p>
+        <!-- 수동 userId 입력을 제거하고 로그인 상태에 따라 자동 조회 또는 안내만 보여준다. -->
+        <p class="desc" th:if="${isLoggedIn}">현재 로그인한 계정의 장바구니를 자동으로 불러옵니다.</p>
+        <p class="desc" th:if="${!isLoggedIn}">로그인 후 내 장바구니를 확인할 수 있습니다.</p>
     </section>
 
     <section class="panel summary">
@@ -386,26 +381,19 @@
         cart: null
     };
 
-    // 사용자 재방문 시 즉시 장바구니를 보여주기 위해 URL 파라미터와 로컬 저장소에서 userId를 복원한다.
+    // 장바구니 페이지는 body data 속성으로 내려온 로그인 사용자 ID만 초기값으로 사용한다.
     function resolveInitialUserId() {
-        const params = new URLSearchParams(window.location.search);
-        const fromQuery = parsePositiveInt(params.get('userId'));
-        if (fromQuery) {
-            return fromQuery;
-        }
-        return parsePositiveInt(localStorage.getItem('cartUserId'));
+        return parsePositiveInt(document.body.dataset.currentUserId);
     }
 
-    // API 경로에 잘못된 값이 들어가지 않도록 양의 정수 userId만 상태에 반영한다.
+    // API 경로에 잘못된 값이 들어가지 않도록 로그인 사용자 userId만 상태와 요약 영역에 반영한다.
     function setUserId(userId) {
         const parsed = parsePositiveInt(userId);
         if (!parsed) {
             return false;
         }
         state.userId = parsed;
-        refs.userIdInput.value = String(parsed);
         refs.summaryUserId.textContent = String(parsed);
-        localStorage.setItem('cartUserId', String(parsed));
         return true;
     }
 
@@ -421,10 +409,8 @@
         refs.status.textContent = '';
     }
 
-    // 초기 렌더 직후에도 바로 장바구니 조회가 가능하도록 이벤트 연결과 최초 데이터 로딩을 함께 수행한다.
+    // 초기 렌더 직후 로그인 사용자 장바구니를 자동 조회하고 비로그인 상태면 안내만 보여준다.
     async function initializeCartPage() {
-        refs.userIdInput = document.getElementById('user-id-input');
-        refs.loadCartButton = document.getElementById('load-cart-btn');
         refs.clearCartButton = document.getElementById('clear-cart-btn');
         refs.summaryUserId = document.getElementById('summary-user-id');
         refs.summaryItemCount = document.getElementById('summary-item-count');
@@ -434,7 +420,6 @@
         refs.cartItemsBody = document.getElementById('cart-items-body');
         refs.status = document.getElementById('status');
 
-        refs.loadCartButton.addEventListener('click', loadCartFromInput);
         refs.clearCartButton.addEventListener('click', clearCart);
         refs.cartItemsBody.addEventListener('click', handleTableClick);
 
@@ -442,7 +427,8 @@
         if (initialUserId && setUserId(initialUserId)) {
             await loadCart();
         } else {
-            showStatus('사용자 ID를 입력한 뒤 장바구니를 불러오세요.', 'info');
+            renderCart({ userId: null, cartItems: [], totalAmount: 0 });
+            showStatus('로그인 후 장바구니를 확인할 수 있습니다.', 'info');
         }
     }
 
@@ -481,20 +467,10 @@
         }
     }
 
-    // 입력값을 확정해 저장하고 장바구니 조회를 수행해 잘못된 userId로 요청이 나가는 상황을 막는다.
-    async function loadCartFromInput() {
-        const isValid = setUserId(refs.userIdInput.value);
-        if (!isValid) {
-            showStatus('userId는 1 이상의 숫자여야 합니다.', 'error');
-            return;
-        }
-        await loadCart();
-    }
-
     // 서버 응답을 상태에 반영하고 렌더링을 갱신해 수동 새로고침 없이 최신 장바구니를 확인할 수 있게 했다.
     async function loadCart() {
         if (!state.userId) {
-            showStatus('먼저 사용자 ID를 입력해주세요.', 'error');
+            showStatus('로그인 후 장바구니를 확인할 수 있습니다.', 'error');
             return;
         }
 
@@ -552,7 +528,7 @@
     // 장바구니 항목 수량 변경을 API와 동기화해 총액 계산이 서버 기준으로 다시 맞춰지도록 했다.
     async function updateItemQuantity(cartItemId, quantity) {
         if (!state.userId) {
-            showStatus('먼저 사용자 ID를 입력해주세요.', 'error');
+            showStatus('로그인 후 장바구니를 수정할 수 있습니다.', 'error');
             return;
         }
 
@@ -578,7 +554,7 @@
     // 단일 항목 삭제 API를 연결해 장바구니 페이지에서 바로 행 단위 정리가 가능하게 했다.
     async function removeItem(cartItemId) {
         if (!state.userId) {
-            showStatus('먼저 사용자 ID를 입력해주세요.', 'error');
+            showStatus('로그인 후 장바구니를 수정할 수 있습니다.', 'error');
             return;
         }
 
@@ -597,7 +573,7 @@
     // 전체 비우기 버튼을 API와 연결해 테스트 중 장바구니 상태를 빠르게 초기화할 수 있게 했다.
     async function clearCart() {
         if (!state.userId) {
-            showStatus('먼저 사용자 ID를 입력해주세요.', 'error');
+            showStatus('로그인 후 장바구니를 비울 수 있습니다.', 'error');
             return;
         }
 

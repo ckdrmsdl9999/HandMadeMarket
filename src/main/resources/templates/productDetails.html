@@ -509,8 +509,8 @@
         }
     </style>
 </head>
-<!-- 컨트롤러에서 받은 productId를 body data 속성으로 전달해 JS 초기 조회 기준값으로 사용한다. -->
-<body th:attr="data-product-id=${productId}">
+<!-- 컨트롤러에서 받은 productId와 로그인 사용자 ID를 body data 속성으로 내려 상세/장바구니 동작 기준을 맞춘다. -->
+<body th:attr="data-product-id=${productId},data-current-user-id=${currentUserId}">
 <!-- 헤더 -->
 <header class="header">
     <div class="header-container">
@@ -578,11 +578,8 @@
                 </div>
             </div>
 
-            <!-- 현재 장바구니 API가 userId 기반이라 상세 페이지에서 바로 사용자 ID를 입력해 담기를 테스트할 수 있게 한다. -->
-            <div class="quantity-section">
-                <label for="cart-user-id" class="option-label">장바구니 사용자 ID</label>
-                <input type="number" id="cart-user-id" class="option-select" min="1" placeholder="예: 1">
-            </div>
+            <!-- 로그인 사용자 기준 장바구니만 쓰도록 수동 userId 입력 대신 로그인 안내만 노출한다. -->
+            <p class="option-label" th:if="${!isLoggedIn}" style="margin-bottom: 15px; color: #b42318;">로그인 후 장바구니를 이용할 수 있습니다.</p>
 
             <div class="action-buttons">
                 <button class="add-to-cart-btn" onclick="addToCart()">장바구니 담기</button>
@@ -757,7 +754,8 @@
     // 상세 페이지 전역 상태에 productId/상품 데이터를 보관해 버튼 액션과 렌더링에서 공통으로 사용한다.
     const detailState = {
         productId: null,
-        product: null
+        product: null,
+        currentUserId: null
     };
 
     // 수량 감소 버튼 클릭 시 최소 1개 이하로 내려가지 않게 방어한다.
@@ -800,14 +798,10 @@
         }
     }
 
-    // 진입 시 path 변수로 전달된 productId를 읽어 상품 API 조회를 수행하고 기본 사용자 ID를 복원한다.
+    // 진입 시 body data 속성에서 상품 ID와 로그인 사용자 ID를 읽어 같은 기준으로 요청을 보낸다.
     async function initializeProductDetails() {
-        const initialUserId = localStorage.getItem('cartUserId');
-        if (parsePositiveInt(initialUserId)) {
-            document.getElementById('cart-user-id').value = initialUserId;
-        }
-
         detailState.productId = parsePositiveInt(document.body.dataset.productId);
+        detailState.currentUserId = parsePositiveInt(document.body.dataset.currentUserId);
         bindThumbnailEvents();
         await loadProductDetail();
     }
@@ -857,10 +851,10 @@
         document.title = `${productName} | 수제품 마켓`;
     }
 
-    // 장바구니 담기 버튼은 userId/productId/quantity를 검증한 뒤 장바구니 API에 실제 항목 추가를 요청한다.
+    // 장바구니 담기는 현재 로그인 사용자와 상품/수량을 검증한 뒤 해당 사용자 장바구니로만 보낸다.
     async function addToCart(options = {}) {
         const shouldOpenModal = options.openModal !== false;
-        const userId = parsePositiveInt(document.getElementById('cart-user-id').value);
+        const userId = detailState.currentUserId;
         const quantity = parsePositiveInt(document.getElementById('quantity').value);
 
         if (!detailState.productId) {
@@ -868,7 +862,7 @@
             return false;
         }
         if (!userId) {
-            setDetailStatus('장바구니 사용자 ID를 입력해 주세요.', true);
+            setDetailStatus('로그인 후 장바구니를 이용해 주세요.', true);
             return false;
         }
         if (!quantity) {
@@ -884,7 +878,6 @@
                     quantity: quantity
                 })
             });
-            localStorage.setItem('cartUserId', String(userId));
             setDetailStatus('장바구니에 담았습니다.');
             if (shouldOpenModal) {
                 document.getElementById('cart-modal').style.display = 'flex';
@@ -909,12 +902,9 @@
         document.getElementById('cart-modal').style.display = 'none';
     }
 
-    // 장바구니 이동 시 현재 입력된 userId를 쿼리로 넘겨 장바구니 페이지가 동일 사용자 데이터를 즉시 조회하게 한다.
+    // 장바구니 이동은 현재 로그인한 사용자의 장바구니 화면으로 바로 보내 수동 쿼리 전달을 없앤다.
     function goToCart() {
-        const userId = parsePositiveInt(document.getElementById('cart-user-id').value)
-            || parsePositiveInt(localStorage.getItem('cartUserId'));
-        const query = userId ? `?userId=${userId}` : '';
-        window.location.href = `/cart${query}`;
+        window.location.href = '/cart';
     }
 
     // 상세 페이지 API 호출 공통 처리를 함수화해 HTTP 에러 메시지를 담기/조회 로직에서 일관되게 다룬다.

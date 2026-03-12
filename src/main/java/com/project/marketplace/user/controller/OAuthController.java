@@ -298,6 +298,8 @@ public class OAuthController {//일단 만들어보자구
                 && !"anonymousUser".equals(authentication.getPrincipal());
 
         model.addAttribute("isLoggedIn", isLoggedIn);
+        // 로그인 사용자 ID를 전달해서 이용
+        model.addAttribute("currentUserId", isLoggedIn ? resolveCurrentUserId(authentication) : null);
 
         if (!isLoggedIn) {
             return;
@@ -323,5 +325,26 @@ public class OAuthController {//일단 만들어보자구
 
 
         model.addAttribute("displayName", authentication.getName());
+    }
+
+    private Long resolveCurrentUserId(Authentication authentication) {
+        if (authentication instanceof OAuth2AuthenticationToken oauthToken) {
+            Object responseObj = oauthToken.getPrincipal().getAttributes().get("response");
+            if (responseObj instanceof Map<?, ?> response) {
+                Object providerId = response.get("id");
+                if (providerId instanceof String providerIdText && !providerIdText.isBlank()) {
+                    return userRepository.findByProviderAndProviderId(
+                                    oauthToken.getAuthorizedClientRegistrationId(),
+                                    providerIdText
+                            )
+                            .map(User::getUserId)
+                            .orElse(null);
+                }
+            }
+        }
+
+        return userRepository.findByUserName(authentication.getName())
+                .map(User::getUserId)
+                .orElse(null);
     }
 }
