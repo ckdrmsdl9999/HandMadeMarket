@@ -3,6 +3,7 @@ package com.project.marketplace.user.service;
 import com.project.marketplace.user.dto.UserDto;
 import com.project.marketplace.user.dto.UserSignInDto;
 import com.project.marketplace.user.entity.User;
+import com.project.marketplace.user.entity.UserRole;
 import com.project.marketplace.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,6 +21,9 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     public void insertUser(UserDto userDto) {
+        if (userDto.getRole() == null) {
+            userDto.setRole(UserRole.USER);
+        }
         userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
         userRepository.save(userDto.toEntity());
     }
@@ -54,7 +58,7 @@ public class UserService {
         return true;
     }
 
-    public boolean updateUserRole(Long userId, String role) {
+    public boolean updateUserRole(Long userId, UserRole role) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) return false;
 

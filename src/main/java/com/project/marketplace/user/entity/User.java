@@ -29,8 +29,9 @@ public class User {
     @Column
     private String password;
 
-    @Column(nullable = false)
-    private String role; // (USER, ADMIN)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private UserRole role;
 
     // OAuth2 관련 필드 추가
     @Column

@@ -1,6 +1,7 @@
 package com.project.marketplace.security;
 
 import com.project.marketplace.user.entity.User;
+import com.project.marketplace.user.entity.UserRole;
 import com.project.marketplace.user.repository.UserRepository;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -98,7 +99,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                         .userName(userName)
                         .provider(provider)
                         .providerId(providerId)
-                        .role("USER") // 기본 권한
+                        .role(UserRole.USER) // 기본 권한
                         .build();
 
                 userRepository.save(newUser);

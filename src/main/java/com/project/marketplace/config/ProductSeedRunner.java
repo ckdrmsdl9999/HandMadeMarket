@@ -3,6 +3,7 @@ package com.project.marketplace.config;
 import com.project.marketplace.product.entity.Product;
 import com.project.marketplace.product.repository.ProductRepository;
 import com.project.marketplace.user.entity.User;
+import com.project.marketplace.user.entity.UserRole;
 import com.project.marketplace.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
@@ -91,7 +92,7 @@ public class ProductSeedRunner implements ApplicationRunner {
                 .orElseGet(() -> userRepository.save(User.builder()
                         .userName(userName)
                         .password(passwordEncoder.encode("seed1234"))
-                        .role("USER")
+                        .role(UserRole.SELLER)
                         .email(email)
                         .provider("local")
                         .build()));
