@@ -1,6 +1,7 @@
 package com.project.marketplace.user.dto;
 
 import com.project.marketplace.user.entity.User;
+import com.project.marketplace.user.entity.UserRole;
 import lombok.*;
 
 @Getter
@@ -13,7 +14,7 @@ public class UserDto {
     private Long userId;
     private String userName;
     private String password;
-    private String role;
+    private UserRole role;
     private String email;
     private String provider;
     private String providerId;

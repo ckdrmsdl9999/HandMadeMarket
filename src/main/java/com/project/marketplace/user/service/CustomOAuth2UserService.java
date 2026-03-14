@@ -1,6 +1,7 @@
 package com.project.marketplace.user.service;
 
 import com.project.marketplace.user.entity.User;
+import com.project.marketplace.user.entity.UserRole;
 import com.project.marketplace.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -101,10 +102,8 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         String email = (String) response.get("email");
         //String userName = "naver_" + providerId;
 
-        //하드코딩제거
         String userName = registrationId + "_" + providerId;
 
-        // 이미 가입된 사용자인지 확인
         Optional<User> userOptional = userRepository.findByProviderAndProviderId(registrationId, providerId);
         User user;
 
@@ -117,7 +116,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                     .providerId(providerId)
                     .accessToken(accessToken)
                     .tokenExpiresAt(expiresAt)
-                    .role("USER") // 기본 권한
+                    .role(UserRole.USER) // 기본 권한
                     .build();
         } else {
             // 기존 사용자면 토큰 정보 업데이트
@@ -134,8 +133,9 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         // 사용자 저장 또는 업데이트
         userRepository.save(user);
 
-        // 사용자 권한 정보를 포함한 OAuth2User 객체 생성
-        Collection<SimpleGrantedAuthority> authorities = Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"));
+        Collection<SimpleGrantedAuthority> authorities = Collections.singleton(
+                new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
+        );
 
         return new DefaultOAuth2User(
                 authorities,
