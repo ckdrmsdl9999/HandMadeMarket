@@ -20,10 +20,10 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long userId;
+    private Long Id;
 
     @Column(nullable = false, unique = true)
-    private String userName;
+    private String userId;
 
 //    @Column(nullable = false)
     @Column
@@ -41,7 +41,7 @@ public class User {
     private String provider; // local, naver
 
     @Column
-    private String providerId; // OAuth 제공자의 ID
+    private String userName; // 사용자의 이름
 
     @Column
     private String accessToken;
