@@ -20,10 +20,11 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long Id;
+
+    private Long id;
 
     @Column(nullable = false, unique = true)
-    private String userId;
+    private String loginId;
 
 //    @Column(nullable = false)
     @Column

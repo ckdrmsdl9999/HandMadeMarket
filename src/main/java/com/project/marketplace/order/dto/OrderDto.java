@@ -29,8 +29,8 @@ public class OrderDto {//쿠폰 선착순 100명 이런식으로 추가고려
     public static OrderDto fromEntity(Order order) {
         return OrderDto.builder()
                 .orderId(order.getOrderId())
-                // Order 엔티티가 User 연관객체를 가지도록 바뀌어 DTO의 userId를 연관객체에서 꺼내도록 변경했다.
-                .userId(order.getUser() != null ? order.getUser().getUserId() : null)
+                // 주문 DTO의 userId는 API가 사용하는 내부 PK를 유지하도록 User.id를 노출한다 -3/16
+                .userId(order.getUser() != null ? order.getUser().getId() : null)
                 .orderNumber(order.getOrderNumber())
                 .orderStatus(order.getOrderStatus())
                 .totalAmount(order.getTotalAmount())

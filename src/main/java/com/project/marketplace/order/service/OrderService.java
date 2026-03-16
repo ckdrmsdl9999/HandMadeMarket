@@ -83,7 +83,8 @@ public class OrderService{
      */
     public List<OrderDto> getOrdersByUserId(Long userId) {
         // 사용자 주문 목록을 최신 주문 우선으로 내려주기 위해 정렬 메서드를 사용한다.
-        return orderRepository.findByUser_UserIdOrderByOrderDateDesc(userId)
+        // 주문 조회는 User 내부 PK를 기준으로 저장소 메서드를 호출하도록 수정했다 -3/16
+        return orderRepository.findByUser_IdOrderByOrderDateDesc(userId)
                 .stream()
                 .map(OrderDto::fromEntity)
                 .collect(Collectors.toList());

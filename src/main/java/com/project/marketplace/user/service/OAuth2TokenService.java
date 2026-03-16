@@ -38,7 +38,7 @@ public class OAuth2TokenService {
      */
     @Transactional(readOnly = true)
     public Optional<String> getValidAccessToken(String provider, String providerId) {
-        return userRepository.findByProviderAndProviderId(provider, providerId)
+        return userRepository.findByProviderAndLoginId(provider, providerId)
                 .filter(this::isTokenValid)
                 .map(User::getAccessToken);
     }

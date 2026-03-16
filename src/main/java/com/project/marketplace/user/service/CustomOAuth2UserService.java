@@ -100,20 +100,20 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
 //      String providerId = (String) response.get("id");
         String email = (String) response.get("email");
-        //String userName = "naver_" + providerId;
+        String name = (String) response.get("name");
 
-        String userName = registrationId + "_" + providerId;
+        String userName = (name != null && !name.isBlank()) ? name : registrationId + "_" + providerId;
 
-        Optional<User> userOptional = userRepository.findByProviderAndProviderId(registrationId, providerId);
+        Optional<User> userOptional = userRepository.findByProviderAndLoginId(registrationId, providerId);
         User user;
 
         if (userOptional.isEmpty()) {
             // 신규 사용자 생성 및 토큰 저장
             user = User.builder()
+                    .loginId(providerId)
                     .userName(userName)
                     .email(email)
                     .provider(registrationId)
-                    .providerId(providerId)
                     .accessToken(accessToken)
                     .tokenExpiresAt(expiresAt)
                     .role(UserRole.USER) // 기본 권한
@@ -127,6 +127,10 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
             // 이메일이 변경되었거나 없는 경우 업데이트
             if (email != null && (user.getEmail() == null || !email.equals(user.getEmail()))) {
                 user.setEmail(email);
+            }
+            // 소셜 프로필 이름이 있으면 표시 이름도 최신 상태로 갱신한다 -3/16
+            if (name != null && !name.isBlank()) {
+                user.setUserName(name);
             }
         }
 

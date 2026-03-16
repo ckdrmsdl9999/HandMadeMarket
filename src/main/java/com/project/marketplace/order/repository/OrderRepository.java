@@ -12,14 +12,14 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     Optional<Order> findByOrderNumber(String orderNumber);
 
-    // Order.user 연관필드를 기준으로 사용자 주문 목록을 조회하도록 메서드 경로를 변경했다.
-    List<Order> findByUser_UserIdOrderByOrderDateDesc(Long userId);
+    // 주문 목록 조회는 API 경로와 같은 User 내부 PK 기준으로 맞춰 식별자 의미를 통일했다 -3/16
+    List<Order> findByUser_IdOrderByOrderDateDesc(Long userId);
 
     @Query("select distinct o from Order o left join fetch o.orderItems where o.orderId = :orderId")
     Optional<Order> findDetailById(@Param("orderId") Long orderId);
 
-    // JPQL 조건도 userId 컬럼 직접참조 대신 user 연관객체 경로를 사용하도록 수정했다.
-    @Query("select distinct o from Order o left join fetch o.orderItems where o.user.userId = :userId order by o.orderDate desc")
+    // 상세 주문 목록도 User.loginId가 아니라 내부 PK로 조회되게 조건을 정리했다 -3/16
+    @Query("select distinct o from Order o left join fetch o.orderItems where o.user.id = :userId order by o.orderDate desc")
     List<Order> findDetailsByUserId(@Param("userId") Long userId);
 
     @Query("select distinct o from Order o left join fetch o.orderItems order by o.orderDate desc")

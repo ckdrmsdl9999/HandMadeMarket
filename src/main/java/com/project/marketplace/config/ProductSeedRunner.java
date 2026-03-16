@@ -29,8 +29,8 @@ public class ProductSeedRunner implements ApplicationRunner {
             return;
         }
 
-        User sellerA = getOrCreateSeller("artisan_lee", "artisan.lee@local.test");
-        User sellerB = getOrCreateSeller("woven_kim", "woven.kim@local.test");
+        User sellerA = getOrCreateSeller("artisan_lee", "artisan_lee", "artisan.lee@local.test");
+        User sellerB = getOrCreateSeller("woven_kim", "woven_kim", "woven.kim@local.test");
 
         productRepository.saveAll(List.of(
                 Product.builder()
@@ -87,9 +87,10 @@ public class ProductSeedRunner implements ApplicationRunner {
     }
 
 
-    private User getOrCreateSeller(String userName, String email) {
-        return userRepository.findByUserName(userName)
+    private User getOrCreateSeller(String loginId, String userName, String email) {
+        return userRepository.findByLoginId(loginId)
                 .orElseGet(() -> userRepository.save(User.builder()
+                        .loginId(loginId)
                         .userName(userName)
                         .password(passwordEncoder.encode("seed1234"))
                         .role(UserRole.SELLER)

@@ -10,6 +10,7 @@ import lombok.Setter;
 @Builder
 public class UserSignInDto {
 
+    private String loginId;
     private String userName;
 
     private String password;
