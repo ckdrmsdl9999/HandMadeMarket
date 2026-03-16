@@ -34,8 +34,8 @@ public class ProductDto {
                 .quantity(product.getQuantity())
                 .salesCount(product.getSalesCount())
                 .mainImage(product.getDescription())
-                // 연관된 판매자 정보를 DTO로 노출해 프론트에서 상품 작성자 정보를 바로 사용할 수 있게 했다.
-                .sellerId(product.getSeller() != null ? product.getSeller().getUserId() : null)
+                // 상품 응답의 판매자 식별값을 내부 PK로 맞춰 다른 도메인과 같은 사용자 키를 쓰게 수정함
+                .sellerId(product.getSeller() != null ? product.getSeller().getId() : null)
                 .sellerName(product.getSeller() != null ? product.getSeller().getUserName() : null)
                 .build();
     }
