@@ -58,7 +58,7 @@ public class UserController {
     // 사용자 정보 업데이트
     @PutMapping("/{userId}")
     public ResponseEntity<?> updateUser(@PathVariable Long userId, @RequestBody UserDto userDto) {
-        userDto.setUserId(userId);// URL의 ID와 일치시킴
+        userDto.setId(userId);
 
         boolean updated = userService.updateUser(userDto);
         if (updated) {

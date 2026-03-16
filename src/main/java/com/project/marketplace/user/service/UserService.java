@@ -24,14 +24,29 @@ public class UserService {
         if (userDto.getRole() == null) {
             userDto.setRole(UserRole.USER);
         }
-        userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
+
+        if (userDto.getProvider() == null || userDto.getProvider().isBlank()) {
+            userDto.setProvider("local");
+        }
+        if ((userDto.getUserName() == null || userDto.getUserName().isBlank()) && userDto.getLoginId() != null) {
+            userDto.setUserName(userDto.getLoginId());
+        }
+
+        if (userDto.getPassword() != null && !userDto.getPassword().isBlank()) {
+            userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
+        }
         userRepository.save(userDto.toEntity());
     }
 
     public UserDto checkoutUser(UserSignInDto userSignInDto) {
-        Optional<User> userOpt = userRepository.findByUserName(userSignInDto.getUserName());
 
-        if (userOpt.isEmpty() || !passwordEncoder.matches(userSignInDto.getPassword(), userOpt.get().getPassword())) {
+        String loginId = resolveLoginId(userSignInDto);
+        Optional<User> userOpt = userRepository.findByLoginId(loginId)
+                .or(() -> userRepository.findByUserName(loginId));
+
+        if (userOpt.isEmpty()
+                || userOpt.get().getPassword() == null
+                || !passwordEncoder.matches(userSignInDto.getPassword(), userOpt.get().getPassword())) {
             throw new RuntimeException("아이디 또는 비밀번호가 일치하지 않습니다");
         }
 
@@ -51,10 +66,36 @@ public class UserService {
     }
 
     public boolean updateUser(UserDto userDto) {
-        if (!userRepository.existsById(userDto.getUserId())) {
+
+        if (userDto.getId() == null) {
             return false;
         }
-        userRepository.save(userDto.toEntity());
+        Optional<User> userOpt = userRepository.findById(userDto.getId());
+        if (userOpt.isEmpty()) {
+            return false;
+        }
+
+        User user = userOpt.get();
+        if (userDto.getLoginId() != null && !userDto.getLoginId().isBlank()) {
+            user.setLoginId(userDto.getLoginId());
+        }
+        if (userDto.getUserName() != null) {
+            user.setUserName(userDto.getUserName());
+        }
+        if (userDto.getRole() != null) {
+            user.setRole(userDto.getRole());
+        }
+        if (userDto.getEmail() != null) {
+            user.setEmail(userDto.getEmail());
+        }
+        if (userDto.getProvider() != null && !userDto.getProvider().isBlank()) {
+            user.setProvider(userDto.getProvider());
+        }
+        if (userDto.getPassword() != null && !userDto.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(userDto.getPassword()));
+        }
+
+        userRepository.save(user);
         return true;
     }
 
@@ -72,5 +113,16 @@ public class UserService {
         if (!userRepository.existsById(userId)) return false;
         userRepository.deleteById(userId);
         return true;
+    }
+
+
+    private String resolveLoginId(UserSignInDto userSignInDto) {
+        if (userSignInDto.getLoginId() != null && !userSignInDto.getLoginId().isBlank()) {
+            return userSignInDto.getLoginId();
+        }
+        if (userSignInDto.getUserName() != null && !userSignInDto.getUserName().isBlank()) {
+            return userSignInDto.getUserName();
+        }
+        throw new RuntimeException("로그인 아이디는 필수입니다");
     }
 }

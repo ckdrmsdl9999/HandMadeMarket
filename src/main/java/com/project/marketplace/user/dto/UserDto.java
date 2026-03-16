@@ -11,35 +11,36 @@ import lombok.*;
 @AllArgsConstructor
 public class UserDto {
 
-    private Long userId;
+
+    private Long id;
+    private String loginId;
     private String userName;
     private String password;
     private UserRole role;
     private String email;
     private String provider;
-    private String providerId;
 
     public User toEntity() {
         return User.builder()
-                .userId(userId)
+                .id(id)
+                .loginId(loginId)
                 .userName(userName)
                 .password(password)
                 .role(role)
                 .email(email)
                 .provider(provider)
-                .providerId(providerId)
                 .build();
     }
 
     public static UserDto fromEntity(User user) {
         return UserDto.builder()
-                .userId(user.getUserId())
+                .id(user.getId())
+                .loginId(user.getLoginId())
                 .userName(user.getUserName())
                 .password(user.getPassword())
                 .role(user.getRole())
                 .email(user.getEmail())
                 .provider(user.getProvider())
-                .providerId(user.getProviderId())
                 .build();
     }
 }

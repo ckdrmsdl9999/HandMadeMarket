@@ -76,7 +76,7 @@ public class OAuthController {//일단 만들어보자구
 
             // OAuth2 로그인 시 저장된 사용자 토큰을 조회해서 성공 화면에서 확인 가능하게 한다.
             if (providerId != null && !providerId.isBlank()) {
-                userRepository.findByProviderAndProviderId(provider, providerId)
+                userRepository.findByProviderAndLoginId(provider, providerId)
                         .ifPresent(user -> {
                             model.addAttribute("token", user.getAccessToken());
                             model.addAttribute("tokenExpiresAt", user.getTokenExpiresAt());
@@ -194,7 +194,8 @@ public class OAuthController {//일단 만들어보자구
             }
 
 
-            Optional<User> userOpt = userRepository.findByProviderAndProviderId(provider, providerId);
+            // 액세스 토큰 조회도 provider가 준 식별값을 loginId로 저장한 기준을 그대로 따른다 -3/16
+            Optional<User> userOpt = userRepository.findByProviderAndLoginId(provider, providerId);
             if (userOpt.isPresent()) {
                 String token = userOpt.get().getAccessToken();
                 if (token != null && !token.isEmpty()) {
@@ -218,7 +219,8 @@ public class OAuthController {//일단 만들어보자구
                 user.setAccessToken(null);
                 user.setTokenExpiresAt(null);
                 userRepository.save(user);
-                log.info("사용자 토큰 정보 삭제 완료: userId={}", user.getUserId());
+                // 토큰 삭제 로그도 현재 로그인 식별자 필드명에 맞춰 남기도록 변경했다 -3/16
+                log.info("사용자 토큰 정보 삭제 완료: loginId={}", user.getLoginId());
             } else {
                 log.warn("해당 액세스 토큰을 가진 사용자를 찾을 수 없습니다");
             }
@@ -333,18 +335,21 @@ public class OAuthController {//일단 만들어보자구
             if (responseObj instanceof Map<?, ?> response) {
                 Object providerId = response.get("id");
                 if (providerId instanceof String providerIdText && !providerIdText.isBlank()) {
-                    return userRepository.findByProviderAndProviderId(
+                    // 화면에서 쓰는 currentUserId는 내부 PK를 유지하고 소셜 매칭만 loginId 기준으로 처리한다 -3/16
+                    return userRepository.findByProviderAndLoginId(
                                     oauthToken.getAuthorizedClientRegistrationId(),
                                     providerIdText
                             )
-                            .map(User::getUserId)
+                            .map(User::getId)
                             .orElse(null);
                 }
             }
         }
 
-        return userRepository.findByUserName(authentication.getName())
-                .map(User::getUserId)
+        // 로컬 인증 이름은 loginId를 우선 조회하고 남아 있는 userName 기반 계정도 임시 호환한다 -3/16
+        return userRepository.findByLoginId(authentication.getName())
+                .or(() -> userRepository.findByUserName(authentication.getName()))
+                .map(User::getId)
                 .orElse(null);
     }
 }

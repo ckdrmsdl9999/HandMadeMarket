@@ -78,8 +78,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     private void saveOrUpdateUser(String provider, String providerId, String name) {
         try {
-            // 기존 사용자 조회 (providerId와 provider로 검색)
-            Optional<User> existingUser = userRepository.findByProviderAndProviderId(provider, providerId);
+            // 소셜 사용자 매칭을 provider와 loginId 조합으로 통일해 User 구조와 맞췄다 -3/16
+            Optional<User> existingUser = userRepository.findByProviderAndLoginId(provider, providerId);
 
             if (existingUser.isPresent()) {
                 // 기존 사용자 정보 업데이트
@@ -92,13 +92,13 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                 log.info("기존 사용자 정보 업데이트: {}", name);
             } else {
                 // 새 사용자 생성
-                // 사용자명은 중복되지 않아야 하므로 provider_providerId 형식으로 생성
-                String userName = provider + "_" + providerId;
+                // 신규 소셜 사용자는 loginId에 제공자 식별값을 저장하고 userName은 표시 이름으로 둔다 -3/16
+                String userName = (name != null && !name.isBlank()) ? name : provider + "_" + providerId;
 
                 User newUser = User.builder()
+                        .loginId(providerId)
                         .userName(userName)
                         .provider(provider)
-                        .providerId(providerId)
                         .role(UserRole.USER) // 기본 권한
                         .build();
 
