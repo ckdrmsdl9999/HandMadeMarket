@@ -30,7 +30,7 @@ public class CartResponseDto {
 
         return CartResponseDto.builder()
                 .cartId(cart.getCartId())
-                // 장바구니 응답의 userId는 프론트가 API 경로에 재사용하는 내부 PK로 통일했다 -3/16
+                // 장바구니 응답의 userId는 프론트가 API 경로에 재사용하는 내부 PK로 통일
                 .userId(cart.getUser().getId())
                 .totalAmount(totalAmount)
                 .cartItems(itemDtos)

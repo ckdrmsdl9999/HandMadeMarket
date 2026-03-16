@@ -98,7 +98,7 @@ public class CartController {
             if (responseObj instanceof Map<?, ?> response) {
                 Object providerId = response.get("id");
                 if (providerId instanceof String providerIdText && !providerIdText.isBlank()) {
-                    // 소셜 로그인 사용자 판별은 provider와 loginId로 찾고 API 비교값은 내부 PK를 쓰도록 맞췄다 -3/16
+                    // 소셜 로그인 사용자 판별은 provider와 loginId로 찾고 API 비교값은 내부 PK를 쓰도록 맞춤
                     return userRepository.findByProviderAndLoginId(
                                     oauthToken.getAuthorizedClientRegistrationId(),
                                     providerIdText
@@ -109,7 +109,7 @@ public class CartController {
             }
         }
 
-        // 로컬 로그인도 loginId 기준으로 조회하고 장바구니 접근 제어는 내부 PK로 비교하도록 정리했다 -3/16
+        // 로컬 로그인도 loginId 기준으로 조회하고 장바구니 접근 제어는 내부 PK로 비교하도록 정리
         return userRepository.findByLoginId(authentication.getName())
                 .or(() -> userRepository.findByUserName(authentication.getName()))
                 .map(User::getId)
