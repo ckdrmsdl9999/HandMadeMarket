@@ -1,5 +1,6 @@
 package com.project.marketplace.user.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.marketplace.user.entity.User;
 import com.project.marketplace.user.entity.UserRole;
 import com.project.marketplace.user.repository.UserRepository;
@@ -26,6 +27,8 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
     private final UserRepository userRepository;
+    // OAuth2 디버그 데이터를 JSON 문자열로 통일해 다음 단계 로그 추가를 쉽게 맞춤 -3/17
+    private final ObjectMapper objectMapper;
 
     @Override
     @Transactional
@@ -52,6 +55,15 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                     ZoneId.systemDefault()
             );
         }
+
+        // OAuth2 토큰과 추가 파라미터를 JSON 한 묶음으로 남겨 실제 요청 데이터를 바로 비교하게 추가함 -3/17
+        Map<String, Object> requestPayload = new LinkedHashMap<>();
+        requestPayload.put("registrationId", userRequest.getClientRegistration().getRegistrationId());
+        requestPayload.put("accessToken", accessToken);
+        requestPayload.put("tokenType", tokenType);
+        requestPayload.put("expiresAt", expiresAt);
+        requestPayload.put("additionalParameters", userRequest.getAdditionalParameters());
+        logJson("loadUser.userRequest", requestPayload);
 //
 //        System.out.println("Access Token2: " + accessToken);
 //        System.out.println("Token Type2: " + tokenType);
@@ -89,6 +101,10 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         }
         @SuppressWarnings("unchecked")
         Map<String, Object> response = (Map<String, Object>) responseRaw;
+
+        // 네이버 사용자 원본 attributes와 response를 JSON으로 남겨 내려온 구조를 바로 확인하게 추가함 -3/17
+        logJson("loadUser.attributes", attributes);
+        logJson("loadUser.response", response);
 
         String providerId = (String) response.get("id");
         if (providerId == null || providerId.isBlank()) {
@@ -137,6 +153,17 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         // 사용자 저장 또는 업데이트
         userRepository.save(user);
 
+        // DB 반영 뒤 사용자 식별값과 토큰 저장 결과를 JSON으로 남겨 화면 값과 대조하기 쉽게 추가
+        Map<String, Object> savedUserPayload = new LinkedHashMap<>();
+        savedUserPayload.put("dbUserId", user.getId());
+        savedUserPayload.put("provider", user.getProvider());
+        savedUserPayload.put("loginId", user.getLoginId());
+        savedUserPayload.put("userName", user.getUserName());
+        savedUserPayload.put("email", user.getEmail());
+        savedUserPayload.put("accessToken", user.getAccessToken());
+        savedUserPayload.put("tokenExpiresAt", user.getTokenExpiresAt());
+        logJson("loadUser.savedUser", savedUserPayload);
+
         Collection<SimpleGrantedAuthority> authorities = Collections.singleton(
                 new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
         );
@@ -146,5 +173,14 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 attributes,
                 userNameAttributeName
         );
+    }
+
+    // OAuth2 흐름에서 받은 객체를 같은 형식으로 남겨 단계별 비교가 쉬워지게 추가
+    private void logJson(String label, Object payload) {
+        try {
+            log.info("[OAuth2] {}={}", label, objectMapper.writeValueAsString(payload));
+        } catch (Exception e) {
+            log.info("[OAuth2] {}={}", label, payload);
+        }
     }
 }

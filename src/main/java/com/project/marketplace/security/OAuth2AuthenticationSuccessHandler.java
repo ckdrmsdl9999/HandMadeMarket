@@ -1,5 +1,6 @@
 package com.project.marketplace.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.marketplace.user.entity.User;
 import com.project.marketplace.user.entity.UserRole;
 import com.project.marketplace.user.repository.UserRepository;
@@ -16,6 +17,7 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationSu
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -25,6 +27,8 @@ import java.util.Optional;
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final UserRepository userRepository;
+    // OAuth2 성공 직후 세션과 인증값을 JSON으로 같은 형식에 찍을 준비를 맞춤 -3/17
+    private final ObjectMapper objectMapper;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -42,6 +46,14 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         log.debug("OAuth2 User attributes: {}", attributes);
         log.debug("Oauth2token :{} ", oauthToken);
 
+        // 인증 완료 직후 principal과 attributes를 JSON으로 남겨 success 단계 입력값을 바로 확인하게 추가함 -3/17
+        Map<String, Object> authPayload = new LinkedHashMap<>();
+        authPayload.put("registrationId", registrationId);
+        authPayload.put("principalName", authentication.getName());
+        authPayload.put("authorities", authentication.getAuthorities());
+        authPayload.put("attributes", attributes);
+        logJson("success.authentication", authPayload);
+
         // 네이버 로그인 정보 추출
         if ("naver".equals(registrationId) && attributes.containsKey("response")) {
             Map<String, Object> response_attr = (Map<String, Object>) attributes.get("response");
@@ -56,6 +68,15 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             session.setAttribute("providerId", response_attr.get("id"));
             session.setAttribute("provider", registrationId);
             session.setAttribute("mobile", response_attr.get("mobile"));
+
+            // 세션에 저장한 값을 JSON으로 남겨 다음 컨트롤러 단계와 비교하기 쉽게 추가함 -3/17
+            Map<String, Object> sessionPayload = new LinkedHashMap<>();
+            sessionPayload.put("sessionId", session.getId());
+            sessionPayload.put("name", name);
+            sessionPayload.put("providerId", providerId);
+            sessionPayload.put("provider", registrationId);
+            sessionPayload.put("mobile", mobile);
+            logJson("success.session", sessionPayload);
 
 
             // DB에 사용자 정보 저장 또는 업데이트
@@ -73,6 +94,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         // 기본 성공 URL로 리다이렉트
 //        super.onAuthenticationSuccess(request, response, authentication);
+        // 성공 핸들러의 최종 이동 경로를 JSON으로 남겨 흐름 종료 지점을 바로 확인하게 추가함 -3/17
+        logJson("success.redirect", Map.of("location", "/loginSuccess"));
         response.sendRedirect("/loginSuccess");
     }
 
@@ -107,6 +130,15 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             }
         } catch (Exception e) {
             log.error("사용자 정보 저장 중 오류 발생: {}", e.getMessage(), e);
+        }
+    }
+
+    // OAuth2 성공 처리 중 객체 로그를 JSON 한 형태로 남기기 쉽게 추가함 -3/17
+    private void logJson(String label, Object payload) {
+        try {
+            log.info("[OAuth2] {}={}", label, objectMapper.writeValueAsString(payload));
+        } catch (Exception e) {
+            log.info("[OAuth2] {}={}", label, payload);
         }
     }
 
