@@ -17,6 +17,7 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationSu
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -45,6 +46,14 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         log.debug("OAuth2 User attributes: {}", attributes);
         log.debug("Oauth2token :{} ", oauthToken);
 
+        // 인증 완료 직후 principal과 attributes를 JSON으로 남겨 success 단계 입력값을 바로 확인하게 추가함 -3/17
+        Map<String, Object> authPayload = new LinkedHashMap<>();
+        authPayload.put("registrationId", registrationId);
+        authPayload.put("principalName", authentication.getName());
+        authPayload.put("authorities", authentication.getAuthorities());
+        authPayload.put("attributes", attributes);
+        logJson("success.authentication", authPayload);
+
         // 네이버 로그인 정보 추출
         if ("naver".equals(registrationId) && attributes.containsKey("response")) {
             Map<String, Object> response_attr = (Map<String, Object>) attributes.get("response");
@@ -59,6 +68,15 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             session.setAttribute("providerId", response_attr.get("id"));
             session.setAttribute("provider", registrationId);
             session.setAttribute("mobile", response_attr.get("mobile"));
+
+            // 세션에 저장한 값을 JSON으로 남겨 다음 컨트롤러 단계와 비교하기 쉽게 추가함 -3/17
+            Map<String, Object> sessionPayload = new LinkedHashMap<>();
+            sessionPayload.put("sessionId", session.getId());
+            sessionPayload.put("name", name);
+            sessionPayload.put("providerId", providerId);
+            sessionPayload.put("provider", registrationId);
+            sessionPayload.put("mobile", mobile);
+            logJson("success.session", sessionPayload);
 
 
             // DB에 사용자 정보 저장 또는 업데이트
@@ -76,6 +94,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         // 기본 성공 URL로 리다이렉트
 //        super.onAuthenticationSuccess(request, response, authentication);
+        // 성공 핸들러의 최종 이동 경로를 JSON으로 남겨 흐름 종료 지점을 바로 확인하게 추가함 -3/17
+        logJson("success.redirect", Map.of("location", "/loginSuccess"));
         response.sendRedirect("/loginSuccess");
     }
 
