@@ -1,5 +1,6 @@
 package com.project.marketplace.user.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.marketplace.user.entity.User;
 import com.project.marketplace.user.entity.UserRole;
 import com.project.marketplace.user.repository.UserRepository;
@@ -26,6 +27,8 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
     private final UserRepository userRepository;
+    // OAuth2 디버그 데이터를 JSON 문자열로 통일해 다음 단계 로그 추가를 쉽게 맞춤 -3/17
+    private final ObjectMapper objectMapper;
 
     @Override
     @Transactional
@@ -146,5 +149,14 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 attributes,
                 userNameAttributeName
         );
+    }
+
+    // OAuth2 흐름에서 받은 객체를 같은 형식으로 남겨 단계별 비교가 쉬워지게 추가함 -3/17
+    private void logJson(String label, Object payload) {
+        try {
+            log.info("[OAuth2] {}={}", label, objectMapper.writeValueAsString(payload));
+        } catch (Exception e) {
+            log.info("[OAuth2] {}={}", label, payload);
+        }
     }
 }

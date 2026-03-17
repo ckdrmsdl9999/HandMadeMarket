@@ -1,5 +1,6 @@
 package com.project.marketplace.user.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.marketplace.user.entity.User;
 import com.project.marketplace.user.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
@@ -36,6 +37,8 @@ import java.util.Optional;
 public class OAuthController {//일단 만들어보자구
 
     private final UserRepository userRepository;
+    // OAuth2 화면 전환과 로그아웃 데이터를 JSON 로그로 같은 방식에 확인하게 맞춤 -3/17
+    private final ObjectMapper objectMapper;
     // 네이버 토큰 해제 호출과 로그인 설정값을 일치시키기 위해 클라이언트 정보를 yml에서 주입받는다.
     @Value("${spring.security.oauth2.client.registration.naver.client-id}")
     private String naverClientId;
@@ -351,5 +354,14 @@ public class OAuthController {//일단 만들어보자구
                 .or(() -> userRepository.findByUserName(authentication.getName()))
                 .map(User::getId)
                 .orElse(null);
+    }
+
+    // OAuth2 컨트롤러 단계별 객체를 JSON 문자열로 남겨 흐름 비교가 쉬워지게 추가함 -3/17
+    private void logJson(String label, Object payload) {
+        try {
+            log.info("[OAuth2] {}={}", label, objectMapper.writeValueAsString(payload));
+        } catch (Exception e) {
+            log.info("[OAuth2] {}={}", label, payload);
+        }
     }
 }

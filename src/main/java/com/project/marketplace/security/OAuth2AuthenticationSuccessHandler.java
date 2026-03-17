@@ -1,5 +1,6 @@
 package com.project.marketplace.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.marketplace.user.entity.User;
 import com.project.marketplace.user.entity.UserRole;
 import com.project.marketplace.user.repository.UserRepository;
@@ -25,6 +26,8 @@ import java.util.Optional;
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final UserRepository userRepository;
+    // OAuth2 성공 직후 세션과 인증값을 JSON으로 같은 형식에 찍을 준비를 맞춤 -3/17
+    private final ObjectMapper objectMapper;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -107,6 +110,15 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             }
         } catch (Exception e) {
             log.error("사용자 정보 저장 중 오류 발생: {}", e.getMessage(), e);
+        }
+    }
+
+    // OAuth2 성공 처리 중 객체 로그를 JSON 한 형태로 남기기 쉽게 추가함 -3/17
+    private void logJson(String label, Object payload) {
+        try {
+            log.info("[OAuth2] {}={}", label, objectMapper.writeValueAsString(payload));
+        } catch (Exception e) {
+            log.info("[OAuth2] {}={}", label, payload);
         }
     }
 
