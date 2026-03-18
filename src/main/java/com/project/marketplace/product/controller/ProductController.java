@@ -2,10 +2,13 @@ package com.project.marketplace.product.controller;
 
 import com.project.marketplace.product.dto.ProductDto;
 import com.project.marketplace.product.service.ProductService;
+import com.project.marketplace.user.entity.User;
+import com.project.marketplace.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +19,8 @@ import java.util.Map;
 public class ProductController {
 
     private final ProductService productService;
+    // 상품 등록 시 프론트 sellerId 대신 로그인 사용자 ID를 서버에서 결정하게 사용자 저장소를 추가함 -3/18
+    private final UserRepository userRepository;
 
     /**
      * 모든 상품 목록을 조회합니다.
@@ -60,7 +65,13 @@ public class ProductController {
      * 새로운 상품을 등록합니다.
      */
     @PostMapping
-    public ResponseEntity<Map<String, Long>> createProduct(@RequestBody ProductDto productDto) {
+    public ResponseEntity<Map<String, Long>> createProduct(@RequestBody ProductDto productDto, Authentication authentication) {
+        // 상품 등록 판매자를  현재 로그인 사용자 기준으로정함
+        Long currentUserId = resolveCurrentUserId(authentication);
+        if (currentUserId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        productDto.setSellerId(currentUserId);
         Long productId = productService.createProduct(productDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("productId", productId));
     }
@@ -142,5 +153,33 @@ public class ProductController {
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    // 상품 등록 API도 홈/장바구니와 같은 기준으로 현재 로그인 사용자를 찾아 sellerId로 재사용하게 맞춤 -3/18
+    private Long resolveCurrentUserId(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+
+        if (authentication instanceof OAuth2AuthenticationToken oauthToken) {
+            Object responseObj = oauthToken.getPrincipal().getAttributes().get("response");
+            if (responseObj instanceof Map<?, ?> response) {
+                Object providerId = response.get("id");
+                if (providerId instanceof String providerIdText && !providerIdText.isBlank()) {
+                    return userRepository.findByProviderAndLoginId(
+                                    oauthToken.getAuthorizedClientRegistrationId(),
+                                    providerIdText
+                            )
+                            .map(User::getId)
+                            .orElse(null);
+                }
+            }
+        }
+
+        // 로컬 인증 계정도 loginId 우선, userName 보조 조회로 sellerId를 찾게 맞춤 -3/18
+        return userRepository.findByLoginId(authentication.getName())
+                .or(() -> userRepository.findByUserName(authentication.getName()))
+                .map(User::getId)
+                .orElse(null);
     }
 }

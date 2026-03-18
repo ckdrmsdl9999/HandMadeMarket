@@ -145,6 +145,22 @@ public class OAuthController {//일단 만들어보자구
         return "login";
     }
 
+    // 상품 등록 MVP 화면 진입 경로를 추가
+    @GetMapping("/seller/products/new")
+    public String productForm(Model model, Authentication authentication) {
+        boolean isLoggedIn = authentication != null
+                && authentication.isAuthenticated()
+                && !(authentication instanceof AnonymousAuthenticationToken)
+                && !"anonymousUser".equals(authentication.getPrincipal());
+
+        if (!isLoggedIn) {
+            return "redirect:/login";
+        }
+
+        addAuthInfoToModel(model, authentication);
+        return "product-form";
+    }
+
     @GetMapping("/oauth2/authoriztion/naver")
     public String redirectTypoOAuthPath() {
         return "redirect:/oauth2/authorization/naver";
