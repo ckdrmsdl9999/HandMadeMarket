@@ -31,7 +31,7 @@ public class ProductController {
         return ResponseEntity.ok(products);
     }
 
-    // 판매자 페이지에서 로그인한 사용자 상품만 분리 조회하게 내 상품 API를 추가
+    // 판매자 페이지에서 로그인한 사용자 상품만 분리 조회하게 내 상품 API를 추가함 -3/19
     @GetMapping("/mine")
     public ResponseEntity<List<ProductDto>> getMyProducts(Authentication authentication) {
         Long currentUserId = resolveCurrentUserId(authentication);
@@ -108,9 +108,14 @@ public class ProductController {
      * 상품을 삭제합니다.
      */
     @DeleteMapping("/{productId}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable Long productId) {
-        // 삭제 전 사전 조회를 제거해 불필요한 조회를 줄이고 서비스 단일 경로로 처리하도록 변경했다.
-        productService.deleteProduct(productId);
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long productId, Authentication authentication) {
+        // 상품 삭제도 등록 권한 검사
+        Long currentUserId = resolveCurrentUserId(authentication);
+        if (currentUserId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        // 삭제 요청은 서비스에서 판매자 본인 여부까지 확인하도록함
+        productService.deleteProduct(productId, currentUserId);
         return ResponseEntity.noContent().build();
     }
 
