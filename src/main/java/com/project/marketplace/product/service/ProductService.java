@@ -4,14 +4,20 @@ import com.project.marketplace.product.dto.ProductDto;
 import com.project.marketplace.product.entity.Product;
 import com.project.marketplace.product.repository.ProductRepository;
 import com.project.marketplace.user.entity.User;
+import com.project.marketplace.user.entity.UserRole;
 import com.project.marketplace.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 @Service
 @RequiredArgsConstructor
@@ -47,6 +53,15 @@ public class ProductService {
     @Transactional(readOnly = true)
     public List<ProductDto> searchProductsByName(String keyword) {
         return productRepository.findByNameContaining(keyword)
+                .stream()
+                .map(ProductDto::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    // 판매자 관리 화면에서 현재 사용자 상품만 조회하도록함
+    @Transactional(readOnly = true)
+    public List<ProductDto> getProductsBySellerId(Long sellerId) {
+        return productRepository.findProductsBySellerId(sellerId)
                 .stream()
                 .map(ProductDto::fromEntity)
                 .collect(Collectors.toList());
@@ -94,8 +109,20 @@ public class ProductService {
     }
 
     @Transactional
-    public void deleteProduct(Long productId) {
-        productRepository.deleteById(productId);
+    public void deleteProduct(Long productId, Long requesterUserId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "상품을 찾을 수 없습니다."));
+        User requester = userRepository.findById(requesterUserId)
+                .orElseThrow(() -> new ResponseStatusException(UNAUTHORIZED, "사용자를 찾을 수 없습니다."));
+
+        // 관리자 또는 판매자 본인만 상품을 삭제할 수 있게 권한을 제한
+        boolean canDelete = requester.getRole() == UserRole.ADMIN
+                || (product.getSeller() != null && requesterUserId.equals(product.getSeller().getId()));
+        if (!canDelete) {
+            throw new ResponseStatusException(FORBIDDEN, "본인 상품만 삭제할 수 있습니다.");
+        }
+
+        productRepository.delete(product);
     }
 
     @Transactional

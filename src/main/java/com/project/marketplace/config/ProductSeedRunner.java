@@ -63,16 +63,7 @@ public class ProductSeedRunner implements ApplicationRunner {
                         .isSoldOut(false)
                         .seller(sellerB)
                         .build(),
-                Product.builder()
-                        .name("도자기 머그컵 2인 세트")
-                        .category("리빙")
-                        .quantity(8)
-                        .salesCount(9)
-                        .price(32000)
-                        .description("유약 색감이 다른 수제 머그컵 두 점으로 구성한 선물용 세트")
-                        .isSoldOut(false)
-                        .seller(sellerB)
-                        .build(),
+
                 Product.builder()
                         .name("한지 커버 미니 노트")
                         .category("문구")
