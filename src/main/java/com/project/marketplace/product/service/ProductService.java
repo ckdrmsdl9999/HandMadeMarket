@@ -52,6 +52,15 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
+    // 판매자 관리 화면에서 현재 사용자 상품조회
+    @Transactional(readOnly = true)
+    public List<ProductDto> getProductsBySellerId(Long sellerId) {
+        return productRepository.findProductsBySellerId(sellerId)
+                .stream()
+                .map(ProductDto::fromEntity)
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     public Long createProduct(ProductDto dto) {
         // 상품 등록 시 sellerId로 사용자 엔티티를 연결해 상품-판매자 FK가 누락되지 않도록 했다.

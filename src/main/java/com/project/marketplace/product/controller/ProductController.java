@@ -31,6 +31,18 @@ public class ProductController {
         return ResponseEntity.ok(products);
     }
 
+    // 판매자 페이지에서 로그인한 사용자 상품만 분리 조회하게 내 상품 API를 추가
+    @GetMapping("/mine")
+    public ResponseEntity<List<ProductDto>> getMyProducts(Authentication authentication) {
+        Long currentUserId = resolveCurrentUserId(authentication);
+        if (currentUserId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        List<ProductDto> products = productService.getProductsBySellerId(currentUserId);
+        return ResponseEntity.ok(products);
+    }
+
     /**
      * 상품 상세 정보를 조회합니다.
      */
