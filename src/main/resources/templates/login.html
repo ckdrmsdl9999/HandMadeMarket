@@ -314,7 +314,7 @@
                 <strong th:text="${displayName}">user</strong> 님 계정이 연결되어 있습니다.
             </div>
 
-            <a class="btn btn-naver" th:if="${!isLoggedIn}" th:href="@{/oauth2/authoriztion/naver}">네이버로 로그인</a>
+            <a class="btn btn-naver" th:if="${!isLoggedIn}" th:href="@{/oauth2/authorization/naver}">네이버로 로그인</a>
             <a class="btn btn-primary" th:if="${isLoggedIn}" th:href="@{/loginSuccess}">내 인증 정보 보기</a>
 
             <form th:if="${isLoggedIn}" th:action="@{/logout/naver}" method="post">

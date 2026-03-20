@@ -161,16 +161,6 @@ public class OAuthController {//일단 만들어보자구
         return "product-form";
     }
 
-    @GetMapping("/oauth2/authoriztion/naver")
-    public String redirectTypoOAuthPath() {
-        return "redirect:/oauth2/authorization/naver";
-    }
-
-    @GetMapping("/")
-    public String home(Model model, Authentication authentication){
-        addAuthInfoToModel(model, authentication);
-        return "home";
-    }
 
     // 장바구니 화면도 홈과 동일한 인증 상태 정보를 사용하도록 모델을 채워 반환한다.
     @GetMapping("/cart")
