@@ -15,7 +15,7 @@
 <div th:if="${token != null}">
     <p>저장된 액세스 토큰</p>
     <code>
-        Authorization: Bearer <span th:text="${token}"></span>
+        Access Token <span th:text="${token}"></span>
     </code>
     <p th:if="${tokenExpiresAt != null}" th:text="'토큰 만료 시각: ' + ${tokenExpiresAt}"></p>
 </div>
