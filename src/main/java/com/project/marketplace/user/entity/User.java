@@ -9,8 +9,7 @@ import java.util.List;
 import java.time.LocalDateTime;
 
 
-@Entity
-@Table(name = "users") // 실제 DB 테이블명에 맞게 수정
+@Entity@Table(name = "users") // 실제 DB 테이블명에 맞게 수정
 @Getter
 @Setter
 @Builder

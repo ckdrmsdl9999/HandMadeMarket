@@ -161,7 +161,11 @@ public class OAuthController {//일단 만들어보자구
         return "product-form";
     }
 
-
+    @GetMapping("/")
+    public String home(Model model, Authentication authentication){
+        addAuthInfoToModel(model, authentication);
+        return "home";
+    }
     // 장바구니 화면도 홈과 동일한 인증 상태 정보를 사용하도록 모델을 채워 반환한다.
     @GetMapping("/cart")
     public String cart(Model model, Authentication authentication) {
@@ -325,11 +329,11 @@ public class OAuthController {//일단 만들어보자구
             session.invalidate();
         }
 
-        // 3. JWT 사용 시 쿠키에서 JWT 토큰 제거
-        Cookie cookie = new Cookie("jwt_token", null);
-        cookie.setMaxAge(0);
-        cookie.setPath("/");
-        response.addCookie(cookie);
+//        // 3. JWT 사용 시 쿠키에서 JWT 토큰 제거
+//        Cookie cookie = new Cookie("jwt_token", null);
+//        cookie.setMaxAge(0);
+//        cookie.setPath("/");
+//        response.addCookie(cookie);
 
         // 4. 세션 쿠키도 함께 제거해 브라우저 기준 로그인 흔적을 즉시 정리한다.
         Cookie sessionCookie = new Cookie("JSESSIONID", null);
