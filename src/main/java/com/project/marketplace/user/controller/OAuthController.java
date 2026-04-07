@@ -209,6 +209,7 @@ public class OAuthController {//일단 만들어보자구
         return naverLogoutSuccess ? "redirect:/?logout=success" : "redirect:/?logout=partial";
     }
 
+
     private String getAccessTokenFromAuth() {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -247,6 +248,7 @@ public class OAuthController {//일단 만들어보자구
         }
         return null;
     }
+
 
     private void clearTokenInDatabase(String accessToken) {
         try {
