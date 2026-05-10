@@ -32,13 +32,15 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/login", "/loginSuccess", "/oauth2/**", "/error").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/user/signup", "/api/user/signin").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/**").authenticated()
                         .requestMatchers("/seller/**", "/api/carts/**", "/api/orders/**","/products/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/products").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/products/**").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/products/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/products/**").authenticated()
-                        .anyRequest().permitAll())
+                        .requestMatchers("/api/user/admin/**").hasRole("ADMIN")
+                        .anyRequest().authenticated())
                         .oauth2Login(
                                 oauth2 -> oauth2
                                 .loginPage("/login")
@@ -46,16 +48,12 @@ public class SecurityConfig {
                                                 .baseUri("/login/oauth2/code/naver")
                                 )//
 
-
                         .userInfoEndpoint(userInfo -> userInfo//0125주석
                                 .userService(customOAuth2UserService))//
                         .successHandler(oauth2AuthenticationSuccessHandler)//0125주석
 
                 )
-
-
         ;
-
 
         return http.build();
     }
