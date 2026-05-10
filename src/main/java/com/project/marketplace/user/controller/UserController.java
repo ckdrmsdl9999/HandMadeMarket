@@ -1,15 +1,19 @@
 package com.project.marketplace.user.controller;
 
-import com.project.marketplace.user.dto.RoleUpdateDto;
-import com.project.marketplace.user.dto.UserDto;
-import com.project.marketplace.user.dto.UserSignInDto;
+import com.project.marketplace.user.dto.*;
 import com.project.marketplace.user.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -20,14 +24,24 @@ public class UserController {
     private UserService userService;//주석
 
     @PostMapping("/signup")
-    public ResponseEntity<?> signup(@RequestBody  UserDto userDto) {
-        userService.insertUser(userDto);
+    public ResponseEntity<?> signup(@RequestBody UserSignUpDto userSignUpDto) {
+        userService.insertUser(userSignUpDto);
         return ResponseEntity.status(HttpStatus.OK).body("계정생성 성공");
     }
 
     @PostMapping("/signin")
     public ResponseEntity<?> signin(@RequestBody UserSignInDto signInDto, HttpSession session) {
-        userService.checkoutUser(signInDto);
+        UserDto userDto = userService.checkoutUser(signInDto);
+        Authentication authentication =
+                new UsernamePasswordAuthenticationToken(signInDto.getLoginId(),
+                        null,List.of(new SimpleGrantedAuthority("ROLE_"+userDto.getRole())));
+
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authentication);
+        SecurityContextHolder.setContext(context);
+        session.setAttribute("SPRING_SECURITY_CONTEXT", context);
+
+
         return ResponseEntity.status(HttpStatus.OK).body("로그인성공");
     }
 
@@ -38,9 +52,9 @@ public class UserController {
     }
 
     // 사용자 ID로 조회
-    @GetMapping("/{userId}")
-    public ResponseEntity<?> getUserById(@PathVariable Long userId) {
-        UserDto user = userService.getUserById(userId);
+    @GetMapping("/me")
+    public ResponseEntity<?> getUserById(Authentication authentication) {
+        UserResponseDto user = userService.getUser(authentication.getName());
         if (user != null) {
             return ResponseEntity.status(HttpStatus.OK).body(user);
         } else {
@@ -51,16 +65,15 @@ public class UserController {
     // 사용자 목록 조회
     @GetMapping("/list")
     public ResponseEntity<?> getUserList() {
-        List<UserDto> users = userService.getAllUsers();
+        List<UserResponseDto> users = userService.getAllUsers();
         return ResponseEntity.status(HttpStatus.OK).body(users);
     }
 
     // 사용자 정보 업데이트
-    @PutMapping("/{userId}")
-    public ResponseEntity<?> updateUser(@PathVariable Long userId, @RequestBody UserDto userDto) {
-        userDto.setId(userId);
+    @PutMapping("/me")
+    public ResponseEntity<?> updateUser(Authentication authentication, @RequestBody UserUpdateDto userUpdateDto) {
 
-        boolean updated = userService.updateUser(userDto);
+        boolean updated = userService.updateUser(authentication.getName(), userUpdateDto);
         if (updated) {
             return ResponseEntity.status(HttpStatus.OK).body("사용자 정보 업데이트 성공");
         } else {
@@ -69,7 +82,7 @@ public class UserController {
     }
 
     // 사용자 역할 업데이트
-    @PutMapping("/{userId}/role")
+    @PutMapping("/admin/users/{userId}/role")
     public ResponseEntity<?> updateRole(@PathVariable Long userId, @RequestBody RoleUpdateDto roleUpdateDto) {
         boolean updated = userService.updateUserRole(userId, roleUpdateDto.getRole());
         if (updated) {

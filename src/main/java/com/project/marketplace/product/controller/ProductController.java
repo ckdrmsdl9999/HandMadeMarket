@@ -20,6 +20,7 @@ public class ProductController {
 
     private final ProductService productService;
     // 상품 등록 시 프론트 sellerId 대신 로그인 사용자 ID를 서버에서 결정하게 사용자 저장소를 추가함 -3/18
+
     private final UserRepository userRepository;
 
     /**

@@ -24,6 +24,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class CartController {
 
+
     private final CartService cartService;
     private final UserRepository userRepository;
 
@@ -45,6 +46,7 @@ public class CartController {
         return ResponseEntity.status(HttpStatus.CREATED).body(cartService.addItem(userId, requestDto));
     }
 
+
     @PatchMapping("/{userId}/items/{cartItemId}")
     public ResponseEntity<CartResponseDto> updateItemQuantity(
             @PathVariable Long userId,
@@ -64,7 +66,6 @@ public class CartController {
         validateCartAccess(userId, authentication);
         return ResponseEntity.ok(cartService.removeItem(userId, cartItemId));
     }
-
 
     @DeleteMapping("/{userId}/items")
     public ResponseEntity<CartResponseDto> clearCart(@PathVariable Long userId, Authentication authentication) {
@@ -115,4 +116,10 @@ public class CartController {
                 .map(User::getId)
                 .orElse(null);
     }
+
+
+
 }
+
+
+

@@ -19,17 +19,16 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-
-    private Long id;
+    private Long id;//db내부식별
 
     @Column(nullable = false, unique = true)
-    private String loginId;
+    private String loginId;//실제 로그인할때 입력하는 id값
 
 //    @Column(nullable = false)
     @Column
     private String password;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.STRING)//"USER", "SELLER", "ADMIN"
     @Column(nullable = false, length = 20)
     private UserRole role;
 
