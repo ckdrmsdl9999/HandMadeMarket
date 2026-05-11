@@ -5,6 +5,7 @@ import com.project.marketplace.user.entity.User;
 import com.project.marketplace.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,14 @@ public class OAuth2TokenService {
 
     private final UserRepository userRepository;
     private final RestTemplate restTemplate;
+
+
+    @Value("${spring.security.oauth2.client.registration.naver.client-id}")
+    private String clientId;
+
+    @Value("${spring.security.oauth2.client.registration.naver.client-secret}")
+    private String clientSecret;
+
 
     /**
      * 사용자 ID로 유효한 액세스 토큰 조회
@@ -80,8 +89,8 @@ public class OAuth2TokenService {
 
             MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
             params.add("grant_type", "delete");
-            params.add("client_id", "tjdb79ERpbO7fZ0lmU7N");  // 설정에서 가져오는 것이 좋음
-            params.add("client_secret", "LzBHj360fR");  // 설정에서 가져오는 것이 좋음
+            params.add("client_id", clientId);  // 설정에서 가져오는 것이 좋음
+            params.add("client_secret", clientSecret);  // 설정에서 가져오는 것이 좋음
             params.add("access_token", accessToken);
             params.add("service_provider", "NAVER");
 

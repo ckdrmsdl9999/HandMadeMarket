@@ -19,17 +19,16 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-
-    private Long id;
+    private Long id;//db내부식별
 
     @Column(nullable = false, unique = true)
-    private String loginId;
+    private String loginId;//실제 로그인할때 입력하는 id값
 
 //    @Column(nullable = false)
     @Column
     private String password;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.STRING)//"USER", "SELLER", "ADMIN"
     @Column(nullable = false, length = 20)
     private UserRole role;
 
@@ -48,6 +47,13 @@ public class User {
 
     @Column
     private LocalDateTime tokenExpiresAt;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean deleted = false;
+
+    @Column
+    private LocalDateTime deletedAt;
 
     // 판매자가 등록한 상품을 사용자 기준으로 조회할 수 있게 하려고 상품 컬렉션 연관을 추가했다.
     @Builder.Default

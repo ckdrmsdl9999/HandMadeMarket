@@ -5,12 +5,14 @@ import com.project.marketplace.user.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+
 
 @Configuration
 @EnableWebSecurity
@@ -29,7 +31,16 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll())
+                        .requestMatchers("/", "/login", "/loginSuccess", "/oauth2/**", "/error").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/user/signup", "/api/user/signin").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/**","/products/**").permitAll()
+                        .requestMatchers("/seller/**", "/api/carts/**", "/api/orders/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/products").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/products/**").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/products/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/products/**").authenticated()
+                        .requestMatchers("/api/user/admin/**").hasRole("ADMIN")
+                        .anyRequest().authenticated())
                         .oauth2Login(
                                 oauth2 -> oauth2
                                 .loginPage("/login")
@@ -37,16 +48,12 @@ public class SecurityConfig {
                                                 .baseUri("/login/oauth2/code/naver")
                                 )//
 
-
                         .userInfoEndpoint(userInfo -> userInfo//0125주석
                                 .userService(customOAuth2UserService))//
                         .successHandler(oauth2AuthenticationSuccessHandler)//0125주석
 
                 )
-
-
         ;
-
 
         return http.build();
     }

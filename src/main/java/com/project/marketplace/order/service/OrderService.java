@@ -105,11 +105,15 @@ public class OrderService{
      * 주문 상태를 업데이트합니다.
      */
     @Transactional
-    public void updateOrderStatus(Long orderId, String orderStatus) {
+    public void updateOrderStatus(Long orderId, OrderStatus orderStatus) {
         // 상태 변경 시 대상 주문을 조회해 엔티티를 수정하고 JPA dirty checking으로 반영한다.
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다. ID: " + orderId));
-        order.setOrderStatus(OrderStatus.PENDING);
+
+
+            order.setOrderStatus(orderStatus);
+
+
     }
 
     /**
