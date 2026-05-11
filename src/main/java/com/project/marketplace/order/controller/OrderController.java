@@ -1,6 +1,7 @@
 package com.project.marketplace.order.controller;
 
 import com.project.marketplace.order.dto.OrderDto;
+import com.project.marketplace.order.entity.OrderStatus;
 import com.project.marketplace.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -78,11 +79,17 @@ public class OrderController {
             @RequestBody Map<String, String> statusUpdate) {
 
         String orderStatus = statusUpdate.get("orderStatus");
+
         if (orderStatus == null) {
             return ResponseEntity.badRequest().build();
         }
 
-        orderService.updateOrderStatus(orderId, orderStatus);
+        try {
+            orderService.updateOrderStatus(orderId, OrderStatus.valueOf(orderStatus));
+        }catch(IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+
         return ResponseEntity.ok().build();
     }
 
