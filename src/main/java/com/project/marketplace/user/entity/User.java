@@ -48,6 +48,13 @@ public class User {
     @Column
     private LocalDateTime tokenExpiresAt;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean deleted = false;
+
+    @Column
+    private LocalDateTime deletedAt;
+
     // 판매자가 등록한 상품을 사용자 기준으로 조회할 수 있게 하려고 상품 컬렉션 연관을 추가했다.
     @Builder.Default
     @OneToMany(mappedBy = "seller")

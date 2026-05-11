@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -49,6 +51,10 @@ public class UserService {
 
         User user =
                 userRepository.findByLoginId(loginId).orElseThrow(()->new RuntimeException("아이디 또는 비밀번호가 올바르지 않습니다"));
+
+        if (user.isDeleted()) {
+            throw new RuntimeException("탈퇴 처리된 계정입니다");
+        }
 
         if (user.getPassword() == null
                 || userSignInDto.getPassword() == null
@@ -113,6 +119,14 @@ public class UserService {
         if (!userRepository.existsById(userId)) return false;
         userRepository.deleteById(userId);
         return true;
+    }
+
+    public void requestDeletion(String loginId) {
+        User user = userRepository.findByLoginId(loginId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다"));
+        user.setDeleted(true);
+        user.setDeletedAt(LocalDateTime.now());
+        userRepository.save(user);
     }
 
 

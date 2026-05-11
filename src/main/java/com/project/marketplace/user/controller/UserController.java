@@ -45,10 +45,17 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body("로그인성공");
     }
 
-    @GetMapping("/logout")
+    @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpSession session) {
         session.invalidate();
         return ResponseEntity.status(HttpStatus.OK).body("로그아웃성공");
+    }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<?> requestDeletion(Authentication authentication, HttpSession session) {
+        userService.requestDeletion(authentication.getName());
+        session.invalidate();
+        return ResponseEntity.ok("탈퇴 신청 완료");
     }
 
     // 사용자 ID로 조회
@@ -93,7 +100,7 @@ public class UserController {
     }
 
     // 사용자 삭제
-    @DeleteMapping("/{userId}")
+    @DeleteMapping("/admin/{userId}")
     public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
         boolean deleted = userService.deleteUser(userId);
         if (deleted) {
