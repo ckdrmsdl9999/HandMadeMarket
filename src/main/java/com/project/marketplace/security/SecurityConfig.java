@@ -33,8 +33,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/login", "/loginSuccess", "/oauth2/**", "/error").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/user/signup", "/api/user/signin").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/**").authenticated()
-                        .requestMatchers("/seller/**", "/api/carts/**", "/api/orders/**","/products/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/**","/products/**").permitAll()
+                        .requestMatchers("/seller/**", "/api/carts/**", "/api/orders/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/products").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/products/**").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/products/**").authenticated()
