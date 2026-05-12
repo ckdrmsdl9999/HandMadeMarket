@@ -7,6 +7,7 @@ import com.project.marketplace.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -21,6 +22,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @Transactional
     public void insertUser(UserSignUpDto userSignUpDto) {
         if (userSignUpDto.getLoginId() == null || userSignUpDto.getLoginId().isBlank()) {
             throw new RuntimeException("로그인 아이디는 필수입니다.");
@@ -45,6 +47,7 @@ public class UserService {
         userRepository.save(userSignUpDto.toEntity());
     }
 
+    @Transactional
     public UserDto checkoutUser(UserSignInDto userSignInDto) {
 
         String loginId = resolveLoginId(userSignInDto);
@@ -66,19 +69,21 @@ public class UserService {
         return UserDto.fromEntity(user);
     }
 
+    @Transactional
     public UserResponseDto getUser(String loginId) {
         return userRepository.findByLoginId(loginId)
                 .map(UserResponseDto::fromEntity)
                 .orElse(null);
     }
 
+    @Transactional
     public List<UserResponseDto> getAllUsers() {
         return userRepository.findAll().stream()
                 .map(UserResponseDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
-
+    @Transactional
     public boolean updateUser(String loginId, UserUpdateDto userUpdateDto) {
 
         Optional<User> userOpt = userRepository.findByLoginId(loginId);
@@ -104,6 +109,7 @@ public class UserService {
         return true;
     }
 
+    @Transactional
     public boolean updateUserRole(Long userId, UserRole role) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) return false;
@@ -114,13 +120,14 @@ public class UserService {
         return true;
     }
 
-
+    @Transactional
     public boolean deleteUser(Long userId) {
         if (!userRepository.existsById(userId)) return false;
         userRepository.deleteById(userId);
         return true;
     }
 
+    @Transactional
     public void requestDeletion(String loginId) {
         User user = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다"));
@@ -128,7 +135,6 @@ public class UserService {
         user.setDeletedAt(LocalDateTime.now());
         userRepository.save(user);
     }
-
 
     private String resolveLoginId(UserSignInDto userSignInDto) {
         if (userSignInDto.getLoginId() != null && !userSignInDto.getLoginId().isBlank()) {
