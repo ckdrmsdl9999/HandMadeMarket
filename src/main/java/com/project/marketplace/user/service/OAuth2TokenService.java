@@ -113,17 +113,16 @@ public class OAuth2TokenService {
         }
     }
 
-    /**
-     * DB에서 해당 토큰 정보 제거
-     */
     @Transactional
     public void clearTokenInfo(String accessToken) {
-        userRepository.findAll().stream()
-                .filter(user -> accessToken.equals(user.getAccessToken()))
-                .forEach(user -> {
-                    user.setAccessToken(null);
-                    user.setTokenExpiresAt(null);
-                    userRepository.save(user);
-                });
+        User user = userRepository.findByAccessToken(accessToken).orElse(null);
+        if (user == null) return;
+        user.setAccessToken(null);
+        user.setTokenExpiresAt(null);
+        userRepository.save(user);
     }
+
+
+
+
 }
