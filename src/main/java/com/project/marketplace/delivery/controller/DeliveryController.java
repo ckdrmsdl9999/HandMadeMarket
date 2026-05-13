@@ -2,16 +2,13 @@ package com.project.marketplace.delivery.controller;
 
 import com.project.marketplace.delivery.dto.DeliveryUpdateRequestDto;
 import com.project.marketplace.delivery.dto.DeliveryUpdateResponseDto;
-import com.project.marketplace.delivery.entity.Delivery;
 import com.project.marketplace.delivery.service.DeliveryService;
 import lombok.RequiredArgsConstructor;
-// Delivery API 응답의 상태코드를 명시하려고 ResponseEntity와 HttpStatus를 추가한다.
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -55,12 +52,5 @@ public class DeliveryController {
         return ResponseEntity.noContent().build();
     }
 
-
-    private Delivery toEntity(DeliveryUpdateRequestDto requestDto) {
-        return Delivery.builder()
-                .address(requestDto.getAddress())
-                .status(requestDto.getStatus())
-                .build();
-    }
 
 }
