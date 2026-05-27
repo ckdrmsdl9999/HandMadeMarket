@@ -9,19 +9,26 @@ import java.util.List;
 import java.time.LocalDateTime;
 
 
-@Entity@Table(name = "users") // 실제 DB 테이블명에 맞게 수정
+@Entity// 실제 DB 테이블명에 맞게 수정
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(
+        name = "users",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_users_provider_login_id", columnNames = {"provider", "login_id"})
+        }
+)
+
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;//db내부식별
 
-    @Column(nullable = false, unique = true)
+    @Column(name="login_id", nullable = false)
     private String loginId;//실제 로그인할때 입력하는 id값
 
 //    @Column(nullable = false)
@@ -36,7 +43,7 @@ public class User {
     @Column
     private String email;
 
-    @Column
+    @Column(nullable = false)
     private String provider; // local, naver
 
     @Column
