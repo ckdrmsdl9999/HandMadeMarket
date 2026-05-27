@@ -1,6 +1,7 @@
 package com.project.marketplace.user.controller;
 
 import com.project.marketplace.user.dto.*;
+import com.project.marketplace.user.entity.User;
 import com.project.marketplace.user.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -20,11 +21,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserController {
 
-
     private final UserService userService;//주석
 
-    @PostMapping("/signup")
-    public ResponseEntity<?> signup(@RequestBody UserSignUpDto userSignUpDto) {
+   @PostMapping("/signup")
+   public ResponseEntity<?> signup(@RequestBody UserSignUpDto userSignUpDto) {
         userService.insertUser(userSignUpDto);
         return ResponseEntity.status(HttpStatus.OK).body("계정생성 성공");
     }
@@ -53,15 +53,22 @@ public class UserController {
 
     @DeleteMapping("/me")
     public ResponseEntity<?> requestDeletion(Authentication authentication, HttpSession session) {
-        userService.requestDeletion(authentication.getName());
+        // 현재 인증 사용자 내부 PK로 탈퇴 처리해 provider별 loginId 중복 영향을 제거
+        User user = userService.getAuthenticatedUser(authentication)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다"));
+        userService.requestDeletion(user.getId());
+
         session.invalidate();
         return ResponseEntity.ok("탈퇴 신청 완료");
     }
 
-    // 사용자 ID로 조회
     @GetMapping("/me")
     public ResponseEntity<?> getUserById(Authentication authentication) {
-        UserResponseDto user = userService.getUser(authentication.getName());
+        // 현재 인증 사용자 내부 PK로 내 정보를 조회해 로컬/OAuth2 getName 차이를 제거
+        User authenticatedUser = userService.getAuthenticatedUser(authentication)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다"));
+
+        UserResponseDto user = userService.getUser(authenticatedUser.getId());
         if (user != null) {
             return ResponseEntity.status(HttpStatus.OK).body(user);
         } else {
@@ -79,8 +86,11 @@ public class UserController {
     // 사용자 정보 업데이트
     @PutMapping("/me")
     public ResponseEntity<?> updateUser(Authentication authentication, @RequestBody UserUpdateDto userUpdateDto) {
+        // 현재 인증 사용자 내부 PK로 수정해 provider별 loginId 중복 영향을 제거
+        User authenticatedUser = userService.getAuthenticatedUser(authentication)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다"));
 
-        boolean updated = userService.updateUser(authentication.getName(), userUpdateDto);
+        boolean updated = userService.updateUser(authenticatedUser.getId(), userUpdateDto);
         if (updated) {
             return ResponseEntity.status(HttpStatus.OK).body("사용자 정보 업데이트 성공");
         } else {
