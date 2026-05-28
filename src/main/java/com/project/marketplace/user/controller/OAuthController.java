@@ -3,6 +3,7 @@ package com.project.marketplace.user.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.marketplace.user.entity.User;
 import com.project.marketplace.user.repository.UserRepository;
+import com.project.marketplace.user.service.UserService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -38,6 +39,7 @@ import java.util.Optional;
 public class OAuthController {//일단 만들어보자구
 
     private final UserRepository userRepository;
+    private final UserService userService;
     // OAuth2 화면 전환과 로그아웃 데이터를 JSON 로그로 같은 방식에 확인하게 맞춤 -3/17
     private final ObjectMapper objectMapper;
     // 네이버 토큰 해제 호출과 로그인 설정값을 일치시키기 위해 클라이언트 정보를 yml에서 주입받는다.
@@ -384,25 +386,8 @@ public class OAuthController {//일단 만들어보자구
     }
 
     private Long resolveCurrentUserId(Authentication authentication) {
-        if (authentication instanceof OAuth2AuthenticationToken oauthToken) {
-            Object responseObj = oauthToken.getPrincipal().getAttributes().get("response");
-            if (responseObj instanceof Map<?, ?> response) {
-                Object providerId = response.get("id");
-                if (providerId instanceof String providerIdText && !providerIdText.isBlank()) {
-                    // 화면에서 쓰는 currentUserId는 내부 PK를 유지하고 소셜 매칭만 loginId 기준으로 처리한다 -3/16
-                    return userRepository.findByProviderAndLoginId(
-                                    oauthToken.getAuthorizedClientRegistrationId(),
-                                    providerIdText
-                            )
-                            .map(User::getId)
-                            .orElse(null);
-                }
-            }
-        }
-
-        // 로컬 인증 이름은 loginId를 우선 조회하고 남아 있는 userName 기반 계정도 임시 호환한다 -3/16
-        return userRepository.findByLoginId(authentication.getName())
-                .or(() -> userRepository.findByUserName(authentication.getName()))
+        // 화면 currentUserId도 공통 인증 사용자 해석 결과의 내부 PK를 사용하게 맞춤 -5/29
+        return userService.getAuthenticatedUser(authentication)
                 .map(User::getId)
                 .orElse(null);
     }
