@@ -54,42 +54,36 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         authPayload.put("attributes", attributes);
         logJson("success.authentication", authPayload);
 
-        // 네이버 로그인 정보 추출
-        if ("naver".equals(registrationId) && attributes.containsKey("response")) {
-            Map<String, Object> response_attr = (Map<String, Object>) attributes.get("response");
-            // 필요한 정보 추출
-            String providerId = (String) response_attr.get("id");
-            String name = (String) response_attr.get("name");
-            String mobile = (String) response_attr.get("mobile");
-
-            // 세션에 필요한 정보 저장
+        // OAuth2 성공 세션 값도 provider별 response가 아니라 공통 profile로 구성
+        OAuth2Profile profile = resolveOAuth2Profile(attributes);
+        if (profile.providerId() != null) {
             HttpSession session = request.getSession(true);
-            session.setAttribute("name", response_attr.get("name"));
-            session.setAttribute("providerId", response_attr.get("id"));
+            session.setAttribute("name", profile.name());
+            session.setAttribute("providerId", profile.providerId());
             session.setAttribute("provider", registrationId);
-            session.setAttribute("mobile", response_attr.get("mobile"));
+            session.setAttribute("mobile", profile.mobile());
 
-            // 세션에 저장한 값을 JSON으로 남겨 다음 컨트롤러 단계와 비교하기 쉽게 추가함 -3/17
+            // 세션에 저장한 값을 JSON으로 남겨 다음 컨트롤러 단계와 비교하기 쉽게 맞춤
             Map<String, Object> sessionPayload = new LinkedHashMap<>();
             sessionPayload.put("sessionId", session.getId());
-            sessionPayload.put("name", name);
-            sessionPayload.put("providerId", providerId);
+            sessionPayload.put("name", profile.name());
+            sessionPayload.put("providerId", profile.providerId());
             sessionPayload.put("provider", registrationId);
-            sessionPayload.put("mobile", mobile);
+            sessionPayload.put("mobile", profile.mobile());
             logJson("success.session", sessionPayload);
 
+            // DB 저장도 provider 공통 profile 기준으로 처리
+            saveOrUpdateUser(registrationId, profile.providerId(), profile.name(), profile.email());
 
-            // DB에 사용자 정보 저장 또는 업데이트
-            saveOrUpdateUser(registrationId, providerId, name);
-
-            log.info("세션에 사용자 정보 저장 완료: {}", name);
-            log.info("DB에 사용자 정보 저장 완료: {}", name);
+            log.info("세션에 사용자 정보 저장 완료: {}", profile.name());
+            log.info("DB에 사용자 정보 저장 완료: {}", profile.name());
 
             // 로그인 토큰 값을 저장 (로그아웃 시 사용)
             // 실제 토큰 값은 OAuth2AuthorizedClientService에서 가져와야 합니다
             // session.setAttribute("accessToken", token);
-
-            log.info("세션에 사용자 정보 저장 완료: {}", response_attr.get("name"));
+        } else {
+            // provider별 응답에서 식별자를 찾지 못하면 사용자 저장 없이 흐름만 기록
+            log.warn("OAuth2 사용자 식별자를 찾을 수 없습니다: provider={}", registrationId);
         }
 
         // 기본 성공 URL로 리다이렉트
@@ -99,38 +93,75 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         response.sendRedirect("/loginSuccess");
     }
 
-    private void saveOrUpdateUser(String provider, String providerId, String name) {
+    // OAuth2 사용자 저장도 정규화 profile 값과 email을 함께 반영
+    private void saveOrUpdateUser(String provider, String providerId, String name, String email) {
         try {
             // 소셜 사용자 매칭을 provider와 loginId 조합으로 통일해 User 구조와 맞췄다 -3/16
             Optional<User> existingUser = userRepository.findByProviderAndLoginId(provider, providerId);
+            String userName = (name != null && !name.isBlank()) ? name : provider + "_" + providerId;
 
             if (existingUser.isPresent()) {
-                // 기존 사용자 정보 업데이트
+                // 기존 소셜 사용자도 정규화된 이름/email 기준으로 갱신
                 User user = existingUser.get();
-                // 필요한 정보 업데이트 (이름, 이메일 등)
-
-                user.setUserName(name);
+                user.setUserName(userName);
+                if (email != null) {
+                    user.setEmail(email);
+                }
 
                 userRepository.save(user);
-                log.info("기존 사용자 정보 업데이트: {}", name);
+                log.info("기존 사용자 정보 업데이트: {}", userName);
             } else {
-                // 새 사용자 생성
-                // 신규 소셜 사용자는 loginId에 제공자 식별값을 저장하고 userName은 표시 이름으로 둔다 -3/16
-                String userName = (name != null && !name.isBlank()) ? name : provider + "_" + providerId;
-
+                // 신규 소셜 사용자도 providerId를 loginId로 저장하고 표시 이름/email을 함께 저장
                 User newUser = User.builder()
                         .loginId(providerId)
                         .userName(userName)
+                        .email(email)
                         .provider(provider)
                         .role(UserRole.USER) // 기본 권한
                         .build();
 
                 userRepository.save(newUser);
-                log.info("새 사용자 등록: {}", name);
+                log.info("새 사용자 등록: {}", userName);
             }
         } catch (Exception e) {
             log.error("사용자 정보 저장 중 오류 발생: {}", e.getMessage(), e);
         }
+    }
+
+    private OAuth2Profile resolveOAuth2Profile(Map<String, Object> attributes) {
+        // CustomOAuth2UserService가 정규화한 값을 우선 사용하고 provider 원본 응답은 fallback으로만 사용
+        String providerId = asText(attributes.get("providerId"));
+        String name = asText(attributes.get("name"));
+        String email = asText(attributes.get("email"));
+        String mobile = asText(attributes.get("mobile"));
+
+        Object responseObj = attributes.get("response");
+        if (responseObj instanceof Map<?, ?> response) {
+            providerId = firstNonBlank(providerId, asText(response.get("id")));
+            name = firstNonBlank(name, asText(response.get("name")));
+            email = firstNonBlank(email, asText(response.get("email")));
+            mobile = firstNonBlank(mobile, asText(response.get("mobile")));
+        }
+
+        providerId = firstNonBlank(providerId, asText(attributes.get("sub")));
+        return new OAuth2Profile(providerId, name, email, mobile);
+    }
+
+    private String firstNonBlank(String value, String fallback) {
+        // 앞에서 빈 문자열을 null로 정리했으므로 null 여부만 보고 fallback을 선택
+        return value != null ? value : fallback;
+    }
+
+    private String asText(Object value) {
+        // provider 응답 값 타입 차이를 문자열 또는 null로 통일함
+        if (value == null) {
+            return null;
+        }
+        String text = String.valueOf(value);
+        return text.isBlank() ? null : text;
+    }
+
+    private record OAuth2Profile(String providerId, String name, String email, String mobile) {
     }
 
     // OAuth2 성공 처리 중 객체 로그를 JSON 한 형태로 남기기 쉽게 추가함 -3/17
