@@ -6,14 +6,11 @@ import com.project.marketplace.cart.dto.CartItemRequestDto;
 import com.project.marketplace.cart.dto.CartResponseDto;
 import com.project.marketplace.cart.service.CartService;
 import com.project.marketplace.user.entity.User;
-import com.project.marketplace.user.repository.UserRepository;
+import com.project.marketplace.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -26,7 +23,7 @@ public class CartController {
 
 
     private final CartService cartService;
-    private final UserRepository userRepository;
+    private final UserService userService;
 
 
     @GetMapping("/{userId}")
@@ -86,36 +83,12 @@ public class CartController {
 
 
     private Long resolveAuthenticatedUserId(Authentication authentication) {
-        if (authentication == null
-                || !authentication.isAuthenticated()
-                || authentication instanceof AnonymousAuthenticationToken
-                || "anonymousUser".equals(authentication.getPrincipal())) {
-            return null;
-        }
-
-        if (authentication instanceof OAuth2AuthenticationToken oauthToken) {
-            OAuth2User oauth2User = oauthToken.getPrincipal();
-            Object responseObj = oauth2User.getAttributes().get("response");
-            if (responseObj instanceof Map<?, ?> response) {
-                Object providerId = response.get("id");
-                if (providerId instanceof String providerIdText && !providerIdText.isBlank()) {
-                    // 소셜 로그인 사용자 판별은 provider와 loginId로 찾고 API 비교값은 내부 PK를 쓰도록 맞춤
-                    return userRepository.findByProviderAndLoginId(
-                                    oauthToken.getAuthorizedClientRegistrationId(),
-                                    providerIdText
-                            )
-                            .map(User::getId)
-                            .orElse(null);
-                }
-            }
-        }
-
-        // 로컬 로그인도 loginId 기준으로 조회하고 장바구니 접근 제어는 내부 PK로 비교하도록 정리
-        return userRepository.findByLoginId(authentication.getName())
-                .or(() -> userRepository.findByUserName(authentication.getName()))
+        // 현재 인증 사용자 해석을 UserService로 통일해 로컬/OAuth2 분기 중복 제거 -5/29
+        return userService.getAuthenticatedUser(authentication)
                 .map(User::getId)
                 .orElse(null);
     }
+
 
 
 

@@ -3,12 +3,11 @@ package com.project.marketplace.product.controller;
 import com.project.marketplace.product.dto.ProductDto;
 import com.project.marketplace.product.service.ProductService;
 import com.project.marketplace.user.entity.User;
-import com.project.marketplace.user.repository.UserRepository;
+import com.project.marketplace.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
@@ -21,8 +20,7 @@ public class ProductController {
     private final ProductService productService;
     // 상품 등록 시 프론트 sellerId 대신 로그인 사용자 ID를 서버에서 결정하게 사용자 저장소를 추가함 -3/18
 
-    private final UserRepository userRepository;
-
+    private final UserService userService;
     /**
      * 모든 상품 목록을 조회합니다.
      */
@@ -173,30 +171,9 @@ public class ProductController {
         }
     }
 
-    // 상품 등록 API도 홈/장바구니와 같은 기준으로 현재 로그인 사용자를 찾아 sellerId로 재사용하게 맞춤 -3/18
     private Long resolveCurrentUserId(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return null;
-        }
-
-        if (authentication instanceof OAuth2AuthenticationToken oauthToken) {
-            Object responseObj = oauthToken.getPrincipal().getAttributes().get("response");
-            if (responseObj instanceof Map<?, ?> response) {
-                Object providerId = response.get("id");
-                if (providerId instanceof String providerIdText && !providerIdText.isBlank()) {
-                    return userRepository.findByProviderAndLoginId(
-                                    oauthToken.getAuthorizedClientRegistrationId(),
-                                    providerIdText
-                            )
-                            .map(User::getId)
-                            .orElse(null);
-                }
-            }
-        }
-
-        // 로컬 인증 계정도 loginId 우선, userName 보조 조회로 sellerId를 찾게 맞춤 -3/18
-        return userRepository.findByLoginId(authentication.getName())
-                .or(() -> userRepository.findByUserName(authentication.getName()))
+        // 현재 인증 사용자 해석을 UserService로 통일해 상품 sellerId 계산 기준을 맞춤 -5/29
+        return userService.getAuthenticatedUser(authentication)
                 .map(User::getId)
                 .orElse(null);
     }
