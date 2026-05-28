@@ -60,52 +60,40 @@ public class OAuthController {//일단 만들어보자구
         try {
 
             Map<String, Object> attributes = oauth2User.getAttributes();
-            Object responseObject = attributes.get("response");
-            if (!(responseObject instanceof Map<?, ?> responseRaw)) {
-                return "redirect:/";
-            }
+            // 로그인 성공 화면 값을 provider 공통 attributes와 DB 사용자 기준으로 구성
+            String provider = resolveProvider(authentication, attributes);
+            String providerId = (String) attributes.get("providerId");
+            Object name = resolveOAuthAttribute(oauth2User, "name");
+            Object email = resolveOAuthAttribute(oauth2User, "email");
+            Object mobile = resolveOAuthAttribute(oauth2User, "mobile");
+            Optional<User> currentUser = userService.getAuthenticatedUser(authentication);
 
-            @SuppressWarnings("unchecked")
-            Map<String, Object> response = (Map<String, Object>) responseRaw;
-            // 로그인 성공 화면으로 넘어온 원본 attributes와 response를 JSON으로 남겨 successHandler 다음 값을 바로 확인하게 추가함 -3/17
+            // 로그인 성공 화면으로 넘어온 원본 attributes를 JSON으로 남겨 successHandler 다음 값을 바로 확인하게 맞춤
             logJson("controller.loginSuccess.attributes", attributes);
-            logJson("controller.loginSuccess.response", response);
 
-            String provider = "naver";
-            if (authentication instanceof OAuth2AuthenticationToken oauthToken) {
-                provider = oauthToken.getAuthorizedClientRegistrationId();
-            }
-            String providerId = (String) response.get("id");
-            String token = null;
-            Object tokenExpiresAt = null;
-
-            model.addAttribute("userName", response.get("name"));
-            model.addAttribute("email", response.get("email"));
-            model.addAttribute("mobile", response.get("mobile"));
+            model.addAttribute("userName", name);
+            model.addAttribute("email", email);
+            model.addAttribute("mobile", mobile);
             model.addAttribute("provider", provider);
             model.addAttribute("providerId", providerId);
 
-            // OAuth2 로그인 시 저장된 사용자 토큰을 조회해서 성공 화면에서 확인 가능하게 한다.
-            if (providerId != null && !providerId.isBlank()) {
-                Optional<User> userOpt = userRepository.findByProviderAndLoginId(provider, providerId);
-                if (userOpt.isPresent()) {
-                    User user = userOpt.get();
-                    token = user.getAccessToken();
-                    tokenExpiresAt = user.getTokenExpiresAt();
-                    model.addAttribute("token", token);
-                    model.addAttribute("tokenExpiresAt", tokenExpiresAt);
-                }
-            }
+            // OAuth2 로그인 시 저장된 사용자 토큰도 공통 인증 사용자 조회 결과에서 가져옴
+            currentUser.ifPresent(user -> {
+                model.addAttribute("token", user.getAccessToken());
+                model.addAttribute("tokenExpiresAt", user.getTokenExpiresAt());
+            });
 
-            // 화면에 전달한 최종 모델 값을 JSON으로 남겨 템플릿에서 보는 값과 대조하기 쉽게 추가함 -3/17
+            // 화면에 전달한 최종 모델 값을 JSON으로 남겨 템플릿에서 보는 값과 대조하기 쉽게 맞춤
             Map<String, Object> modelPayload = new LinkedHashMap<>();
-            modelPayload.put("userName", response.get("name"));
-            modelPayload.put("email", response.get("email"));
-            modelPayload.put("mobile", response.get("mobile"));
+            modelPayload.put("userName", name);
+            modelPayload.put("email", email);
+            modelPayload.put("mobile", mobile);
             modelPayload.put("provider", provider);
             modelPayload.put("providerId", providerId);
-            modelPayload.put("token", token);
-            modelPayload.put("tokenExpiresAt", tokenExpiresAt);
+            currentUser.ifPresent(user -> {
+                modelPayload.put("token", user.getAccessToken());
+                modelPayload.put("tokenExpiresAt", user.getTokenExpiresAt());
+            });
             logJson("controller.loginSuccess.model", modelPayload);
 
             return "login-success"; // 뷰 이름 반환
@@ -117,28 +105,8 @@ public class OAuthController {//일단 만들어보자구
 
     @GetMapping("/oauth2/callback")
     public String loginSuccess3(@AuthenticationPrincipal OAuth2User oauth2User, Model model, Authentication authentication) {
-    //  oauth2User가 null인 경우 처리 (직접 URL 접속 시)
-        if (oauth2User == null) {
-            System.out.println("oauth2User is null!");
-            return "redirect:/"; // 홈페이지로 리다이렉트
-        }
-        System.out.println("oauth2User attributes(callback): " + oauth2User.getAttributes());
-
-        try {
-            // OAuth2User에서 사용자 정보 추출
-            Map<String, Object> attributes = oauth2User.getAttributes();
-            Map<String, Object> response = (Map<String, Object>) attributes.get("response");
-            String mobile = (String) response.get("mobile");
-
-            // 모델에 토큰 추가
-//            model.addAttribute("token", token);
-            model.addAttribute("userName", response.get("name"));
-
-            return "login-success"; // 뷰 이름 반환
-        } catch (Exception e) {
-            // 예외 처리
-            return "redirect:/";
-        }
+        // callback 화면 처리도 loginSuccess와 같은 공통 OAuth2 모델 구성을 사용
+        return loginSuccess(oauth2User, model, authentication);
     }
 
     @GetMapping("/login")
@@ -215,40 +183,24 @@ public class OAuthController {//일단 만들어보자구
     private String getAccessTokenFromAuth() {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof OAuth2User) {
-            OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal();
-
-
-            Map<String, Object> attributes = oauth2User.getAttributes();
-            Object responseObject = attributes.get("response");
-            if (!(responseObject instanceof Map<?, ?> responseRaw)) {
-                return null;
-            }
-            @SuppressWarnings("unchecked")
-            Map<String, Object> response = (Map<String, Object>) responseRaw;
-            String providerId = (String) response.get("id");
-
-
-            String provider = "naver";
-            if (authentication instanceof OAuth2AuthenticationToken) {
-                provider = ((OAuth2AuthenticationToken) authentication).getAuthorizedClientRegistrationId();
-            }
-
-
-            // 액세스 토큰 조회도 provider가 준 식별값을 loginId로 저장한 기준을 그대로 따른다 -3/16
-            Optional<User> userOpt = userRepository.findByProviderAndLoginId(provider, providerId);
-            if (userOpt.isPresent()) {
-                String token = userOpt.get().getAccessToken();
-                if (token != null && !token.isEmpty()) {
-                    return token;
-                }
-            }
-
-
-            log.warn("사용자의 액세스 토큰을 찾을 수 없습니다: provider={}, providerId={}", provider, providerId);
+        if (!(authentication instanceof OAuth2AuthenticationToken oauthToken)) {
             return null;
         }
-        return null;
+
+        if (!"naver".equals(oauthToken.getAuthorizedClientRegistrationId())) {
+            return null;
+        }
+
+        // 네이버 토큰 해제용 accessToken도 공통 인증 사용자 조회 결과에서 가져옴
+        Optional<String> accessToken = userService.getAuthenticatedUser(authentication)
+                .map(User::getAccessToken)
+                .filter(token -> token != null && !token.isBlank());
+
+        if (accessToken.isEmpty()) {
+            log.warn("사용자의 네이버 액세스 토큰을 찾을 수 없습니다: authName={}", authentication.getName());
+        }
+
+        return accessToken.orElse(null);
     }
 
 
@@ -356,8 +308,9 @@ public class OAuthController {//일단 만들어보자구
                 && !"anonymousUser".equals(authentication.getPrincipal());
 
         model.addAttribute("isLoggedIn", isLoggedIn);
-        // 로그인 사용자 ID를 전달해서 이용
-        model.addAttribute("currentUserId", isLoggedIn ? resolveCurrentUserId(authentication) : null);
+        // 로그인 사용자 모델 정보도 공통 인증 사용자 조회 결과를 재사용함
+        Optional<User> currentUser = isLoggedIn ? userService.getAuthenticatedUser(authentication) : Optional.empty();
+        model.addAttribute("currentUserId", currentUser.map(User::getId).orElse(null));
 
         if (!isLoggedIn) {
             return;
@@ -365,31 +318,42 @@ public class OAuthController {//일단 만들어보자구
 
         model.addAttribute("authName", authentication.getName());
 
-        if (authentication instanceof OAuth2AuthenticationToken oauthToken) {
-
-            OAuth2User oauth2User = oauthToken.getPrincipal();
-            model.addAttribute("provider", oauthToken.getAuthorizedClientRegistrationId());
-
-            Map<String, Object> attributes = oauth2User.getAttributes();
-            Object responseObj = attributes.get("response");
-            if (responseObj instanceof Map<?, ?> response) {
-                Object name = response.get("name");
-                Object email = response.get("email");
-                model.addAttribute("displayName", name != null ? name : authentication.getName());
-                model.addAttribute("email", email);
-                return;
-            }
-        }
-
-
-        model.addAttribute("displayName", authentication.getName());
+        // 화면 표시 이름과 이메일은 provider별 response가 아니라 DB 사용자 기준으로 맞춤
+        currentUser.ifPresentOrElse(user -> {
+            model.addAttribute("provider", user.getProvider());
+            model.addAttribute("displayName", user.getUserName() != null ? user.getUserName() : authentication.getName());
+            model.addAttribute("email", user.getEmail());
+        }, () -> model.addAttribute("displayName", authentication.getName()));
     }
 
     private Long resolveCurrentUserId(Authentication authentication) {
-        // 화면 currentUserId도 공통 인증 사용자 해석 결과의 내부 PK를 사용하게 맞춤 -5/29
+        // 화면 currentUserId도 공통 인증 사용자 해석 결과의 내부 PK를 사용하게 맞춤
         return userService.getAuthenticatedUser(authentication)
                 .map(User::getId)
                 .orElse(null);
+    }
+
+    private String resolveProvider(Authentication authentication, Map<String, Object> attributes) {
+        // OAuth2 provider 값을 인증 토큰에서 우선 읽고 없으면 정규화 attributes를 사용함
+        if (authentication instanceof OAuth2AuthenticationToken oauthToken) {
+            return oauthToken.getAuthorizedClientRegistrationId();
+        }
+        Object provider = attributes.get("provider");
+        return provider instanceof String providerText ? providerText : "unknown";
+    }
+
+    private Object resolveOAuthAttribute(OAuth2User oauth2User, String key) {
+        // provider별 응답 차이는 정규화 attributes를 우선 사용하고 네이버 response는 fallback으로만 처리함
+        Map<String, Object> attributes = oauth2User.getAttributes();
+        Object value = attributes.get(key);
+        if (value != null) {
+            return value;
+        }
+        Object responseObj = attributes.get("response");
+        if (responseObj instanceof Map<?, ?> response) {
+            return response.get(key);
+        }
+        return null;
     }
 
     // OAuth2 컨트롤러 단계별 객체를 JSON 문자열로 남겨 흐름 비교가 쉬워지게 추가함 -3/17
