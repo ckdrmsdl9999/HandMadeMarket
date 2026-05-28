@@ -25,10 +25,11 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 @RequiredArgsConstructor
 @Slf4j
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
-
     private final UserRepository userRepository;
     // OAuth2 디버그 데이터를 JSON 문자열로 통일해 다음 단계 로그 추가를 쉽게 맞춤 -3/17
     private final ObjectMapper objectMapper;
+
+
 
     @Override
     @Transactional
@@ -38,13 +39,14 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 this.getClass().getName(),
                 userRequest.getClientRegistration().getRegistrationId());
 
+        //dfeaultOAuth2UserService의 loadUser 실행해줌으로써 네이버에서 사용자정보 api호출후 저장(안하면 안받아오니까)
         OAuth2UserService<OAuth2UserRequest, OAuth2User> delegate = new DefaultOAuth2UserService();
         OAuth2User oAuth2User = delegate.loadUser(userRequest);
 
         // 액세스 토큰 정보
         String accessToken = userRequest.getAccessToken().getTokenValue();
         String clientRegistration = userRequest.getClientRegistration().toString();
-       String additionalParameters = userRequest.getAdditionalParameters().toString();
+        String additionalParameters = userRequest.getAdditionalParameters().toString();
         String tokenType = userRequest.getAccessToken().getTokenType().getValue();
         LocalDateTime expiresAt = null;
 
@@ -55,7 +57,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                     ZoneId.systemDefault()
             );
         }
-
+        //
         // OAuth2 토큰과 추가 파라미터를 JSON 한 묶음으로 남겨 실제 요청 데이터를 바로 비교하게 추가함 -3/17
         Map<String, Object> requestPayload = new LinkedHashMap<>();
         requestPayload.put("registrationId", userRequest.getClientRegistration().getRegistrationId());
@@ -63,17 +65,9 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         requestPayload.put("tokenType", tokenType);
         requestPayload.put("expiresAt", expiresAt);
         requestPayload.put("additionalParameters", userRequest.getAdditionalParameters());
+        requestPayload.put("userRequest당", userRequest);
         logJson("loadUser.userRequest", requestPayload);
-//
-//        System.out.println("Access Token2: " + accessToken);
-//        System.out.println("Token Type2: " + tokenType);
-//        System.out.println("Expires At2: " + expiresAt);
-//        System.out.println("clientRegistration2: " + clientRegistration);
-//        System.out.println("additionalParameters2: " + additionalParameters);
 
-
-//        log.debug("[OAuth2] token metadata - type={}, expiresAt={}, registration={}",
-//                tokenType, expiresAt, clientRegistration);
 
         log.debug("[OAuth2] token debug - accessToken={}, additionalParameters={}, type={}, expiresAt={}, registration={}",
                 accessToken, additionalParameters, tokenType, expiresAt, clientRegistration);
@@ -86,27 +80,10 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 .getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName();
 
 
-//        // 네이버는 response 안에 사용자 정보가 있음
-//        Map<String, Object> attributes = oAuth2User.getAttributes();
-//        Map<String, Object> response = (Map<String, Object>) attributes.get("response");
+        Map<String, Object> attributes = new LinkedHashMap<>(oAuth2User.getAttributes());
+        OAuth2Profile profile = extractProfile(registrationId, attributes);
 
-        //response/providerId 필수값 검증 추가
-        Map<String, Object> attributes = oAuth2User.getAttributes();
-        Object responseObject = attributes.get("response");
-        if (!(responseObject instanceof Map<?, ?> responseRaw)) {
-            throw new OAuth2AuthenticationException(
-                    new OAuth2Error("invalid_user_info"),
-                    "OAuth2 사용자 정보(response)를 찾을 수 없습니다."
-            );
-        }
-        @SuppressWarnings("unchecked")
-        Map<String, Object> response = (Map<String, Object>) responseRaw;
-
-        // 네이버 사용자 원본 attributes와 response를 JSON으로 남겨 내려온 구조를 바로 확인하게 추가함 -3/17
-        logJson("loadUser.attributes", attributes);
-        logJson("loadUser.response", response);
-
-        String providerId = (String) response.get("id");
+        String providerId = profile.providerId();
         if (providerId == null || providerId.isBlank()) {
             throw new OAuth2AuthenticationException(
                     new OAuth2Error("invalid_user_info"),
@@ -114,9 +91,23 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
             );
         }
 
+
+
+        //usernameAttributesName="response" 이므로 value값은 response값
+        Object nameAttributeValue = attributes.get(userNameAttributeName);
+        // user-name-attribute 기준값과 response 식별값을 같이 남겨 principal 이름 기준을 바로 확인하게 로그 추가함 -5/14
+        Map<String, Object> principalPayload = new LinkedHashMap<>();
+        principalPayload.put("userNameAttributeName", userNameAttributeName);//"response"출력
+        principalPayload.put("nameAttributeValue", nameAttributeValue);
+        principalPayload.put("nameAttributeValueType", nameAttributeValue != null ? nameAttributeValue.getClass().getName() : null);
+        principalPayload.put("responseId", providerId);
+      //  principalPayload.put("responseName", response.get("name"));
+        principalPayload.put("expectedPrincipalName", nameAttributeValue != null ? nameAttributeValue.toString() : null);
+        logJson("loadUser.principal", principalPayload);
+
 //      String providerId = (String) response.get("id");
-        String email = (String) response.get("email");
-        String name = (String) response.get("name");
+        String email = profile.email();
+        String name = profile.name();
 
         String userName = (name != null && !name.isBlank()) ? name : registrationId + "_" + providerId;
 
@@ -168,11 +159,60 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
         );
 
+        // OAuth2 principal 이름을 공급자별 원본 키 대신 공통 식별값으로 맞춤 -5/28
+        attributes.put("provider", registrationId);
+        attributes.put("providerId", providerId);
+        attributes.put("principalName", registrationId + ":" + providerId);
+
         return new DefaultOAuth2User(
                 authorities,
                 attributes,
-                userNameAttributeName
+                "principalName"
         );
+
+    }
+
+    // OAuth2 공급자별 사용자 응답 구조 차이를 providerId/email/name으로 정규화함 -5/28
+    private OAuth2Profile extractProfile(String registrationId, Map<String, Object> attributes) {
+        if ("naver".equals(registrationId)) {
+            Object responseObject = attributes.get("response");
+            logJson("loadUser.responseRaw", responseObject);
+
+            if (!(responseObject instanceof Map<?, ?> responseRaw)) {
+                throw new OAuth2AuthenticationException(
+                        new OAuth2Error("invalid_user_info"),
+                        "OAuth2 사용자 정보(response)를 찾을 수 없습니다."
+                );
+            }
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> response = (Map<String, Object>) responseRaw;
+
+            logJson("loadUser.response", response);
+
+            return new OAuth2Profile(
+                    (String) response.get("id"),
+                    (String) response.get("email"),
+                    (String) response.get("name")
+            );
+        }
+
+        if ("google".equals(registrationId)) {
+            return new OAuth2Profile(
+                    (String) attributes.get("sub"),
+                    (String) attributes.get("email"),
+                    (String) attributes.get("name")
+            );
+        }
+
+        throw new OAuth2AuthenticationException(
+                new OAuth2Error("unsupported_provider"),
+                "지원하지 않는 OAuth2 provider입니다: " + registrationId
+        );
+    }
+
+    private record OAuth2Profile(String providerId, String email, String name) {
+
     }
 
     // OAuth2 흐름에서 받은 객체를 같은 형식으로 남겨 단계별 비교가 쉬워지게 추가
