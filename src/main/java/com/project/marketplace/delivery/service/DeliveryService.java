@@ -6,6 +6,8 @@ import com.project.marketplace.delivery.entity.Delivery;
 import com.project.marketplace.delivery.entity.DeliveryStatus;
 import com.project.marketplace.delivery.repository.DeliveryRepository;
 import com.project.marketplace.order.entity.Order;
+import com.project.marketplace.product.entity.Product;
+import com.project.marketplace.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,7 @@ import java.util.List;
 public class DeliveryService {
 
     private final DeliveryRepository deliveryRepository;
+    private final ProductRepository productRepository;
 
     // 주문 생성 직후 기본 배송 정보를 자동 생성해 별도 배송 생성 API가 필요 없게 함
     @Transactional
@@ -53,12 +56,16 @@ public class DeliveryService {
 
     // 수정 요청을 DTO로 받아 필요한 필드만 반영하도록 DTO 기반 업데이트 메서드를 추가한다.
     @Transactional
-    public DeliveryUpdateResponseDto updateDeliveryWithDto(Long id, DeliveryUpdateRequestDto requestDto) {
-        validateUpdateRequest(requestDto);
+    public DeliveryUpdateResponseDto updateDeliveryWithDto(Long id, Long userId, boolean admin, DeliveryUpdateRequestDto requestDto) {
+        validateUpdateRequest(requestDto, admin);
         Delivery delivery = deliveryRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "배송 정보를 찾을 수 없습니다."));
 
-        delivery.setAddress(requestDto.getAddress());
+        validateDeliveryManager(delivery, userId, admin);
+
+        if (admin) {
+            delivery.setAddress(requestDto.getAddress());
+        }
         delivery.setStatus(requestDto.getStatus());
         return DeliveryUpdateResponseDto.fromEntity(delivery);
     }
@@ -68,12 +75,14 @@ public class DeliveryService {
         deliveryRepository.deleteById(id);
     }
 
-    // 배송 수정은 주소와 상태를 명확히 받아 잘못된 상태 저장을 막음
-    private void validateUpdateRequest(DeliveryUpdateRequestDto requestDto) {
+    // 배송 수정은 상태를 필수로 받고 주소는 관리자 수정일 때만 필수로 검증함
+    private void validateUpdateRequest(DeliveryUpdateRequestDto requestDto, boolean admin) {
         if (requestDto == null || requestDto.getStatus() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "배송 상태는 필수입니다.");
         }
-        validateAddress(requestDto.getAddress());
+        if (admin) {
+            validateAddress(requestDto.getAddress());
+        }
     }
 
     // 빈 배송지가 DB에 저장되지 않도록 공통 검증함
@@ -87,6 +96,23 @@ public class DeliveryService {
     private void validateDeliveryViewer(Delivery delivery, Long userId, boolean admin) {
         if (!admin && !delivery.getOrder().getUser().getId().equals(userId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "배송 정보를 찾을 수 없습니다.");
+        }
+    }
+
+    // 관리자가 아니면 주문 상품의 판매자만 배송 상태를 수정할 수 있도록 제한함
+    private void validateDeliveryManager(Delivery delivery, Long userId, boolean admin) {
+        if (admin) {
+            return;
+        }
+
+        boolean sellerOwnsOrderProduct = delivery.getOrder().getOrderItems().stream()
+                .map(orderItem -> productRepository.findById(orderItem.getProductId())
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "주문 상품을 찾을 수 없습니다.")))
+                .map(Product::getSeller)
+                .anyMatch(seller -> seller.getId().equals(userId));
+
+        if (!sellerOwnsOrderProduct) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "해당 배송을 수정할 권한이 없습니다.");
         }
     }
 }
