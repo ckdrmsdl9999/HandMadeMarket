@@ -3,6 +3,7 @@ package com.project.marketplace.order.service;
 import com.project.marketplace.cart.entity.Cart;
 import com.project.marketplace.cart.entity.CartItem;
 import com.project.marketplace.cart.repository.CartRepository;
+import com.project.marketplace.delivery.service.DeliveryService;
 import com.project.marketplace.order.dto.OrderCreateRequestDto;
 import com.project.marketplace.order.dto.OrderResponseDto;
 import com.project.marketplace.order.dto.OrderUpdateRequestDto;
@@ -34,6 +35,7 @@ public class OrderService{
     private final UserRepository userRepository;
     private final CartRepository cartRepository;
     private final ProductRepository productRepository;
+    private final DeliveryService deliveryService;
 
     /**
      * 새로운 주문을 생성합니다.
@@ -89,6 +91,8 @@ public class OrderService{
         List.copyOf(cart.getCartItems()).forEach(cart::removeCartItem);
 
         Order savedOrder = orderRepository.save(order);
+        // 주문 생성과 동시에 기본 배송 정보를 생성해 배송 조회 흐름이 끊기지 않게 함
+        deliveryService.createReadyDelivery(savedOrder);
         return savedOrder.getOrderId();
     }
 

@@ -13,7 +13,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class DeliveryUpdateRequestDto {
-    private Long orderId;
     private String address;
     private DeliveryStatus status;
 }
