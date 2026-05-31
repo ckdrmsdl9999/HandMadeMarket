@@ -51,6 +51,8 @@ public class OrderService{
         if (cart.getCartItems().isEmpty()) {
             throw new RuntimeException("장바구니가 비어 있습니다.");
         }
+        // 하나의 주문에는 한 판매자의 상품만 들어가도록 제한함
+        validateSingleSellerCart(cart);
 
         Order order = Order.builder()
                 .user(user)
@@ -210,6 +212,29 @@ public class OrderService{
                 || request.getRecipientPhone() == null || request.getRecipientPhone().isBlank()
                 || request.getShippingAddress() == null || request.getShippingAddress().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "수령 정보는 필수입니다.");
+        }
+    }
+
+    // 장바구니에 여러 판매자 상품이 섞이면 배송/판매자 권한 기준이 흐려지므로 주문 생성을 막음
+    private void validateSingleSellerCart(Cart cart) {
+        Long sellerId = null;
+
+        for (CartItem cartItem : cart.getCartItems()) {
+            Product product = cartItem.getProduct();
+
+            if (product.getSeller() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "판매자 정보가 없는 상품은 주문할 수 없습니다.");
+            }
+
+            Long currentSellerId = product.getSeller().getId();
+            if (sellerId == null) {
+                sellerId = currentSellerId;
+                continue;
+            }
+
+            if (!sellerId.equals(currentSellerId)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "서로 다른 판매자의 상품은 한 번에 주문할 수 없습니다.");
+            }
         }
     }
 }
