@@ -77,10 +77,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
             log.info("세션에 사용자 정보 저장 완료: {}", profile.name());
             log.info("DB에 사용자 정보 저장 완료: {}", profile.name());
-
-            // 로그인 토큰 값을 저장 (로그아웃 시 사용)
-            // 실제 토큰 값은 OAuth2AuthorizedClientService에서 가져와야 합니다
-            // session.setAttribute("accessToken", token);
         } else {
             // provider별 응답에서 식별자를 찾지 못하면 사용자 저장 없이 흐름만 기록
             log.warn("OAuth2 사용자 식별자를 찾을 수 없습니다: provider={}", registrationId);

@@ -2,7 +2,6 @@ package com.project.marketplace.user.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.marketplace.user.entity.User;
-import com.project.marketplace.user.repository.UserRepository;
 import com.project.marketplace.user.service.UserService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,11 +9,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,12 +17,9 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.client.RestTemplate;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -38,15 +29,9 @@ import java.util.Optional;
 @Slf4j
 public class OAuthController {//일단 만들어보자구
 
-    private final UserRepository userRepository;
     private final UserService userService;
     // OAuth2 화면 전환과 로그아웃 데이터를 JSON 로그로 같은 방식에 확인하게 맞춤 -3/17
     private final ObjectMapper objectMapper;
-    // 네이버 토큰 해제 호출과 로그인 설정값을 일치시키기 위해 클라이언트 정보를 yml에서 주입받는다.
-    @Value("${spring.security.oauth2.client.registration.naver.client-id}")
-    private String naverClientId;
-    @Value("${spring.security.oauth2.client.registration.naver.client-secret}")
-    private String naverClientSecret;
 
     @GetMapping("/loginSuccess")
     public String loginSuccess(@AuthenticationPrincipal OAuth2User oauth2User, Model model, Authentication authentication) {
@@ -66,8 +51,6 @@ public class OAuthController {//일단 만들어보자구
             Object name = resolveOAuthAttribute(oauth2User, "name");
             Object email = resolveOAuthAttribute(oauth2User, "email");
             Object mobile = resolveOAuthAttribute(oauth2User, "mobile");
-            Optional<User> currentUser = userService.getAuthenticatedUser(authentication);
-
             // 로그인 성공 화면으로 넘어온 원본 attributes를 JSON으로 남겨 successHandler 다음 값을 바로 확인하게 맞춤
             logJson("controller.loginSuccess.attributes", attributes);
 
@@ -77,12 +60,6 @@ public class OAuthController {//일단 만들어보자구
             model.addAttribute("provider", provider);
             model.addAttribute("providerId", providerId);
 
-            // OAuth2 로그인 시 저장된 사용자 토큰도 공통 인증 사용자 조회 결과에서 가져옴
-            currentUser.ifPresent(user -> {
-                model.addAttribute("token", user.getAccessToken());
-                model.addAttribute("tokenExpiresAt", user.getTokenExpiresAt());
-            });
-
             // 화면에 전달한 최종 모델 값을 JSON으로 남겨 템플릿에서 보는 값과 대조하기 쉽게 맞춤
             Map<String, Object> modelPayload = new LinkedHashMap<>();
             modelPayload.put("userName", name);
@@ -90,10 +67,6 @@ public class OAuthController {//일단 만들어보자구
             modelPayload.put("mobile", mobile);
             modelPayload.put("provider", provider);
             modelPayload.put("providerId", providerId);
-            currentUser.ifPresent(user -> {
-                modelPayload.put("token", user.getAccessToken());
-                modelPayload.put("tokenExpiresAt", user.getTokenExpiresAt());
-            });
             logJson("controller.loginSuccess.model", modelPayload);
 
             return "login-success"; // 뷰 이름 반환
@@ -154,123 +127,9 @@ public class OAuthController {//일단 만들어보자구
 
     @PostMapping("/logout/naver")
     public String logoutNaver(HttpServletRequest request, HttpServletResponse response) {
-        boolean naverLogoutSuccess = true;
-        try {
-
-            String accessToken = getAccessTokenFromAuth();
-            // 로그아웃 시작 시 현재 토큰 보유 여부와 토큰 값을 JSON으로 남겨 요청 출발 지점을 확인하게 추가함 -3/17
-            Map<String, Object> logoutStartPayload = new LinkedHashMap<>();
-            logoutStartPayload.put("hasAccessToken", accessToken != null && !accessToken.isBlank());
-            logoutStartPayload.put("accessToken", accessToken);
-            logJson("logout.start", logoutStartPayload);
-
-            if (accessToken != null && !accessToken.isBlank()) {
-                naverLogoutSuccess = revokeNaverToken(accessToken);
-            } else {
-                log.warn("액세스 토큰이 없어 네이버 토큰 해제는 건너뛰고 로컬 로그아웃만 수행합니다.");
-            }
-        } catch (Exception e) {
-            log.error("네이버 로그아웃 처리 중 오류 발생", e);
-            naverLogoutSuccess = false;
-        } finally {
-            clearLocalAuthentication(request, response);
-        }
-
-        return naverLogoutSuccess ? "redirect:/?logout=success" : "redirect:/?logout=partial";
-    }
-
-
-    private String getAccessTokenFromAuth() {
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (!(authentication instanceof OAuth2AuthenticationToken oauthToken)) {
-            return null;
-        }
-
-        if (!"naver".equals(oauthToken.getAuthorizedClientRegistrationId())) {
-            return null;
-        }
-
-        // 네이버 토큰 해제용 accessToken도 공통 인증 사용자 조회 결과에서 가져옴
-        Optional<String> accessToken = userService.getAuthenticatedUser(authentication)
-                .map(User::getAccessToken)
-                .filter(token -> token != null && !token.isBlank());
-
-        if (accessToken.isEmpty()) {
-            log.warn("사용자의 네이버 액세스 토큰을 찾을 수 없습니다: authName={}", authentication.getName());
-        }
-
-        return accessToken.orElse(null);
-    }
-
-
-    private void clearTokenInDatabase(String accessToken) {
-        try {
-
-            Optional<User> userOpt = userRepository.findByAccessToken(accessToken);
-            if (userOpt.isPresent()) {
-                User user = userOpt.get();
-                user.setAccessToken(null);
-                user.setTokenExpiresAt(null);
-                userRepository.save(user);
-                // 토큰 삭제 로그도 현재 로그인 식별자 필드명에 맞춰 남기도록 변경했다 -3/16
-                log.info("사용자 토큰 정보 삭제 완료: loginId={}", user.getLoginId());
-            } else {
-                log.warn("해당 액세스 토큰을 가진 사용자를 찾을 수 없습니다");
-            }
-        } catch (Exception e) {
-            log.error("DB에서 토큰 삭제 중 오류", e);
-        }
-    }
-
-
-    private boolean revokeNaverToken(String accessToken) {
-        try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
-            MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-
-            params.add("grant_type", "delete");
-//            params.add("client_id", "tjdb79ERpbO7fZ0lmU7N");
-//            params.add("client_secret", "LzBHj360fR");
-            params.add("client_id", naverClientId);
-            params.add("client_secret", naverClientSecret);
-            params.add("access_token", accessToken);
-            params.add("service_provider", "NAVER");
-
-            // 네이버 토큰 해제 호출 파라미터를 JSON으로 남겨 외부 요청 직전 값을 확인하게 추가함 -3/17
-            Map<String, Object> revokeRequestPayload = new LinkedHashMap<>();
-            revokeRequestPayload.put("grantType", "delete");
-            revokeRequestPayload.put("clientId", naverClientId);
-            revokeRequestPayload.put("accessToken", accessToken);
-            revokeRequestPayload.put("serviceProvider", "NAVER");
-            logJson("logout.revoke.request", revokeRequestPayload);
-
-            HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(params, headers);
-            RestTemplate restTemplate = new RestTemplate();
-
-            ResponseEntity<String> response = restTemplate.postForEntity(
-                    "https://nid.naver.com/oauth2.0/token", entity, String.class);
-
-            // 네이버 토큰 해제 응답 상태와 본문을 JSON으로 남겨 외부 응답 확인을 쉽게 추가함 -3/17
-            Map<String, Object> revokeResponsePayload = new LinkedHashMap<>();
-            revokeResponsePayload.put("status", response.getStatusCode().value());
-            revokeResponsePayload.put("body", response.getBody());
-            logJson("logout.revoke.response", revokeResponsePayload);
-
-            log.info("네이버 로그아웃 응답: {}", response.getBody());
-
-            // 토큰이 성공적으로 삭제되었다면 DB에서도 토큰 정보 제거
-            if (response.getStatusCode().is2xxSuccessful()) {
-                clearTokenInDatabase(accessToken);
-            }
-
-            return response.getStatusCode().is2xxSuccessful();
-        } catch (Exception e) {
-            log.error("네이버 토큰 삭제 중 오류", e);
-            return false;
-        }
+        // OAuth2 로그아웃은 provider 토큰 폐기 없이 우리 서비스 세션만 정리함
+        clearLocalAuthentication(request, response);
+        return "redirect:/?logout=success";
     }
 
 
@@ -297,8 +156,6 @@ public class OAuthController {//일단 만들어보자구
         sessionCookie.setPath("/");
         response.addCookie(sessionCookie);
 
-        // 5. 토큰 블랙리스트에 추가 (옵션)
-        // tokenBlacklistService.addToBlacklist(accessToken);
     }
 
     private void addAuthInfoToModel(Model model, Authentication authentication) {
