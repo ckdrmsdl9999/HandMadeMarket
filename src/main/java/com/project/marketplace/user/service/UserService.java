@@ -140,24 +140,12 @@ public class UserService {
         if (authentication instanceof OAuth2AuthenticationToken oauthToken) {
             String provider = oauthToken.getAuthorizedClientRegistrationId();
             OAuth2User oauth2User = oauthToken.getPrincipal();
+            Map<String, Object> attributes = oauth2User.getAttributes();
 
-            if ("naver".equals(provider)) {
-                Object responseObj = oauth2User.getAttributes().get("response");
-                if (responseObj instanceof Map<?, ?> response) {
-                    Object providerId = response.get("id");
-                    if (providerId instanceof String providerIdText && !providerIdText.isBlank()) {
-                        return userRepository.findByProviderAndLoginId(provider, providerIdText);
-                    }
-                }
-                return Optional.empty();
-            }
-
-            if ("google".equals(provider)) {
-                Object providerId = oauth2User.getAttributes().get("sub");
-                if (providerId instanceof String providerIdText && !providerIdText.isBlank()) {
-                    return userRepository.findByProviderAndLoginId(provider, providerIdText);
-                }
-                return Optional.empty();
+            // OAuth2 사용자 조회를 provider별 원본 응답 대신 정규화된 providerId 기준으로 통일함 -5/31
+            Object providerId = attributes.get("providerId");
+            if (providerId instanceof String providerIdText && !providerIdText.isBlank()) {
+                return userRepository.findByProviderAndLoginId(provider, providerIdText);
             }
 
             return Optional.empty();

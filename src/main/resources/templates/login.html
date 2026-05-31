@@ -15,6 +15,8 @@
             --brand-blue-dark: #224fd6;
             --naver: #03c75a;
             --naver-dark: #00aa4d;
+            --google: #ffffff;
+            --google-border: #d7deea;
             --accent: #ff6f2c;
             --shadow: 0 16px 40px rgba(28, 58, 125, 0.14);
         }
@@ -207,6 +209,13 @@
             background: linear-gradient(145deg, var(--naver) 0%, var(--naver-dark) 100%);
         }
 
+        .btn-google {
+            margin-top: 8px;
+            border: 1px solid var(--google-border);
+            color: var(--ink);
+            background: var(--google);
+        }
+
         .btn-primary {
             margin-top: 4px;
             background: linear-gradient(145deg, var(--brand-blue) 0%, var(--brand-blue-dark) 100%);
@@ -304,7 +313,7 @@
             <p class="eyebrow">LOGIN CENTER</p>
             <h1 class="title">계정 로그인</h1>
             <p class="desc">
-                버튼 클릭 시 네이버 인증 페이지로 이동합니다.
+                버튼 클릭 시 선택한 소셜 인증 페이지로 이동합니다.
                 로그인 이후 홈에서 사용자 상태를 바로 확인할 수 있습니다.
             </p>
 
@@ -314,6 +323,8 @@
             </div>
 
             <a class="btn btn-naver" th:if="${!isLoggedIn}" th:href="@{/oauth2/authorization/naver}">네이버로 로그인</a>
+            <!-- 구글 OAuth2 registration 추가에 맞춰 로그인 진입 버튼을 함께 제공함 -->
+            <a class="btn btn-google" th:if="${!isLoggedIn}" th:href="@{/oauth2/authorization/google}">구글로 로그인</a>
             <a class="btn btn-primary" th:if="${isLoggedIn}" th:href="@{/loginSuccess}">내 인증 정보 보기</a>
 
             <form th:if="${isLoggedIn}" th:action="@{/logout/naver}" method="post">
@@ -328,7 +339,9 @@
             </div>
 
             <div class="links">
-                <a class="link" th:href="@{/oauth2/authorization/naver}">정식 OAuth 경로</a>
+                <!-- OAuth2 공급자별 정식 시작 경로를 화면에서 바로 확인하게 분리함 -->
+                <a class="link" th:href="@{/oauth2/authorization/naver}">네이버 OAuth</a>
+                <a class="link" th:href="@{/oauth2/authorization/google}">구글 OAuth</a>
                 <a class="link" th:href="@{/}">홈으로</a>
             </div>
         </section>

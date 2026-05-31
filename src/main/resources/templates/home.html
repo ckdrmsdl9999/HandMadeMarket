@@ -373,6 +373,12 @@
             background: linear-gradient(145deg, #09be56 0%, #08a44a 100%);
         }
 
+        .cta-google {
+            border: 1px solid var(--line);
+            color: var(--ink);
+            background: #fff;
+        }
+
         .cta-ghost {
             border: 1px solid var(--line);
             background: #fff;
@@ -634,6 +640,8 @@
             <p>계정 연결 후 최근 인기 상품과 취향 기반 제안을 확인할 수 있습니다.</p>
             <a class="cta-btn cta-login" th:href="@{/login}">로그인 페이지 이동</a>
             <a class="cta-btn cta-oauth" th:href="@{/oauth2/authorization/naver}">네이버 로그인 시작</a>
+            <!-- 홈에서도 구글 OAuth2 로그인 진입 경로를 바로 제공함 -->
+            <a class="cta-btn cta-google" th:href="@{/oauth2/authorization/google}">구글 로그인 시작</a>
             <div class="login-meta">
                 비로그인 상태입니다.<br>
                 홈에서 바로 로그인/로그아웃 동선을 제공합니다.
@@ -729,16 +737,17 @@
             <a class="product-card" th:href="@{/oauth2/authorization/naver}">
                 <div class="thumb thumb-2">L2</div>
                 <div class="card-body">
-                    <span class="badge">호환 경로</span>
+                    <span class="badge">네이버 OAuth</span>
                     <p class="name"><code>/oauth2/authorization/naver</code></p>
                     <p class="price">GO<small>></small></p>
                 </div>
             </a>
-            <a class="product-card" th:href="@{/oauth2/authorization/naver}">
+            <!-- 로그인 바로가기 카드도 provider별 OAuth2 시작 경로로 분리함 -->
+            <a class="product-card" th:href="@{/oauth2/authorization/google}">
                 <div class="thumb thumb-3">L3</div>
                 <div class="card-body">
-                    <span class="badge">정식 OAuth</span>
-                    <p class="name"><code>/oauth2/authorization/naver</code></p>
+                    <span class="badge">구글 OAuth</span>
+                    <p class="name"><code>/oauth2/authorization/google</code></p>
                     <p class="price">GO<small>></small></p>
                 </div>
             </a>

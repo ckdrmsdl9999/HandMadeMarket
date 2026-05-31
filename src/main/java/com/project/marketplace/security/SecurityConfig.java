@@ -41,17 +41,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/products/**").authenticated()
                         .requestMatchers("/api/user/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
-                        .oauth2Login(
-                                oauth2 -> oauth2
-                                .loginPage("/login")
-                                .redirectionEndpoint(redirection -> redirection//추가9-15
-                                                .baseUri("/login/oauth2/code/naver")
-                                )//
-
-                        .userInfoEndpoint(userInfo -> userInfo//0125주석
-                                .userService(customOAuth2UserService))//
-                        .successHandler(oauth2AuthenticationSuccessHandler)//0125주석
-
+                .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login")
+                        // OAuth2 callback은 기본 /login/oauth2/code/{registrationId}를 사용해 provider별 경로를 자동 매칭함 -5/31
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService))
+                        .successHandler(oauth2AuthenticationSuccessHandler)
                 )
         ;
 
