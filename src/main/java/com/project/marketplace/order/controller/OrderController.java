@@ -126,11 +126,14 @@ public class OrderController {
     }
 
     /**
-     * 주문을 삭제합니다.
+     * 주문을 취소합니다.
      */
-    @DeleteMapping("/{orderId}") // /api/orders/{orderId}
-    public ResponseEntity<Void> deleteOrder(@PathVariable Long orderId) {
-        orderService.deleteOrder(orderId);
-        return ResponseEntity.noContent().build();
+    @PatchMapping("/{orderId}/cancel")
+    public ResponseEntity<Void> cancelOrder(@PathVariable Long orderId, Authentication authentication) {
+        // 주문 취소는 삭제가 아니라 현재 로그인 사용자의 주문 상태 변경으로 처리함
+        User user = userService.getAuthenticatedUser(authentication)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인 후 주문을 취소할 수 있습니다."));
+        orderService.cancelOrder(orderId, user.getId());
+        return ResponseEntity.ok().build();
     }
 }

@@ -11,11 +11,14 @@ import com.project.marketplace.order.entity.OrderItem;
 import com.project.marketplace.order.entity.OrderStatus;
 import com.project.marketplace.order.repository.OrderRepository;
 import com.project.marketplace.product.entity.Product;
+import com.project.marketplace.product.repository.ProductRepository;
 import com.project.marketplace.user.entity.User;
 import com.project.marketplace.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,6 +33,7 @@ public class OrderService{
     // 주문 생성/수정 시 userId를 실제 사용자로 검증해 연관관계 무결성을 보장하기 위해 사용자 저장소를 추가했다.
     private final UserRepository userRepository;
     private final CartRepository cartRepository;
+    private final ProductRepository productRepository;
 
     /**
      * 새로운 주문을 생성합니다.
@@ -171,12 +175,29 @@ public class OrderService{
         order.setShippingAddress(orderDto.getShippingAddress());
     }
 
-    /**
-     * 주문을 삭제합니다.
-     */
     @Transactional
-    public void deleteOrder(Long orderId) {
-        // 삭제도 Repository 단일 경로로 통일해 데이터 접근 계층을 JPA로 일원화한다.
-        orderRepository.deleteById(orderId);
+    public void cancelOrder(Long orderId, Long userId) {
+        // 주문 취소는 주문 기록을 삭제하지 않고 상태와 재고만 되돌리도록 처리함
+        Order order = orderRepository.findDetailById(orderId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "주문을 찾을 수 없습니다."));
+
+        if (!order.getUser().getId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "주문을 찾을 수 없습니다.");
+        }
+
+        if (order.getOrderStatus() != OrderStatus.PENDING) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "취소할 수 없는 주문 상태입니다.");
+        }
+
+        for (OrderItem orderItem : order.getOrderItems()) {
+            Product product = productRepository.findById(orderItem.getProductId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다."));
+
+            product.setQuantity(product.getQuantity() + orderItem.getQuantity());
+            product.setSalesCount(Math.max(0, product.getSalesCount() - orderItem.getQuantity()));
+            product.setIsSoldOut(product.getQuantity() <= 0);
+        }
+
+        order.setOrderStatus(OrderStatus.CANCELED);
     }
 }
