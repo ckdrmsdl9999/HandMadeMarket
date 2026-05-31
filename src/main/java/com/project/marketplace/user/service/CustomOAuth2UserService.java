@@ -16,8 +16,6 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.*;
 import org.springframework.security.oauth2.core.OAuth2Error;
 
@@ -39,38 +37,9 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 this.getClass().getName(),
                 userRequest.getClientRegistration().getRegistrationId());
 
-        //dfeaultOAuth2UserService의 loadUser 실행해줌으로써 네이버에서 사용자정보 api호출후 저장(안하면 안받아오니까)
+        // OAuth2 accessToken은 사용자 정보 조회까지만 쓰고 DB와 로그에 남기지 않음
         OAuth2UserService<OAuth2UserRequest, OAuth2User> delegate = new DefaultOAuth2UserService();
         OAuth2User oAuth2User = delegate.loadUser(userRequest);
-
-        // 액세스 토큰 정보
-        String accessToken = userRequest.getAccessToken().getTokenValue();
-        String clientRegistration = userRequest.getClientRegistration().toString();
-        String additionalParameters = userRequest.getAdditionalParameters().toString();
-        String tokenType = userRequest.getAccessToken().getTokenType().getValue();
-        LocalDateTime expiresAt = null;
-
-        // 만료 시간이 있는 경우 LocalDateTime으로 변환
-        if (userRequest.getAccessToken().getExpiresAt() != null) {
-            expiresAt = LocalDateTime.ofInstant(
-                    userRequest.getAccessToken().getExpiresAt(),
-                    ZoneId.systemDefault()
-            );
-        }
-        //
-        // OAuth2 토큰과 추가 파라미터를 JSON 한 묶음으로 남겨 실제 요청 데이터를 바로 비교하게 추가함 -3/17
-        Map<String, Object> requestPayload = new LinkedHashMap<>();
-        requestPayload.put("registrationId", userRequest.getClientRegistration().getRegistrationId());
-        requestPayload.put("accessToken", accessToken);
-        requestPayload.put("tokenType", tokenType);
-        requestPayload.put("expiresAt", expiresAt);
-        requestPayload.put("additionalParameters", userRequest.getAdditionalParameters());
-        requestPayload.put("userRequest당", userRequest);
-        logJson("loadUser.userRequest", requestPayload);
-
-
-        log.debug("[OAuth2] token debug - accessToken={}, additionalParameters={}, type={}, expiresAt={}, registration={}",
-                accessToken, additionalParameters, tokenType, expiresAt, clientRegistration);
 
         // 로그인 서비스 구분 (naver,google등..)
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
@@ -115,21 +84,17 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         User user;
 
         if (userOptional.isEmpty()) {
-            // 신규 사용자 생성 및 토큰 저장
+            // 신규 OAuth2 사용자는 provider 식별 정보와 표시 정보만 저장함
             user = User.builder()
                     .loginId(providerId)
                     .userName(userName)
                     .email(email)
                     .provider(registrationId)
-                    .accessToken(accessToken)
-                    .tokenExpiresAt(expiresAt)
                     .role(UserRole.USER) // 기본 권한
                     .build();
         } else {
-            // 기존 사용자면 토큰 정보 업데이트
+            // 기존 사용자면 provider에서 다시 받아온 표시 정보만 갱신함
             user = userOptional.get();
-            user.setAccessToken(accessToken);
-            user.setTokenExpiresAt(expiresAt);
 
             // 이메일이 변경되었거나 없는 경우 업데이트
             if (email != null && (user.getEmail() == null || !email.equals(user.getEmail()))) {
@@ -144,15 +109,13 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         // 사용자 저장 또는 업데이트
         userRepository.save(user);
 
-        // DB 반영 뒤 사용자 식별값과 토큰 저장 결과를 JSON으로 남겨 화면 값과 대조하기 쉽게 추가
+        // DB 반영 뒤 사용자 식별값만 JSON으로 남겨 화면 값과 대조하기 쉽게 추가함
         Map<String, Object> savedUserPayload = new LinkedHashMap<>();
         savedUserPayload.put("dbUserId", user.getId());
         savedUserPayload.put("provider", user.getProvider());
         savedUserPayload.put("loginId", user.getLoginId());
         savedUserPayload.put("userName", user.getUserName());
         savedUserPayload.put("email", user.getEmail());
-        savedUserPayload.put("accessToken", user.getAccessToken());
-        savedUserPayload.put("tokenExpiresAt", user.getTokenExpiresAt());
         logJson("loadUser.savedUser", savedUserPayload);
 
         Collection<SimpleGrantedAuthority> authorities = Collections.singleton(

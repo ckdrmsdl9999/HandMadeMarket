@@ -39,7 +39,7 @@ public class User {
     @Column(nullable = false, length = 20)
     private UserRole role;
 
-    // OAuth2 관련 필드 추가
+    // OAuth2 로그인은 토큰 대신 provider에서 받은 사용자 정보만 저장함
     @Column
     private String email;
 
@@ -48,12 +48,6 @@ public class User {
 
     @Column
     private String userName; // 사용자의 이름
-
-    @Column
-    private String accessToken;
-
-    @Column
-    private LocalDateTime tokenExpiresAt;
 
     @Builder.Default
     @Column(nullable = false)

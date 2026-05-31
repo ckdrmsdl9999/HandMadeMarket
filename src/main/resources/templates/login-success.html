@@ -5,21 +5,12 @@
     <meta charset="UTF-8">
 </head>
 <body>
-<h1>네이버 로그인 성공!</h1>
+<h1>OAuth2 로그인 성공!</h1>
 <p th:text="'환영합니다, ' + ${userName} + '님!'"></p>
 <p th:text="'제공자: ' + ${provider}"></p>
 <p th:text="'제공자 ID: ' + ${providerId}"></p>
 <p th:if="${email != null}" th:text="'이메일: ' + ${email}"></p>
 <p th:if="${mobile != null}" th:text="'휴대폰: ' + ${mobile}"></p>
-
-<div th:if="${token != null}">
-    <p>저장된 액세스 토큰</p>
-    <code>
-        Access Token <span th:text="${token}"></span>
-    </code>
-    <p th:if="${tokenExpiresAt != null}" th:text="'토큰 만료 시각: ' + ${tokenExpiresAt}"></p>
-</div>
-<p th:if="${token == null}">저장된 액세스 토큰이 없습니다.</p>
 
 <div style="margin-top: 20px;">
     <a href="/">홈으로 돌아가기</a>
