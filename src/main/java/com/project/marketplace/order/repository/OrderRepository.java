@@ -18,6 +18,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("select distinct o from Order o left join fetch o.orderItems where o.orderId = :orderId")
     Optional<Order> findDetailById(@Param("orderId") Long orderId);
 
+    // 주문번호 조회 응답에서도 주문상품 목록을 함께 내려주기 위해 상세 조회 쿼리를 분리함
+    @Query("select distinct o from Order o left join fetch o.orderItems where o.orderNumber = :orderNumber")
+    Optional<Order> findDetailByOrderNumber(@Param("orderNumber") String orderNumber);
+
     // 상세 주문 목록도 User.loginId가 아니라 내부 PK로 조회되게 조건을 정리했다 -3/16
     @Query("select distinct o from Order o left join fetch o.orderItems where o.user.id = :userId order by o.orderDate desc")
     List<Order> findDetailsByUserId(@Param("userId") Long userId);
