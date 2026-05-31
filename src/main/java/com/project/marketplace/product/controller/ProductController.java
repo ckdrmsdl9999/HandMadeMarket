@@ -4,6 +4,7 @@ import com.project.marketplace.product.dto.ProductDto;
 import com.project.marketplace.product.service.ProductService;
 import com.project.marketplace.user.entity.User;
 import com.project.marketplace.user.service.UserService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
+// Swagger 문서에서 상품 API를 도메인별로 묶기 위해 태그를 지정함
+@Tag(name = "Product", description = "상품 API")
 public class ProductController {
 
     private final ProductService productService;

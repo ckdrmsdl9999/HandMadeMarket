@@ -6,6 +6,7 @@ import com.project.marketplace.delivery.service.DeliveryService;
 import com.project.marketplace.user.entity.User;
 import com.project.marketplace.user.entity.UserRole;
 import com.project.marketplace.user.service.UserService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,8 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/delivery")
+// Swagger 문서에서 배송 API를 도메인별로 묶기 위해 태그를 지정함
+@Tag(name = "Delivery", description = "배송 API")
 public class DeliveryController {
     private final DeliveryService deliveryService;
     private final UserService userService;

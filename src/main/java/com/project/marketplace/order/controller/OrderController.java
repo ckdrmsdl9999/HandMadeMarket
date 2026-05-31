@@ -8,6 +8,7 @@ import com.project.marketplace.order.service.OrderService;
 import com.project.marketplace.user.entity.User;
 import com.project.marketplace.user.entity.UserRole;
 import com.project.marketplace.user.service.UserService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/orders") // 이 부분을 추가해서 기본 경로 설정
 @RequiredArgsConstructor
+// Swagger 문서에서 주문 API를 도메인별로 묶기 위해 태그를 지정함
+@Tag(name = "Order", description = "주문 API")
 public class OrderController {
 
     private final OrderService orderService;
