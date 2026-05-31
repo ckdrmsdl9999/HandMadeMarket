@@ -44,8 +44,8 @@ public class Product {
     @Column(nullable = false)
     private Boolean isSoldOut;
 
-    // 상품 생성자(판매자) 정보를 상품에 연결해 사용자-상품 연관관계가 DB에 반영되도록 필드를 추가했다.
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "seller_id")
+    // 상품은 반드시 판매자에 속하도록 DB와 JPA 양쪽에서 필수 관계로 제한함
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "seller_id", nullable = false)
     private User seller;
 }
