@@ -42,9 +42,10 @@ public class DeliveryController {
             @PathVariable Long id,
             Authentication authentication,
             @RequestBody DeliveryUpdateRequestDto requestDto) {
-        // 배송 수정은 배송 상태와 주소를 운영자가 관리하는 작업이므로 관리자만 허용함
-        getAdminUser(authentication);
-        return ResponseEntity.ok(deliveryService.updateDeliveryWithDto(id, requestDto));
+        // 배송 수정은 관리자 또는 해당 주문 상품의 판매자만 가능하도록 제한함
+        User user = getDeliveryManager(authentication);
+        boolean admin = user.getRole() == UserRole.ADMIN;
+        return ResponseEntity.ok(deliveryService.updateDeliveryWithDto(id, user.getId(), admin, requestDto));
     }
 
     @DeleteMapping("/{id}")
@@ -66,6 +67,15 @@ public class DeliveryController {
         User user = getAuthenticatedUser(authentication, "로그인 후 이용할 수 있습니다.");
         if (user.getRole() != UserRole.ADMIN) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "관리자만 이용할 수 있습니다.");
+        }
+        return user;
+    }
+
+    // 배송 수정 권한은 관리자와 판매자에게만 열고 실제 담당 판매자 여부는 서비스에서 검증함
+    private User getDeliveryManager(Authentication authentication) {
+        User user = getAuthenticatedUser(authentication, "로그인 후 이용할 수 있습니다.");
+        if (user.getRole() != UserRole.ADMIN && user.getRole() != UserRole.SELLER) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "배송 수정 권한이 없습니다.");
         }
         return user;
     }
