@@ -31,10 +31,13 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/login", "/loginSuccess", "/oauth2/**", "/error").permitAll()
+                        .requestMatchers("/", "/shop", "/login", "/loginSuccess", "/oauth2/**", "/error").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/user/signup", "/api/user/signin").permitAll()
+                        // 관리자 화면과 사용자 목록 API는 관리자 권한으로 제한함
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/user/list").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/**","/products/**").permitAll()
-                        .requestMatchers("/seller/**", "/api/carts/**", "/api/orders/**").authenticated()
+                        .requestMatchers("/seller/**", "/orders", "/api/carts/**", "/api/orders/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/products").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/products/**").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/products/**").authenticated()

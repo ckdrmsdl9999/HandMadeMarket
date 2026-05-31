@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사용자 관리 | HandMade Market</title>
+    <style>
+        :root {
+            --ink: #1f2522;
+            --muted: #6f716a;
+            --paper: #fffaf1;
+            --line: #e5dac8;
+            --brand: #315445;
+            --accent: #bf7045;
+            --danger: #a53a26;
+            --shadow: 0 18px 44px rgba(30, 41, 33, .12);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            color: var(--ink);
+            background:
+                    radial-gradient(circle at 20% 12%, rgba(191, 112, 69, .22), transparent 28%),
+                    linear-gradient(135deg, #fff5e6, #edf0e4);
+            font-family: "Noto Serif KR", Georgia, serif;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        button,
+        select {
+            font: inherit;
+        }
+
+        .container {
+            width: min(1140px, calc(100% - 32px));
+            margin: 0 auto;
+        }
+
+        .topbar {
+            border-bottom: 1px solid rgba(49, 84, 69, .12);
+            background: rgba(255, 250, 241, .84);
+            backdrop-filter: blur(12px);
+        }
+
+        .topbar-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            padding: 18px 0;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: -.04em;
+        }
+
+        .logo em {
+            color: var(--accent);
+            font-style: normal;
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .nav button {
+            border: 0;
+            background: transparent;
+            color: inherit;
+            cursor: pointer;
+        }
+
+        .hero {
+            padding: 38px 0 22px;
+        }
+
+        .hero h1 {
+            margin: 0 0 10px;
+            font-size: clamp(36px, 5vw, 60px);
+            line-height: 1;
+            letter-spacing: -.07em;
+        }
+
+        .hero p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .panel {
+            background: rgba(255, 250, 241, .88);
+            border: 1px solid rgba(49, 84, 69, .13);
+            border-radius: 28px;
+            box-shadow: var(--shadow);
+            padding: 24px;
+            margin-bottom: 48px;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .status {
+            min-height: 22px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .status.error {
+            color: var(--danger);
+        }
+
+        .btn {
+            border: 0;
+            border-radius: 999px;
+            padding: 11px 16px;
+            color: #fffaf1;
+            background: var(--brand);
+            cursor: pointer;
+            font-weight: 900;
+        }
+
+        .btn-light {
+            color: var(--ink);
+            background: #fff;
+            border: 1px solid var(--line);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 900px;
+        }
+
+        th,
+        td {
+            padding: 14px 12px;
+            border-bottom: 1px solid var(--line);
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        th {
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 900;
+        }
+
+        select {
+            width: 140px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 10px 11px;
+            background: #fffdf8;
+        }
+
+        .row-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .empty {
+            padding: 34px;
+            text-align: center;
+            color: var(--muted);
+            border: 1px dashed var(--line);
+            border-radius: 20px;
+        }
+
+        @media (max-width: 760px) {
+            .topbar-inner,
+            .toolbar {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+<header class="topbar">
+    <div class="container topbar-inner">
+        <a class="logo" th:href="@{/}">HandMade <em>Market</em></a>
+        <nav class="nav">
+            <a th:href="@{/shop}">상품</a>
+            <a th:href="@{/orders}">주문</a>
+            <a th:href="@{/admin/users}">사용자관리</a>
+            <a th:href="@{/admin/delivery}">배송관리</a>
+            <form th:action="@{/logout/naver}" method="post">
+                <button type="submit">로그아웃</button>
+            </form>
+        </nav>
+    </div>
+</header>
+
+<main class="container">
+    <section class="hero">
+        <h1>계정 역할을<br>관리자 화면에서 조정</h1>
+        <p>사용자 목록 조회, 역할 변경, 관리자 삭제 API를 한 화면에서 확인합니다.</p>
+    </section>
+
+    <section class="panel">
+        <div class="toolbar">
+            <div id="status" class="status">사용자 목록을 불러오는 중입니다.</div>
+            <button id="reload-btn" class="btn btn-light" type="button">새로고침</button>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>로그인 ID</th>
+                    <th>이름</th>
+                    <th>이메일</th>
+                    <th>Provider</th>
+                    <th>역할</th>
+                    <th>작업</th>
+                </tr>
+                </thead>
+                <tbody id="user-body"></tbody>
+            </table>
+        </div>
+        <div id="empty" class="empty" style="display:none;">사용자가 없습니다.</div>
+    </section>
+</main>
+
+<script>
+    const refs = {
+        status: document.getElementById('status'),
+        reloadButton: document.getElementById('reload-btn'),
+        body: document.getElementById('user-body'),
+        empty: document.getElementById('empty')
+    };
+
+    refs.reloadButton.addEventListener('click', loadUsers);
+    refs.body.addEventListener('click', handleUserAction);
+
+    // 관리자 화면 진입 시 사용자 목록을 바로 불러와 역할 관리 작업을 시작하게 함
+    loadUsers();
+
+    async function loadUsers() {
+        try {
+            setStatus('사용자 목록을 불러오는 중입니다.', '');
+            const users = await requestJson('/api/user/list');
+            renderUsers(users);
+            setStatus(`${users.length}명의 사용자를 표시합니다.`, '');
+        } catch (error) {
+            renderUsers([]);
+            setStatus(error.message, 'error');
+        }
+    }
+
+    function renderUsers(users) {
+        refs.empty.style.display = users.length ? 'none' : 'block';
+        refs.body.innerHTML = users.map(user => `
+            <tr data-user-id="${user.id}">
+                <td>#${user.id}</td>
+                <td>${escapeHtml(user.loginId)}</td>
+                <td>${escapeHtml(user.userName)}</td>
+                <td>${escapeHtml(user.email)}</td>
+                <td>${escapeHtml(user.provider || 'local')}</td>
+                <td>
+                    <select name="role">
+                        ${['USER', 'SELLER', 'ADMIN'].map(role => `
+                            <option value="${role}" ${user.role === role ? 'selected' : ''}>${role}</option>
+                        `).join('')}
+                    </select>
+                </td>
+                <td>
+                    <div class="row-actions">
+                        <button class="btn" type="button" data-action="role">역할 저장</button>
+                        <button class="btn btn-danger" type="button" data-action="delete">삭제</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    async function handleUserAction(event) {
+        const button = event.target.closest('button[data-action]');
+        if (!button) {
+            return;
+        }
+
+        const row = button.closest('tr[data-user-id]');
+        const userId = Number(row.dataset.userId);
+        try {
+            if (button.dataset.action === 'role') {
+                await requestText(`/api/user/admin/users/${userId}/role`, {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        role: row.querySelector('[name="role"]').value
+                    })
+                });
+                setStatus('사용자 역할이 수정되었습니다.', '');
+            }
+            if (button.dataset.action === 'delete') {
+                await requestText(`/api/user/admin/${userId}`, { method: 'DELETE' });
+                setStatus('사용자가 삭제되었습니다.', '');
+            }
+            await loadUsers();
+        } catch (error) {
+            setStatus(error.message, 'error');
+        }
+    }
+
+    async function requestJson(url, options = {}) {
+        const response = await fetch(url, {
+            headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+            ...options
+        });
+        if (!response.ok) {
+            const message = await response.text();
+            throw new Error(message || `요청 실패: ${response.status}`);
+        }
+        return response.json();
+    }
+
+    async function requestText(url, options = {}) {
+        const response = await fetch(url, {
+            headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+            ...options
+        });
+        if (!response.ok) {
+            const message = await response.text();
+            throw new Error(message || `요청 실패: ${response.status}`);
+        }
+        return response.text();
+    }
+
+    function setStatus(message, type) {
+        refs.status.textContent = message;
+        refs.status.className = `status ${type || ''}`;
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+    }
+</script>
+</body>
+</html>

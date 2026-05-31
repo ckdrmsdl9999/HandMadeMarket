@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주문서와 주문내역 | HandMade Market</title>
+    <style>
+        :root {
+            --ink: #1f2522;
+            --muted: #6d756e;
+            --paper: #fffaf1;
+            --line: #e3d7c6;
+            --brand: #355e4b;
+            --accent: #c36b3f;
+            --danger: #a53a26;
+            --shadow: 0 20px 48px rgba(35, 42, 32, .12);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            color: var(--ink);
+            background:
+                    linear-gradient(120deg, rgba(53, 94, 75, .14), transparent 35%),
+                    radial-gradient(circle at 85% 12%, rgba(195, 107, 63, .24), transparent 28%),
+                    #f7f1e7;
+            font-family: "Noto Serif KR", Georgia, serif;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        button,
+        input,
+        textarea {
+            font: inherit;
+        }
+
+        .container {
+            width: min(1120px, calc(100% - 32px));
+            margin: 0 auto;
+        }
+
+        .topbar {
+            border-bottom: 1px solid rgba(50, 65, 54, .12);
+            background: rgba(255, 250, 241, .82);
+            backdrop-filter: blur(12px);
+        }
+
+        .topbar-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 18px;
+            padding: 18px 0;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: -.04em;
+        }
+
+        .logo em {
+            color: var(--accent);
+            font-style: normal;
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .nav button {
+            border: 0;
+            background: transparent;
+            color: inherit;
+            cursor: pointer;
+        }
+
+        .hero {
+            padding: 38px 0 22px;
+        }
+
+        .hero h1 {
+            margin: 0 0 10px;
+            font-size: clamp(36px, 5vw, 62px);
+            line-height: 1;
+            letter-spacing: -.07em;
+        }
+
+        .hero p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: .92fr 1.08fr;
+            gap: 22px;
+            align-items: start;
+            padding-bottom: 50px;
+        }
+
+        .panel,
+        .order-card {
+            background: rgba(255, 250, 241, .88);
+            border: 1px solid rgba(68, 78, 60, .13);
+            border-radius: 28px;
+            box-shadow: var(--shadow);
+        }
+
+        .panel {
+            padding: 26px;
+        }
+
+        .panel h2,
+        .order-card h3 {
+            margin: 0 0 16px;
+            letter-spacing: -.04em;
+        }
+
+        .cart-list {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .cart-item {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            padding: 14px;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            background: #fffdf8;
+        }
+
+        .muted {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .total {
+            display: flex;
+            justify-content: space-between;
+            padding: 16px 0;
+            border-top: 1px solid var(--line);
+            font-size: 22px;
+            font-weight: 900;
+        }
+
+        .form-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .field {
+            display: grid;
+            gap: 7px;
+        }
+
+        .field label {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .field input,
+        .field textarea {
+            width: 100%;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 13px 14px;
+            background: #fffdf8;
+            color: var(--ink);
+        }
+
+        .field textarea {
+            min-height: 86px;
+            resize: vertical;
+        }
+
+        .btn {
+            border: 0;
+            border-radius: 999px;
+            padding: 12px 18px;
+            color: #fffaf1;
+            background: var(--brand);
+            cursor: pointer;
+            font-weight: 900;
+        }
+
+        .btn-light {
+            background: #fff;
+            color: var(--ink);
+            border: 1px solid var(--line);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+        }
+
+        .status {
+            min-height: 22px;
+            margin: 12px 0;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .status.error {
+            color: var(--danger);
+        }
+
+        .orders {
+            display: grid;
+            gap: 16px;
+        }
+
+        .order-card {
+            padding: 20px;
+        }
+
+        .order-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: start;
+            margin-bottom: 14px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 7px 11px;
+            background: rgba(53, 94, 75, .12);
+            color: var(--brand);
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        .items {
+            display: grid;
+            gap: 8px;
+            margin: 14px 0;
+        }
+
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(227, 215, 198, .7);
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .edit-form {
+            display: grid;
+            gap: 10px;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid var(--line);
+        }
+
+        .row-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .empty {
+            padding: 32px;
+            text-align: center;
+            color: var(--muted);
+            border: 1px dashed var(--line);
+            border-radius: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .topbar-inner,
+            .order-head {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+<header class="topbar">
+    <div class="container topbar-inner">
+        <a class="logo" th:href="@{/}">HandMade <em>Market</em></a>
+        <nav class="nav">
+            <a th:href="@{/shop}">상품</a>
+            <a th:href="@{/cart}">장바구니</a>
+            <a th:href="@{/orders}">주문내역</a>
+            <a th:href="@{/loginSuccess}">내 정보</a>
+            <form th:action="@{/logout/naver}" method="post">
+                <button type="submit">로그아웃</button>
+            </form>
+        </nav>
+    </div>
+</header>
+
+<main class="container">
+    <section class="hero">
+        <h1>주문서 작성과<br>내 주문 관리</h1>
+        <p>현재 장바구니 기준으로 주문을 만들고, 생성된 주문의 수령 정보 수정과 취소까지 처리합니다.</p>
+    </section>
+
+    <section class="layout">
+        <aside class="panel">
+            <h2>주문서</h2>
+            <div id="cart-list" class="cart-list"></div>
+            <div id="cart-empty" class="empty" style="display:none;">장바구니가 비어 있습니다.</div>
+            <div class="total">
+                <span>총 결제 금액</span>
+                <strong id="cart-total">0원</strong>
+            </div>
+            <form id="order-form" class="form-grid">
+                <div class="field">
+                    <label for="recipientName">수령인</label>
+                    <input id="recipientName" name="recipientName" required th:value="${displayName}">
+                </div>
+                <div class="field">
+                    <label for="recipientPhone">연락처</label>
+                    <input id="recipientPhone" name="recipientPhone" required placeholder="010-0000-0000">
+                </div>
+                <div class="field">
+                    <label for="shippingAddress">배송지</label>
+                    <textarea id="shippingAddress" name="shippingAddress" required placeholder="배송 받을 주소를 입력하세요"></textarea>
+                </div>
+                <button class="btn" type="submit">장바구니 상품으로 주문하기</button>
+            </form>
+            <div id="order-status" class="status"></div>
+        </aside>
+
+        <section class="panel">
+            <h2>내 주문</h2>
+            <div id="orders-status" class="status"></div>
+            <div id="orders" class="orders"></div>
+            <div id="orders-empty" class="empty" style="display:none;">아직 주문이 없습니다.</div>
+        </section>
+    </section>
+</main>
+
+<script th:inline="javascript">
+    const pageState = {
+        userId: [[${currentUserId}]]
+    };
+
+    const refs = {
+        cartList: document.getElementById('cart-list'),
+        cartEmpty: document.getElementById('cart-empty'),
+        cartTotal: document.getElementById('cart-total'),
+        orderForm: document.getElementById('order-form'),
+        orderStatus: document.getElementById('order-status'),
+        ordersStatus: document.getElementById('orders-status'),
+        orders: document.getElementById('orders'),
+        ordersEmpty: document.getElementById('orders-empty')
+    };
+
+    refs.orderForm.addEventListener('submit', createOrder);
+    refs.orders.addEventListener('click', handleOrderAction);
+
+    // 주문 화면 진입 시 장바구니와 주문 목록을 같이 불러와 주문 전후 흐름을 한 화면에 둠
+    initializeOrdersPage();
+
+    async function initializeOrdersPage() {
+        await Promise.all([loadCart(), loadOrders()]);
+    }
+
+    async function loadCart() {
+        try {
+            const cart = await requestJson(`/api/carts/${pageState.userId}`);
+            renderCart(cart);
+        } catch (error) {
+            renderCart({ cartItems: [], totalAmount: 0 });
+            setStatus(refs.orderStatus, error.message, 'error');
+        }
+    }
+
+    function renderCart(cart) {
+        const items = cart.cartItems || [];
+        refs.cartList.innerHTML = items.map(item => `
+            <div class="cart-item">
+                <div>
+                    <strong>${escapeHtml(item.productNameSnapshot)}</strong>
+                    <div class="muted">${formatMoney(item.unitPriceSnapshot)}원 × ${item.quantity}개</div>
+                </div>
+                <strong>${formatMoney(item.lineAmount)}원</strong>
+            </div>
+        `).join('');
+        refs.cartEmpty.style.display = items.length ? 'none' : 'block';
+        refs.cartTotal.textContent = `${formatMoney(cart.totalAmount)}원`;
+        refs.orderForm.querySelector('button[type="submit"]').disabled = items.length === 0;
+    }
+
+    async function loadOrders() {
+        try {
+            setStatus(refs.ordersStatus, '주문 목록을 불러오는 중입니다.', '');
+            const orders = await requestJson('/api/orders/me');
+            renderOrders(orders);
+            setStatus(refs.ordersStatus, `${orders.length}개의 주문이 있습니다.`, '');
+        } catch (error) {
+            renderOrders([]);
+            setStatus(refs.ordersStatus, error.message, 'error');
+        }
+    }
+
+    function renderOrders(orders) {
+        refs.ordersEmpty.style.display = orders.length ? 'none' : 'block';
+        refs.orders.innerHTML = orders.map(order => `
+            <article class="order-card" data-order-id="${order.orderId}">
+                <div class="order-head">
+                    <div>
+                        <h3>주문 ${escapeHtml(order.orderNumber)}</h3>
+                        <div class="muted">${formatDate(order.orderDate)} · ${formatMoney(order.totalAmount)}원</div>
+                    </div>
+                    <span class="badge">${escapeHtml(order.orderStatus)}</span>
+                </div>
+                <div class="items">
+                    ${(order.items || []).map(item => `
+                        <div class="item-row">
+                            <span>${escapeHtml(item.productName)} · ${item.quantity}개</span>
+                            <strong>${formatMoney(item.lineAmount)}원</strong>
+                        </div>
+                    `).join('')}
+                </div>
+                <form class="edit-form">
+                    <div class="field">
+                        <label>수령인</label>
+                        <input name="recipientName" value="${escapeHtml(order.recipientName)}">
+                    </div>
+                    <div class="field">
+                        <label>연락처</label>
+                        <input name="recipientPhone" value="${escapeHtml(order.recipientPhone)}">
+                    </div>
+                    <div class="field">
+                        <label>배송지</label>
+                        <textarea name="shippingAddress">${escapeHtml(order.shippingAddress)}</textarea>
+                    </div>
+                </form>
+                <div class="row-actions">
+                    <button class="btn btn-light" type="button" data-action="update" ${order.orderStatus !== 'PENDING' ? 'disabled' : ''}>수령 정보 수정</button>
+                    <button class="btn btn-danger" type="button" data-action="cancel" ${order.orderStatus !== 'PENDING' ? 'disabled' : ''}>주문 취소</button>
+                </div>
+            </article>
+        `).join('');
+    }
+
+    async function createOrder(event) {
+        event.preventDefault();
+        const payload = Object.fromEntries(new FormData(refs.orderForm).entries());
+        try {
+            const result = await requestJson('/api/orders', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+            setStatus(refs.orderStatus, `주문이 생성되었습니다. 주문 ID: ${result.orderId}`, '');
+            refs.orderForm.reset();
+            await initializeOrdersPage();
+        } catch (error) {
+            setStatus(refs.orderStatus, error.message, 'error');
+        }
+    }
+
+    async function handleOrderAction(event) {
+        const button = event.target.closest('button[data-action]');
+        if (!button) {
+            return;
+        }
+
+        const card = button.closest('.order-card');
+        const orderId = Number(card.dataset.orderId);
+        try {
+            if (button.dataset.action === 'update') {
+                const payload = Object.fromEntries(new FormData(card.querySelector('.edit-form')).entries());
+                await requestJson(`/api/orders/${orderId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(payload)
+                });
+                setStatus(refs.ordersStatus, '수령 정보가 수정되었습니다.', '');
+            }
+            if (button.dataset.action === 'cancel') {
+                await requestJson(`/api/orders/${orderId}/cancel`, { method: 'PATCH' });
+                setStatus(refs.ordersStatus, '주문이 취소되었습니다.', '');
+            }
+            await Promise.all([loadCart(), loadOrders()]);
+        } catch (error) {
+            setStatus(refs.ordersStatus, error.message, 'error');
+        }
+    }
+
+    async function requestJson(url, options = {}) {
+        const response = await fetch(url, {
+            headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+            ...options
+        });
+        if (!response.ok) {
+            const message = await response.text();
+            throw new Error(message || `요청 실패: ${response.status}`);
+        }
+        return response.status === 204 ? null : response.json();
+    }
+
+    function setStatus(target, message, type) {
+        target.textContent = message;
+        target.className = `status ${type || ''}`;
+    }
+
+    function formatMoney(value) {
+        return Number(value || 0).toLocaleString('ko-KR');
+    }
+
+    function formatDate(value) {
+        if (!value) {
+            return '-';
+        }
+        const date = Array.isArray(value)
+            ? new Date(value[0], value[1] - 1, value[2], value[3] || 0, value[4] || 0)
+            : new Date(value);
+        return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString('ko-KR');
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+    }
+</script>
+</body>
+</html>

@@ -88,6 +88,43 @@ public class OAuthController {//일단 만들어보자구
         return "login";
     }
 
+    // 전체 상품 탐색 화면을 API 상품 목록과 연결함
+    @GetMapping("/shop")
+    public String shop(Model model, Authentication authentication) {
+        addAuthInfoToModel(model, authentication);
+        return "shop";
+    }
+
+    // 주문서와 내 주문 목록 화면은 로그인 사용자 기준 API를 사용하므로 인증 후 접근하게 함
+    @GetMapping("/orders")
+    public String orders(Model model, Authentication authentication) {
+        if (resolveCurrentUser(authentication).isEmpty()) {
+            return "redirect:/login";
+        }
+        addAuthInfoToModel(model, authentication);
+        return "orders";
+    }
+
+    // 관리자 사용자 관리 화면은 역할 변경/삭제 API를 다루므로 관리자만 진입하게 함
+    @GetMapping("/admin/users")
+    public String adminUsers(Model model, Authentication authentication) {
+        if (!isAdmin(authentication)) {
+            return "redirect:/";
+        }
+        addAuthInfoToModel(model, authentication);
+        return "admin-users";
+    }
+
+    // 관리자 배송 관리 화면은 전체 배송 목록과 삭제 API를 다루므로 관리자만 진입하게 함
+    @GetMapping("/admin/delivery")
+    public String adminDelivery(Model model, Authentication authentication) {
+        if (!isAdmin(authentication)) {
+            return "redirect:/";
+        }
+        addAuthInfoToModel(model, authentication);
+        return "admin-delivery";
+    }
+
     // 상품 등록 MVP 화면 진입 경로를 추가
     @GetMapping("/seller/products/new")
     public String productForm(Model model, Authentication authentication) {
@@ -166,8 +203,9 @@ public class OAuthController {//일단 만들어보자구
 
         model.addAttribute("isLoggedIn", isLoggedIn);
         // 로그인 사용자 모델 정보도 공통 인증 사용자 조회 결과를 재사용함
-        Optional<User> currentUser = isLoggedIn ? userService.getAuthenticatedUser(authentication) : Optional.empty();
+        Optional<User> currentUser = isLoggedIn ? resolveCurrentUser(authentication) : Optional.empty();
         model.addAttribute("currentUserId", currentUser.map(User::getId).orElse(null));
+        model.addAttribute("currentUserRole", currentUser.map(user -> user.getRole().name()).orElse(null));
 
         if (!isLoggedIn) {
             return;
@@ -188,6 +226,18 @@ public class OAuthController {//일단 만들어보자구
         return userService.getAuthenticatedUser(authentication)
                 .map(User::getId)
                 .orElse(null);
+    }
+
+    // 화면 라우트 권한 판단도 공통 인증 사용자 해석 결과를 재사용함
+    private Optional<User> resolveCurrentUser(Authentication authentication) {
+        return userService.getAuthenticatedUser(authentication);
+    }
+
+    // 관리자 전용 템플릿 진입 여부를 DB 사용자 역할 기준으로 판단함
+    private boolean isAdmin(Authentication authentication) {
+        return resolveCurrentUser(authentication)
+                .map(user -> "ADMIN".equals(user.getRole().name()))
+                .orElse(false);
     }
 
     private String resolveProvider(Authentication authentication, Map<String, Object> attributes) {
