@@ -4,8 +4,8 @@ import com.project.marketplace.cart.entity.Cart;
 import com.project.marketplace.cart.entity.CartItem;
 import com.project.marketplace.cart.repository.CartRepository;
 import com.project.marketplace.order.dto.OrderCreateRequestDto;
-import com.project.marketplace.order.dto.OrderDto;
 import com.project.marketplace.order.dto.OrderResponseDto;
+import com.project.marketplace.order.dto.OrderUpdateRequestDto;
 import com.project.marketplace.order.entity.Order;
 import com.project.marketplace.order.entity.OrderItem;
 import com.project.marketplace.order.entity.OrderStatus;
@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 public class OrderService{
 
     private final OrderRepository orderRepository;
-    // 주문 생성/수정 시 userId를 실제 사용자로 검증해 연관관계 무결성을 보장하기 위해 사용자 저장소를 추가했다.
+    // 주문 생성 시 userId를 실제 사용자로 검증해 연관관계 무결성을 보장함
     private final UserRepository userRepository;
     private final CartRepository cartRepository;
     private final ProductRepository productRepository;
@@ -95,21 +95,20 @@ public class OrderService{
     /**
      * 주문 ID로 주문을 조회합니다.
      */
-    public OrderResponseDto getOrderById(Long orderId) {
-        // 주문 상세 응답은 주문상품 목록까지 포함해야 하므로 fetch join 조회 결과를 응답 DTO로 변환함
-        return orderRepository.findDetailById(orderId)
-                .map(OrderResponseDto::fromEntity)
-                .orElse(null);
+    public OrderResponseDto getOrderById(Long orderId, Long userId) {
+        // 주문 상세 조회는 현재 로그인 사용자 소유 주문만 DTO로 변환함
+        return OrderResponseDto.fromEntity(findOrderForUser(orderId, userId));
     }
 
     /**
      * 주문번호로 주문을 조회합니다.
      */
-    public OrderResponseDto getOrderByOrderNumber(String orderNumber) {
-        // 주문번호 조회도 주문상품 목록을 포함한 응답 DTO로 내려주도록 변경함
-        return orderRepository.findDetailByOrderNumber(orderNumber)
-                .map(OrderResponseDto::fromEntity)
-                .orElse(null);
+    public OrderResponseDto getOrderByOrderNumber(String orderNumber, Long userId) {
+        // 주문번호 조회도 현재 로그인 사용자 소유 여부를 확인한 뒤 응답함
+        Order order = orderRepository.findDetailByOrderNumber(orderNumber)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "주문을 찾을 수 없습니다."));
+        validateOrderOwner(order, userId);
+        return OrderResponseDto.fromEntity(order);
     }
 
     /**
@@ -142,48 +141,32 @@ public class OrderService{
     public void updateOrderStatus(Long orderId, OrderStatus orderStatus) {
         // 상태 변경 시 대상 주문을 조회해 엔티티를 수정하고 JPA dirty checking으로 반영한다.
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다. ID: " + orderId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "주문을 찾을 수 없습니다."));
 
-
-            order.setOrderStatus(orderStatus);
-
-
+        order.setOrderStatus(orderStatus);
     }
 
     /**
      * 주문 정보를 업데이트합니다.
      */
     @Transactional
-    public void updateOrder(OrderDto orderDto) {
-        // 전체 주문 수정은 기존 엔티티를 기준으로 필요한 필드만 갱신해 의도치 않은 덮어쓰기를 줄인다.
-        Order order = orderRepository.findById(orderDto.getOrderId())
-                .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다. ID: " + orderDto.getOrderId()));
-        // 주문 수정에서도 주문자 ID 누락을 선제 차단해 잘못된 사용자 연관갱신 요청을 막는다.
-        if (orderDto.getUserId() == null) {
-            throw new RuntimeException("주문자 ID는 필수입니다.");
+    public void updateOrder(Long orderId, Long userId, OrderUpdateRequestDto request) {
+        // 주문 수정은 본인 주문의 수령 정보만 변경해 금액/상태/주문자 조작을 막음
+        Order order = findOrderForUser(orderId, userId);
+        if (order.getOrderStatus() != OrderStatus.PENDING) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "대기 중인 주문만 수정할 수 있습니다.");
         }
-        // 수정 요청의 userId도 사용자 엔티티로 검증해 주문 소유자 연관관계를 안전하게 갱신한다.
-        User user = userRepository.findById(orderDto.getUserId())
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다. ID: " + orderDto.getUserId()));
-        order.setUser(user);
-        order.setOrderNumber(orderDto.getOrderNumber());
-        order.setOrderStatus(orderDto.getOrderStatus());
-        order.setTotalAmount(orderDto.getTotalAmount());
-        order.setOrderDate(orderDto.getOrderDate());
-        order.setRecipientName(orderDto.getRecipientName());
-        order.setRecipientPhone(orderDto.getRecipientPhone());
-        order.setShippingAddress(orderDto.getShippingAddress());
+        validateOrderUpdateRequest(request);
+
+        order.setRecipientName(request.getRecipientName());
+        order.setRecipientPhone(request.getRecipientPhone());
+        order.setShippingAddress(request.getShippingAddress());
     }
 
     @Transactional
     public void cancelOrder(Long orderId, Long userId) {
         // 주문 취소는 주문 기록을 삭제하지 않고 상태와 재고만 되돌리도록 처리함
-        Order order = orderRepository.findDetailById(orderId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "주문을 찾을 수 없습니다."));
-
-        if (!order.getUser().getId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "주문을 찾을 수 없습니다.");
-        }
+        Order order = findOrderForUser(orderId, userId);
 
         if (order.getOrderStatus() != OrderStatus.PENDING) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "취소할 수 없는 주문 상태입니다.");
@@ -199,5 +182,30 @@ public class OrderService{
         }
 
         order.setOrderStatus(OrderStatus.CANCELED);
+    }
+
+    // 주문 조회와 변경에서 본인 주문 확인을 같은 기준으로 처리함
+    private Order findOrderForUser(Long orderId, Long userId) {
+        Order order = orderRepository.findDetailById(orderId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "주문을 찾을 수 없습니다."));
+        validateOrderOwner(order, userId);
+        return order;
+    }
+
+    // 다른 사용자의 주문 존재 여부가 노출되지 않도록 소유자가 아니면 404로 응답함
+    private void validateOrderOwner(Order order, Long userId) {
+        if (!order.getUser().getId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "주문을 찾을 수 없습니다.");
+        }
+    }
+
+    // 주문 수령 정보 필수값 누락으로 DB 제약조건 오류가 나지 않도록 요청 단계에서 차단함
+    private void validateOrderUpdateRequest(OrderUpdateRequestDto request) {
+        if (request == null
+                || request.getRecipientName() == null || request.getRecipientName().isBlank()
+                || request.getRecipientPhone() == null || request.getRecipientPhone().isBlank()
+                || request.getShippingAddress() == null || request.getShippingAddress().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "수령 정보는 필수입니다.");
+        }
     }
 }
