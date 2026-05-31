@@ -1,13 +1,18 @@
 package com.project.marketplace.order.controller;
 
 import com.project.marketplace.order.dto.OrderDto;
+import com.project.marketplace.order.dto.OrderCreateRequestDto;
 import com.project.marketplace.order.dto.OrderResponseDto;
 import com.project.marketplace.order.entity.OrderStatus;
 import com.project.marketplace.order.service.OrderService;
+import com.project.marketplace.user.entity.User;
+import com.project.marketplace.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
@@ -18,13 +23,19 @@ import java.util.Map;
 public class OrderController {
 
     private final OrderService orderService;
+    private final UserService userService;
 
     /**
      * 새로운 주문을 생성합니다.
      */
     @PostMapping // /api/orders
-    public ResponseEntity<Map<String, Long>> createOrder(@RequestBody OrderDto orderDto) {
-        Long orderId = orderService.createOrder(orderDto);
+    public ResponseEntity<Map<String, Long>> createOrder(
+            Authentication authentication,
+            @RequestBody OrderCreateRequestDto request) {
+        // 주문자는 요청 body가 아니라 현재 로그인 사용자 기준으로 결정함
+        User user = userService.getAuthenticatedUser(authentication)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인 후 주문할 수 있습니다."));
+        Long orderId = orderService.createOrder(user.getId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("orderId", orderId));
     }
 

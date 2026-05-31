@@ -1,10 +1,16 @@
 package com.project.marketplace.order.service;
 
+import com.project.marketplace.cart.entity.Cart;
+import com.project.marketplace.cart.entity.CartItem;
+import com.project.marketplace.cart.repository.CartRepository;
+import com.project.marketplace.order.dto.OrderCreateRequestDto;
 import com.project.marketplace.order.dto.OrderDto;
 import com.project.marketplace.order.dto.OrderResponseDto;
 import com.project.marketplace.order.entity.Order;
+import com.project.marketplace.order.entity.OrderItem;
 import com.project.marketplace.order.entity.OrderStatus;
 import com.project.marketplace.order.repository.OrderRepository;
+import com.project.marketplace.product.entity.Product;
 import com.project.marketplace.user.entity.User;
 import com.project.marketplace.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,37 +29,60 @@ public class OrderService{
     private final OrderRepository orderRepository;
     // 주문 생성/수정 시 userId를 실제 사용자로 검증해 연관관계 무결성을 보장하기 위해 사용자 저장소를 추가했다.
     private final UserRepository userRepository;
+    private final CartRepository cartRepository;
 
     /**
      * 새로운 주문을 생성합니다.
      */
     @Transactional
-    public Long createOrder(OrderDto orderDto) {
-        // 주문 생성 기본값을 서비스에서 보정해 클라이언트 입력 누락 시에도 일관된 데이터를 저장한다.
-        // 주문번호 생성 (UUID 방식)
-        String orderNumber = UUID.randomUUID().toString().replaceAll("-", "").substring(0, 16);
-        orderDto.setOrderNumber(orderNumber);
-
-        // 주문 상태 초기화
-        if (orderDto.getOrderStatus() == null) {
-            orderDto.setOrderStatus(OrderStatus.PENDING);
+    public Long createOrder(Long userId, OrderCreateRequestDto request) {
+        // 주문 생성 사용자는 요청 body 대신 인증 사용자 내부 PK로 조회해 조작 가능성을 제거함
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다. ID: " + userId));
+        // 주문 품목과 수량은 요청값 대신 현재 사용자 장바구니에서 가져와 가격/수량 조작을 막음
+        Cart cart = cartRepository.findDetailByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("장바구니가 비어 있습니다."));
+        if (cart.getCartItems().isEmpty()) {
+            throw new RuntimeException("장바구니가 비어 있습니다.");
         }
 
-        // 주문 일시 설정
-        if (orderDto.getOrderDate() == null) {
-            orderDto.setOrderDate(LocalDateTime.now());
+        Order order = Order.builder()
+                .user(user)
+                .orderNumber(UUID.randomUUID().toString().replaceAll("-", "").substring(0, 16))
+                .orderStatus(OrderStatus.PENDING)
+                .orderDate(LocalDateTime.now())
+                .recipientName(request.getRecipientName())
+                .recipientPhone(request.getRecipientPhone())
+                .shippingAddress(request.getShippingAddress())
+                .totalAmount(0)
+                .build();
+
+        int totalAmount = 0;
+        for (CartItem cartItem : cart.getCartItems()) {
+            Product product = cartItem.getProduct();
+            int quantity = cartItem.getQuantity();
+            int unitPrice = product.getPrice();
+
+            if (product.getQuantity() < quantity) {
+                throw new RuntimeException("상품 재고가 부족합니다. 상품명: " + product.getName());
+            }
+
+            order.addItem(OrderItem.create(
+                    product.getId(),
+                    product.getName(),
+                    unitPrice,
+                    quantity
+            ));
+            totalAmount += unitPrice * quantity;
+
+            product.setQuantity(product.getQuantity() - quantity);
+            product.setSalesCount(product.getSalesCount() + quantity);
+            product.setIsSoldOut(product.getQuantity() <= 0);
         }
 
-        // 사용자 조회 전에 필수값 누락을 검사해 null ID로 인한 저장소 예외를 명확한 메시지로 바꾼다.
-        if (orderDto.getUserId() == null) {
-            throw new RuntimeException("주문자 ID는 필수입니다.");
-        }
-        // 주문 저장 전에 userId로 사용자 엔티티를 조회해 주문-사용자 FK가 유효한 경우만 저장되게 했다.
-        User user = userRepository.findById(orderDto.getUserId())
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다. ID: " + orderDto.getUserId()));
-        // DTO를 엔티티로 변환한 뒤 사용자 연관관계를 연결해 JPA 매핑을 일관되게 적용한다.
-        Order order = OrderDto.toEntity(orderDto);
-        order.setUser(user);
+        order.setTotalAmount(totalAmount);
+        // 주문 생성 후 장바구니 항목을 비워 같은 상품이 중복 주문되지 않게 함
+        List.copyOf(cart.getCartItems()).forEach(cart::removeCartItem);
 
         Order savedOrder = orderRepository.save(order);
         return savedOrder.getOrderId();
