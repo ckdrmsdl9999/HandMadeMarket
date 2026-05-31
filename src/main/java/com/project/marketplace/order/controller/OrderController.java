@@ -1,6 +1,7 @@
 package com.project.marketplace.order.controller;
 
 import com.project.marketplace.order.dto.OrderDto;
+import com.project.marketplace.order.dto.OrderResponseDto;
 import com.project.marketplace.order.entity.OrderStatus;
 import com.project.marketplace.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    /**꽃님반일진 오룡정점
+    /**
      * 새로운 주문을 생성합니다.
      */
     @PostMapping // /api/orders
@@ -31,32 +32,35 @@ public class OrderController {
      * 주문 ID로 주문을 조회합니다.
      */
     @GetMapping("/{orderId}") // /api/orders/{orderId}
-    public ResponseEntity<OrderDto> getOrderById(@PathVariable Long orderId) {
-        OrderDto orderDto = orderService.getOrderById(orderId);
-        if (orderDto == null) {
+    public ResponseEntity<OrderResponseDto> getOrderById(@PathVariable Long orderId) {
+        // 주문 조회 응답은 주문상품 목록을 포함한 전용 응답 DTO로 반환함
+        OrderResponseDto order = orderService.getOrderById(orderId);
+        if (order == null) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(orderDto);
+        return ResponseEntity.ok(order);
     }
 
     /**
      * 주문번호로 주문을 조회합니다.
      */
     @GetMapping("/number/{orderNumber}") // /api/orders/number/{orderNumber}
-    public ResponseEntity<OrderDto> getOrderByOrderNumber(@PathVariable String orderNumber) {
-        OrderDto orderDto = orderService.getOrderByOrderNumber(orderNumber);
-        if (orderDto == null) {
+    public ResponseEntity<OrderResponseDto> getOrderByOrderNumber(@PathVariable String orderNumber) {
+        // 주문번호 조회도 같은 응답 DTO를 사용해 응답 구조를 통일함
+        OrderResponseDto order = orderService.getOrderByOrderNumber(orderNumber);
+        if (order == null) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(orderDto);
+        return ResponseEntity.ok(order);
     }
 
     /**
      * 사용자의 모든 주문을 조회합니다.
      */
     @GetMapping("/user/{userId}") // /api/orders/user/{userId}
-    public ResponseEntity<List<OrderDto>> getOrdersByUserId(@PathVariable Long userId) {
-        List<OrderDto> orders = orderService.getOrdersByUserId(userId);
+    public ResponseEntity<List<OrderResponseDto>> getOrdersByUserId(@PathVariable Long userId) {
+        // 주문 목록 응답도 주문상품 목록을 포함한 응답 DTO 리스트로 반환함
+        List<OrderResponseDto> orders = orderService.getOrdersByUserId(userId);
         return ResponseEntity.ok(orders);
     }
 
@@ -64,8 +68,9 @@ public class OrderController {
      * 모든 주문을 조회합니다.
      */
     @GetMapping // /api/orders
-    public ResponseEntity<List<OrderDto>> getAllOrders() {
-        List<OrderDto> orders = orderService.getAllOrders();
+    public ResponseEntity<List<OrderResponseDto>> getAllOrders() {
+        // 전체 주문 목록도 응답 DTO를 사용해 요청 DTO와 역할을 분리함
+        List<OrderResponseDto> orders = orderService.getAllOrders();
         return ResponseEntity.ok(orders);
 
     }

@@ -1,6 +1,7 @@
 package com.project.marketplace.order.service;
 
 import com.project.marketplace.order.dto.OrderDto;
+import com.project.marketplace.order.dto.OrderResponseDto;
 import com.project.marketplace.order.entity.Order;
 import com.project.marketplace.order.entity.OrderStatus;
 import com.project.marketplace.order.repository.OrderRepository;
@@ -61,43 +62,43 @@ public class OrderService{
     /**
      * 주문 ID로 주문을 조회합니다.
      */
-    public OrderDto getOrderById(Long orderId) {
-        // 조회 결과가 없을 수 있으므로 Optional을 DTO null 반환 규칙에 맞춰 변환한다.
-        return orderRepository.findById(orderId)
-                .map(OrderDto::fromEntity)
+    public OrderResponseDto getOrderById(Long orderId) {
+        // 주문 상세 응답은 주문상품 목록까지 포함해야 하므로 fetch join 조회 결과를 응답 DTO로 변환함
+        return orderRepository.findDetailById(orderId)
+                .map(OrderResponseDto::fromEntity)
                 .orElse(null);
     }
 
     /**
      * 주문번호로 주문을 조회합니다.
      */
-    public OrderDto getOrderByOrderNumber(String orderNumber) {
-        // 주문번호 조회도 JPA 메서드 기반으로 전환해 Mapper 의존을 제거한다.
-        return orderRepository.findByOrderNumber(orderNumber)
-                .map(OrderDto::fromEntity)
+    public OrderResponseDto getOrderByOrderNumber(String orderNumber) {
+        // 주문번호 조회도 주문상품 목록을 포함한 응답 DTO로 내려주도록 변경함
+        return orderRepository.findDetailByOrderNumber(orderNumber)
+                .map(OrderResponseDto::fromEntity)
                 .orElse(null);
     }
 
     /**
      * 사용자의 모든 주문을 조회합니다.
      */
-    public List<OrderDto> getOrdersByUserId(Long userId) {
+    public List<OrderResponseDto> getOrdersByUserId(Long userId) {
         // 사용자 주문 목록을 최신 주문 우선으로 내려주기 위해 정렬 메서드를 사용한다.
         // 주문 조회는 User 내부 PK를 기준으로 저장소 메서드를 호출하도록 수정했다 -3/16
-        return orderRepository.findByUser_IdOrderByOrderDateDesc(userId)
+        return orderRepository.findDetailsByUserId(userId)
                 .stream()
-                .map(OrderDto::fromEntity)
+                .map(OrderResponseDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
     /**
      * 모든 주문을 조회합니다.
      */
-    public List<OrderDto> getAllOrders() {
-        // 전체 주문도 엔티티 목록을 DTO로 변환해 컨트롤러 응답 형식을 유지한다.
-        return orderRepository.findAll()
+    public List<OrderResponseDto> getAllOrders() {
+        // 전체 주문 조회도 주문상품 목록을 포함한 응답 DTO로 내려주도록 변경함
+        return orderRepository.findAllDetailsOrderByOrderDateDesc()
                 .stream()
-                .map(OrderDto::fromEntity)
+                .map(OrderResponseDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
