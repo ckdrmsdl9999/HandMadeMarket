@@ -17,9 +17,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // 상품명으로 검색 (이름에 키워드 포함된 상품)
     List<Product> findByNameContaining(String keyword);
 
-    // 샘플 판매자에 연결된 초기 상품만 시작 시 정리할 수 있게 삭제 조건을 추가
-    long deleteByNameInAndSeller_IdIn(List<String> names, List<Long> sellerIds);
-
+    boolean existsByNameAndSeller_Id(String name, Long sellerId);
 
     @Query("SELECT p FROM Product p ORDER BY p.salesCount DESC")
     List<Product> findPopularProducts(Pageable pageable);
