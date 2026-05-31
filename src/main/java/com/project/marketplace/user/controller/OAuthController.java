@@ -3,6 +3,7 @@ package com.project.marketplace.user.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.marketplace.user.entity.User;
 import com.project.marketplace.user.service.UserService;
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -24,6 +25,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
+// Swagger 문서에는 API가 아닌 화면 이동 컨트롤러를 노출하지 않도록 숨김
+@Hidden
 @Controller
 @RequiredArgsConstructor
 @Slf4j

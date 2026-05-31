@@ -13,6 +13,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
+
 
 @Configuration
 @EnableWebSecurity
@@ -31,18 +33,20 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/shop", "/login", "/loginSuccess", "/oauth2/**", "/error").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/user/signup", "/api/user/signin").permitAll()
+                        // Swagger UI와 OpenAPI 명세는 로그인 없이 확인할 수 있게 허용함
+                        .requestMatchers(antMatcher("/swagger-ui.html"), antMatcher("/swagger-ui/**"), antMatcher("/v3/api-docs/**")).permitAll()
+                        .requestMatchers(antMatcher("/"), antMatcher("/shop"), antMatcher("/login"), antMatcher("/loginSuccess"), antMatcher("/oauth2/**"), antMatcher("/error")).permitAll()
+                        .requestMatchers(antMatcher(HttpMethod.POST, "/api/user/signup"), antMatcher(HttpMethod.POST, "/api/user/signin")).permitAll()
                         // 관리자 화면과 사용자 목록 API는 관리자 권한으로 제한함
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/user/list").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/**","/products/**").permitAll()
-                        .requestMatchers("/seller/**", "/orders", "/api/carts/**", "/api/orders/**").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/products").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/products/**").authenticated()
-                        .requestMatchers(HttpMethod.PATCH, "/api/products/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/products/**").authenticated()
-                        .requestMatchers("/api/user/admin/**").hasRole("ADMIN")
+                        .requestMatchers(antMatcher("/admin/**")).hasRole("ADMIN")
+                        .requestMatchers(antMatcher(HttpMethod.GET, "/api/user/list")).hasRole("ADMIN")
+                        .requestMatchers(antMatcher(HttpMethod.GET, "/api/products"), antMatcher(HttpMethod.GET, "/api/products/**"), antMatcher(HttpMethod.GET, "/products/**")).permitAll()
+                        .requestMatchers(antMatcher("/seller/**"), antMatcher("/orders"), antMatcher("/api/carts/**"), antMatcher("/api/orders/**")).authenticated()
+                        .requestMatchers(antMatcher(HttpMethod.POST, "/api/products")).authenticated()
+                        .requestMatchers(antMatcher(HttpMethod.PUT, "/api/products/**")).authenticated()
+                        .requestMatchers(antMatcher(HttpMethod.PATCH, "/api/products/**")).authenticated()
+                        .requestMatchers(antMatcher(HttpMethod.DELETE, "/api/products/**")).authenticated()
+                        .requestMatchers(antMatcher("/api/user/admin/**")).hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .oauth2Login(oauth2 -> oauth2
                         .loginPage("/login")

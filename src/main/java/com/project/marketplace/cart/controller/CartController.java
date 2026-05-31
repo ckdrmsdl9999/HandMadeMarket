@@ -7,6 +7,7 @@ import com.project.marketplace.cart.dto.CartResponseDto;
 import com.project.marketplace.cart.service.CartService;
 import com.project.marketplace.user.entity.User;
 import com.project.marketplace.user.service.UserService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/carts")
 @RequiredArgsConstructor
+// Swagger 문서에서 장바구니 API를 도메인별로 묶기 위해 태그를 지정함
+@Tag(name = "Cart", description = "장바구니 API")
 public class CartController {
 
 

@@ -3,6 +3,7 @@ package com.project.marketplace.user.controller;
 import com.project.marketplace.user.dto.*;
 import com.project.marketplace.user.entity.User;
 import com.project.marketplace.user.service.UserService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/user")
 @RequiredArgsConstructor
+// Swagger 문서에서 사용자 API를 도메인별로 묶기 위해 태그를 지정함
+@Tag(name = "User", description = "사용자와 인증 API")
 public class UserController {
 
     private final UserService userService;//주석
