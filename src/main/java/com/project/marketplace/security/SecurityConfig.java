@@ -42,11 +42,13 @@ public class SecurityConfig {
                         .requestMatchers(antMatcher("/admin/**")).hasRole("ADMIN")
                         .requestMatchers(antMatcher(HttpMethod.GET, "/api/user/list")).hasRole("ADMIN")
                         .requestMatchers(antMatcher(HttpMethod.GET, "/api/products"), antMatcher(HttpMethod.GET, "/api/products/**"), antMatcher(HttpMethod.GET, "/products/**")).permitAll()
-                        .requestMatchers(antMatcher("/seller/**"), antMatcher("/orders"), antMatcher("/api/carts/**"), antMatcher("/api/orders/**")).authenticated()
-                        .requestMatchers(antMatcher(HttpMethod.POST, "/api/products")).authenticated()
-                        .requestMatchers(antMatcher(HttpMethod.PUT, "/api/products/**")).authenticated()
-                        .requestMatchers(antMatcher(HttpMethod.PATCH, "/api/products/**")).authenticated()
-                        .requestMatchers(antMatcher(HttpMethod.DELETE, "/api/products/**")).authenticated()
+                        // 상품 관리 화면과 변경 API는 판매자와 관리자만 접근하도록 제한함
+                        .requestMatchers(antMatcher("/seller/**")).hasAnyRole("SELLER", "ADMIN")
+                        .requestMatchers(antMatcher(HttpMethod.POST, "/api/products")).hasAnyRole("SELLER", "ADMIN")
+                        .requestMatchers(antMatcher(HttpMethod.PUT, "/api/products/**")).hasAnyRole("SELLER", "ADMIN")
+                        .requestMatchers(antMatcher(HttpMethod.PATCH, "/api/products/**")).hasAnyRole("SELLER", "ADMIN")
+                        .requestMatchers(antMatcher(HttpMethod.DELETE, "/api/products/**")).hasAnyRole("SELLER", "ADMIN")
+                        .requestMatchers(antMatcher("/orders"), antMatcher("/api/carts/**"), antMatcher("/api/orders/**")).authenticated()
                         .requestMatchers(antMatcher("/api/user/admin/**")).hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .oauth2Login(oauth2 -> oauth2

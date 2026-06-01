@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.Map;
 
@@ -96,12 +97,18 @@ public class ProductController {
     @PutMapping("/{productId}")
     public ResponseEntity<Void> updateProduct(
             @PathVariable Long productId,
-            @RequestBody ProductDto productDto) {
+            @RequestBody ProductDto productDto,
+            Authentication authentication) {
         // 컨트롤러의 사전 조회를 제거하고 경로 ID와 본문 ID 일치만 검증해 서비스 단 조회로 중복 쿼리를 줄였다.
         if (!productId.equals(productDto.getProductId())) {
             return ResponseEntity.badRequest().build();
         }
-        productService.updateProduct(productDto);
+        // 상품 수정은 현재 로그인 사용자를 서비스에 넘겨 판매자 본인 여부를 검증하게 함
+        Long currentUserId = resolveCurrentUserId(authentication);
+        if (currentUserId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        productService.updateProduct(productDto, currentUserId);
 
         return ResponseEntity.ok().build();
     }
@@ -127,7 +134,8 @@ public class ProductController {
     @PatchMapping("/{productId}/quantity")
     public ResponseEntity<Void> updateProductQuantity(
             @PathVariable Long productId,
-            @RequestBody Map<String, Integer> request) {
+            @RequestBody Map<String, Integer> request,
+            Authentication authentication) {
 
         try {
             Integer quantity = request.get("quantity");
@@ -135,8 +143,16 @@ public class ProductController {
                 return ResponseEntity.badRequest().build();
             }
 
-            productService.updateProductQuantity(productId, quantity);
+            // 재고 변경도 상품 수정 권한과 같은 판매자 본인 검사를 거치게 함
+            Long currentUserId = resolveCurrentUserId(authentication);
+            if (currentUserId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            productService.updateProductQuantity(productId, quantity, currentUserId);
             return ResponseEntity.ok().build();
+        } catch (ResponseStatusException e) {
+            // 권한/인증 예외는 상태 코드가 유지되도록 그대로 전달함
+            throw e;
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
         }
