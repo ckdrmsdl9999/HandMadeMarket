@@ -87,9 +87,14 @@ public class ProductService {
     }
 
     @Transactional
-    public void updateProduct(ProductDto dto) {
+    public void updateProduct(ProductDto dto, Long requesterUserId) {
         Product product = productRepository.findById(dto.getProductId())
-                .orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다."));
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "상품을 찾을 수 없습니다."));
+        User requester = userRepository.findById(requesterUserId)
+                .orElseThrow(() -> new ResponseStatusException(UNAUTHORIZED, "사용자를 찾을 수 없습니다."));
+
+        // 상품 수정은 관리자 또는 상품 판매자 본인만 가능하도록 제한함
+        validateProductManager(product, requester, "본인 상품만 수정할 수 있습니다.");
 
         product.setName(dto.getProductName());
         product.setCategory(dto.getCategory());
@@ -97,13 +102,7 @@ public class ProductService {
         product.setQuantity(dto.getQuantity());
         product.setDescription(dto.getMainImage());
         product.setIsSoldOut(dto.getQuantity() <= 0);
-        // 수정 요청에 sellerId가 포함되면 판매자 연관관계도 함께 갱신할 수 있게 처리했다.
-        if (dto.getSellerId() != null) {
-            // 전달된 sellerId를 검증해 존재하는 사용자로만 판매자 변경이 되도록 했다.
-            User seller = userRepository.findById(dto.getSellerId())
-                    .orElseThrow(() -> new RuntimeException("판매자를 찾을 수 없습니다. ID: " + dto.getSellerId()));
-            product.setSeller(seller);
-        }
+        // 수정 요청의 sellerId는 상품 소유자 변경으로 악용될 수 있어 반영하지 않음
 
         productRepository.save(product);
     }
@@ -115,14 +114,22 @@ public class ProductService {
         User requester = userRepository.findById(requesterUserId)
                 .orElseThrow(() -> new ResponseStatusException(UNAUTHORIZED, "사용자를 찾을 수 없습니다."));
 
-        // 관리자 또는 판매자 본인만 상품을 삭제할 수 있게 권한을 제한
-        boolean canDelete = requester.getRole() == UserRole.ADMIN
-                || (product.getSeller() != null && requesterUserId.equals(product.getSeller().getId()));
-        if (!canDelete) {
-            throw new ResponseStatusException(FORBIDDEN, "본인 상품만 삭제할 수 있습니다.");
-        }
+        // 상품 삭제도 수정과 같은 관리자 또는 판매자 본인 기준을 재사용함
+        validateProductManager(product, requester, "본인 상품만 삭제할 수 있습니다.");
 
         productRepository.delete(product);
+    }
+
+    @Transactional
+    public void updateProductQuantity(Long productId, Integer quantityChange, Long requesterUserId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "상품을 찾을 수 없습니다."));
+        User requester = userRepository.findById(requesterUserId)
+                .orElseThrow(() -> new ResponseStatusException(UNAUTHORIZED, "사용자를 찾을 수 없습니다."));
+
+        // 재고 변경도 상품 수정 권한과 같은 관리자 또는 판매자 본인 기준을 적용함
+        validateProductManager(product, requester, "본인 상품만 수정할 수 있습니다.");
+        applyQuantityChange(product, quantityChange);
     }
 
     @Transactional
@@ -130,6 +137,12 @@ public class ProductService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다. ID: " + productId));
 
+        // 구매 처리에서는 주문 흐름에서 검증하므로 재고 증감만 공통 처리함
+        applyQuantityChange(product, quantityChange);
+    }
+
+    private void applyQuantityChange(Product product, Integer quantityChange) {
+        // 재고 변경 계산을 한 곳으로 모아 판매자 수정과 구매 차감 흐름을 동일하게 처리함
         if (quantityChange < 0 && product.getQuantity() < -quantityChange) {
             throw new RuntimeException("상품 재고가 부족합니다.");
         }
@@ -137,6 +150,15 @@ public class ProductService {
         product.setQuantity(product.getQuantity() + quantityChange);
         product.setIsSoldOut(product.getQuantity() <= 0);
         productRepository.save(product);
+    }
+
+    private void validateProductManager(Product product, User requester, String forbiddenMessage) {
+        // 관리자이거나 상품 판매자 본인인지 확인해 다른 판매자 상품 변경을 막음
+        boolean canManage = requester.getRole() == UserRole.ADMIN
+                || (product.getSeller() != null && requester.getId().equals(product.getSeller().getId()));
+        if (!canManage) {
+            throw new ResponseStatusException(FORBIDDEN, forbiddenMessage);
+        }
     }
 
     @Transactional(readOnly = true)

@@ -99,9 +99,7 @@ public class OAuthController {//일단 만들어보자구
     // 관리자 사용자 관리 화면은 역할 변경/삭제 API를 다루므로 관리자만 진입하게 함
     @GetMapping("/admin/users")
     public String adminUsers(Model model, Authentication authentication) {
-        if (!isAdmin(authentication)) {
-            return "redirect:/";
-        }
+        // 관리자 화면 접근 제한은 SecurityConfig에서 처리함
         addAuthInfoToModel(model, authentication);
         return "admin-users";
     }
@@ -109,9 +107,7 @@ public class OAuthController {//일단 만들어보자구
     // 관리자 배송 관리 화면은 전체 배송 목록과 삭제 API를 다루므로 관리자만 진입하게 함
     @GetMapping("/admin/delivery")
     public String adminDelivery(Model model, Authentication authentication) {
-        if (!isAdmin(authentication)) {
-            return "redirect:/";
-        }
+        // 관리자 화면 접근 제한은 SecurityConfig에서 처리함
         addAuthInfoToModel(model, authentication);
         return "admin-delivery";
     }
@@ -119,15 +115,7 @@ public class OAuthController {//일단 만들어보자구
     // 상품 등록 MVP 화면 진입 경로를 추가
     @GetMapping("/seller/products/new")
     public String productForm(Model model, Authentication authentication) {
-        boolean isLoggedIn = authentication != null
-                && authentication.isAuthenticated()
-                && !(authentication instanceof AnonymousAuthenticationToken)
-                && !"anonymousUser".equals(authentication.getPrincipal());
-
-        if (!isLoggedIn) {
-            return "redirect:/login";
-        }
-
+        // 판매자 화면 접근 제한은 SecurityConfig에서 처리함
         addAuthInfoToModel(model, authentication);
         return "product-form";
     }
@@ -228,13 +216,6 @@ public class OAuthController {//일단 만들어보자구
     // 화면 라우트 권한 판단도 공통 인증 사용자 해석 결과를 재사용함
     private Optional<User> resolveCurrentUser(Authentication authentication) {
         return userService.getAuthenticatedUser(authentication);
-    }
-
-    // 관리자 전용 템플릿 진입 여부를 DB 사용자 역할 기준으로 판단함
-    private boolean isAdmin(Authentication authentication) {
-        return resolveCurrentUser(authentication)
-                .map(user -> "ADMIN".equals(user.getRole().name()))
-                .orElse(false);
     }
 
     private String resolveProvider(Authentication authentication, Map<String, Object> attributes) {
