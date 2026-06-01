@@ -26,6 +26,8 @@ public class ProductSeedRunner implements ApplicationRunner {
     private static final String TEST_PASSWORD = "1234";
 
     private static final List<SeedUser> SEED_USERS = List.of(
+            // 관리자 화면과 권한 수정 흐름을 바로 확인할 수 있게 기본 관리자 계정을 추가함
+            new SeedUser("admin_test", "관리자", "admin@test.com", UserRole.ADMIN),
             new SeedUser("artisan_lee", "이공방", "artisan_lee@test.com", UserRole.SELLER),
             new SeedUser("woven_kim", "김직조", "woven_kim@test.com", UserRole.SELLER),
             new SeedUser("buyer_test", "테스트 구매자", "buyer_test@test.com", UserRole.USER)
