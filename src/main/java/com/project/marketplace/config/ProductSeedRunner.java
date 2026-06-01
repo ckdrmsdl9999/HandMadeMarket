@@ -35,6 +35,9 @@ public class ProductSeedRunner implements ApplicationRunner {
             new SeedProduct("artisan_lee", "제주 감귤 비누 세트", "비누", 30, 12000, "제주 감귤 향을 담은 수제 비누 세트"),
             new SeedProduct("artisan_lee", "호두나무 우드 트레이", "목공", 12, 32000, "호두나무 원목으로 만든 핸드메이드 트레이"),
             new SeedProduct("woven_kim", "쪽빛 손염색 스카프", "패브릭", 20, 28000, "천연 쪽빛으로 손염색한 가벼운 스카프"),
+            // 문구 검색 결과를 여러 건으로 확인할 수 있게 테스트 상품 추가함
+            new SeedProduct("woven_kim", "한지 학종이", "문구", 40, 8000, "한지로 만든 학종이"),
+            new SeedProduct("woven_kim", "일반 노트", "문구", 40, 8000, "일반 노트"),
             new SeedProduct("woven_kim", "한지 커버 미니 노트", "문구", 40, 8000, "한지 커버를 사용한 작은 수제 노트")
     );
 

@@ -560,16 +560,19 @@
     <div class="container main-header-inner">
         <a class="logo" th:href="@{/}">HandMade <em>Market</em></a>
         <button class="category-btn" type="button">전체 카테고리</button>
-        <form class="search-form" action="#" method="get">
+        <!-- 검색 결과를 /shop 화면에서 렌더링하도록 홈 검색 목적지를 맞춤 -->
+        <form class="search-form" action="/shop" method="get" th:action="@{/shop}">
             <label for="category" style="display: none;">카테고리</label>
+            <!-- 검색 API 카테고리 값과 맞춰 /shop 필터가 그대로 적용되게 함 -->
             <select id="category" name="category">
                 <option value="">전체</option>
-                <option value="craft">수공예</option>
-                <option value="food">핸드메이드 푸드</option>
-                <option value="living">리빙</option>
+                <option value="비누">비누</option>
+                <option value="목공">목공</option>
+                <option value="패브릭">패브릭</option>
+                <option value="문구">문구</option>
             </select>
             <label for="query" style="display: none;">검색어</label>
-            <input id="query" name="query" type="text" placeholder="찾고 싶은 핸드메이드 제품을 검색해보세요">
+            <input id="query" name="keyword" type="text" placeholder="찾고 싶은 핸드메이드 제품을 검색해보세요">
             <button class="search-btn" type="submit">Q</button>
         </form>
         <div class="header-actions">
