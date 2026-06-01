@@ -5,30 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>주문서와 주문내역 | HandMade Market</title>
     <style>
+        /* 홈/상품 페이지와 같은 브랜드 토큰으로 주문 화면 색감을 통일함 */
         :root {
-            --ink: #1f2522;
-            --muted: #6d756e;
-            --paper: #fffaf1;
-            --line: #e3d7c6;
-            --brand: #355e4b;
-            --accent: #c36b3f;
-            --danger: #a53a26;
-            --shadow: 0 20px 48px rgba(35, 42, 32, .12);
+            --bg: #f4f7fd;
+            --surface: #ffffff;
+            --ink: #0f1729;
+            --muted: #5e6778;
+            --line: #dde4f0;
+            --brand-blue: #3566ff;
+            --brand-blue-dark: #224fd6;
+            --accent: #ff6f2c;
+            --accent-dark: #df5616;
+            --soft: #edf2ff;
+            --green: #1f7a4d;
+            --danger: #d63d32;
+            --shadow: 0 14px 34px rgba(28, 58, 125, 0.12);
         }
 
         * {
             box-sizing: border-box;
         }
 
+        /* 주문 화면도 홈/상품 페이지와 같은 배경과 폰트로 맞춤 */
         body {
             margin: 0;
             min-height: 100vh;
             color: var(--ink);
             background:
-                    linear-gradient(120deg, rgba(53, 94, 75, .14), transparent 35%),
-                    radial-gradient(circle at 85% 12%, rgba(195, 107, 63, .24), transparent 28%),
-                    #f7f1e7;
-            font-family: "Noto Serif KR", Georgia, serif;
+                    radial-gradient(circle at 8% 2%, rgba(53, 102, 255, 0.18), transparent 24%),
+                    radial-gradient(circle at 94% 0%, rgba(255, 111, 44, 0.14), transparent 22%),
+                    var(--bg);
+            font-family: "SUIT", "Pretendard", "Noto Sans KR", sans-serif;
         }
 
         a {
@@ -42,66 +49,148 @@
             font: inherit;
         }
 
+        /* 홈/상품 페이지와 같은 컨테이너 폭을 사용해 헤더와 본문 정렬을 맞춤 */
         .container {
-            width: min(1120px, calc(100% - 32px));
+            width: min(1240px, 100% - 28px);
             margin: 0 auto;
         }
 
-        .topbar {
-            border-bottom: 1px solid rgba(50, 65, 54, .12);
-            background: rgba(255, 250, 241, .82);
-            backdrop-filter: blur(12px);
+        /* 상품 페이지와 같은 상단 유틸리티 바를 주문 화면에도 적용함 */
+        .utility-bar {
+            border-bottom: 1px solid var(--line);
+            background: #fff;
         }
 
-        .topbar-inner {
+        .utility-inner {
+            height: 38px;
             display: flex;
+            align-items: center;
             justify-content: space-between;
-            align-items: center;
-            gap: 18px;
-            padding: 18px 0;
+            font-size: 13px;
+            color: var(--muted);
         }
 
-        .logo {
-            font-size: 24px;
-            font-weight: 900;
-            letter-spacing: -.04em;
-        }
-
-        .logo em {
-            color: var(--accent);
-            font-style: normal;
-        }
-
-        .nav {
+        .utility-links,
+        .header-actions,
+        .gnb-inner {
             display: flex;
             align-items: center;
-            gap: 14px;
-            color: var(--muted);
-            font-size: 14px;
         }
 
-        .nav button {
+        .utility-links {
+            gap: 14px;
+        }
+
+        .utility-links a,
+        .utility-links button {
+            color: var(--muted);
+            text-decoration: none;
+            background: none;
             border: 0;
-            background: transparent;
-            color: inherit;
+            padding: 0;
+            font-size: 13px;
             cursor: pointer;
         }
 
+        /* 홈/상품 페이지와 같은 메인 헤더 형태로 주문 화면 진입부를 맞춤 */
+        .main-header {
+            background: #fff;
+            border-bottom: 1px solid var(--line);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .main-header-inner {
+            min-height: 86px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+        }
+
+        .logo {
+            text-decoration: none;
+            color: var(--ink);
+            font-size: 30px;
+            line-height: 1;
+            font-weight: 900;
+            letter-spacing: -0.7px;
+        }
+
+        .logo em {
+            color: var(--brand-blue);
+            font-style: normal;
+        }
+
+        .header-actions {
+            gap: 14px;
+            margin-left: 6px;
+        }
+
+        .header-link {
+            text-decoration: none;
+            color: var(--muted);
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .header-link strong {
+            display: block;
+            color: var(--ink);
+            font-size: 15px;
+            margin-top: 3px;
+        }
+
+        /* 상품 페이지와 같은 GNB를 유지해 주요 화면 이동을 통일함 */
+        .gnb {
+            background: #fff;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .gnb-inner {
+            min-height: 50px;
+            gap: 18px;
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: thin;
+        }
+
+        .gnb-inner a {
+            text-decoration: none;
+            color: var(--ink);
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .gnb-inner a.highlight {
+            color: var(--accent-dark);
+        }
+
+        /* 주문 화면 제목 영역을 상품 결과 페이지 안내 카드와 같은 톤으로 낮춤 */
+        main {
+            padding: 20px 0 56px;
+        }
+
         .hero {
-            padding: 38px 0 22px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            margin: 20px 0 16px;
+            padding: 22px;
         }
 
         .hero h1 {
-            margin: 0 0 10px;
-            font-size: clamp(36px, 5vw, 62px);
-            line-height: 1;
-            letter-spacing: -.07em;
+            margin: 0 0 8px;
+            font-size: 30px;
+            letter-spacing: -0.3px;
         }
 
         .hero p {
             margin: 0;
             color: var(--muted);
-            line-height: 1.7;
+            line-height: 1.6;
         }
 
         .layout {
@@ -112,11 +201,12 @@
             padding-bottom: 50px;
         }
 
+        /* 주문 패널과 주문 카드도 상품 페이지 카드와 같은 흰 표면으로 맞춤 */
         .panel,
         .order-card {
-            background: rgba(255, 250, 241, .88);
-            border: 1px solid rgba(68, 78, 60, .13);
-            border-radius: 28px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 16px;
             box-shadow: var(--shadow);
         }
 
@@ -127,7 +217,7 @@
         .panel h2,
         .order-card h3 {
             margin: 0 0 16px;
-            letter-spacing: -.04em;
+            letter-spacing: -0.3px;
         }
 
         .cart-list {
@@ -142,8 +232,8 @@
             gap: 10px;
             padding: 14px;
             border: 1px solid var(--line);
-            border-radius: 18px;
-            background: #fffdf8;
+            border-radius: 13px;
+            background: #fff;
         }
 
         .muted {
@@ -180,9 +270,9 @@
         .field textarea {
             width: 100%;
             border: 1px solid var(--line);
-            border-radius: 16px;
+            border-radius: 11px;
             padding: 13px 14px;
-            background: #fffdf8;
+            background: #fff;
             color: var(--ink);
         }
 
@@ -193,12 +283,12 @@
 
         .btn {
             border: 0;
-            border-radius: 999px;
+            border-radius: 11px;
             padding: 12px 18px;
-            color: #fffaf1;
-            background: var(--brand);
+            color: #fff;
+            background: var(--brand-blue);
             cursor: pointer;
-            font-weight: 900;
+            font-weight: 800;
         }
 
         .btn-light {
@@ -244,8 +334,8 @@
             align-items: center;
             border-radius: 999px;
             padding: 7px 11px;
-            background: rgba(53, 94, 75, .12);
-            color: var(--brand);
+            background: var(--soft);
+            color: var(--brand-blue-dark);
             font-size: 12px;
             font-weight: 900;
         }
@@ -261,7 +351,7 @@
             justify-content: space-between;
             gap: 10px;
             padding: 10px 0;
-            border-bottom: 1px solid rgba(227, 215, 198, .7);
+            border-bottom: 1px solid var(--line);
             color: var(--muted);
             font-size: 14px;
         }
@@ -289,27 +379,42 @@
             border-radius: 20px;
         }
 
+        /* 작은 화면에서 상단 헤더와 주문 컬럼이 자연스럽게 세로 배치되게 함 */
         @media (max-width: 900px) {
             .layout {
                 grid-template-columns: 1fr;
             }
 
-            .topbar-inner,
+            .main-header-inner,
             .order-head {
                 align-items: flex-start;
                 flex-direction: column;
+            }
+
+            .header-actions {
+                margin: 0;
+                justify-content: flex-start;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .utility-inner {
+                height: auto;
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 8px;
+                padding: 10px 0;
             }
         }
     </style>
 </head>
 <body>
-<header class="topbar">
-    <div class="container topbar-inner">
-        <a class="logo" th:href="@{/}">HandMade <em>Market</em></a>
-        <nav class="nav">
-            <a th:href="@{/shop}">상품</a>
-            <a th:href="@{/cart}">장바구니</a>
-            <a th:href="@{/orders}">주문내역</a>
+<!-- 홈/상품 페이지와 같은 유틸리티 헤더로 로그인 상태 표시를 통일함 -->
+<header class="utility-bar">
+    <div class="container utility-inner">
+        <span>오늘 도착처럼 빠르게, 장인 제품도 간편하게.</span>
+        <nav class="utility-links">
+            <span th:text="'안녕하세요, ' + ${displayName} + '님'">안녕하세요, 사용자님</span>
             <a th:href="@{/loginSuccess}">내 정보</a>
             <form th:action="@{/logout/naver}" method="post">
                 <button type="submit">로그아웃</button>
@@ -317,6 +422,43 @@
         </nav>
     </div>
 </header>
+
+<!-- 주문 화면 상단도 같은 브랜드 헤더로 맞춰 페이지 전환 이질감을 줄임 -->
+<header class="main-header">
+    <div class="container main-header-inner">
+        <a class="logo" th:href="@{/}">HandMade <em>Market</em></a>
+        <div class="header-actions">
+            <a class="header-link" th:href="@{/shop}">
+                <strong>상품 둘러보기</strong>
+            </a>
+            <a class="header-link" th:href="@{/cart}">
+
+                <strong>장바구니 보기</strong>
+            </a>
+            <a class="header-link" th:href="@{/orders}">
+
+                <strong>주문 내역</strong>
+            </a>
+            <a class="header-link" th:href="@{/loginSuccess}">
+
+                <strong>내 정보</strong>
+            </a>
+        </div>
+    </div>
+</header>
+
+<!-- 상품 페이지와 같은 GNB를 추가해 주요 화면 이동 위치를 맞춤 -->
+<nav class="gnb">
+    <div class="container gnb-inner">
+        <a th:href="@{/shop}">상품 둘러보기</a>
+        <a th:href="@{/cart}">장바구니</a>
+        <a class="highlight" th:href="@{/orders}">주문내역</a>
+        <a th:href="@{/shop(category='비누')}">비누</a>
+        <a th:href="@{/shop(category='목공')}">목공</a>
+        <a th:href="@{/shop(category='패브릭')}">패브릭</a>
+        <a th:href="@{/shop(category='문구')}">문구</a>
+    </div>
+</nav>
 
 <main class="container">
     <section class="hero">
@@ -376,6 +518,15 @@
         ordersEmpty: document.getElementById('orders-empty')
     };
 
+    // 서버 enum 값은 유지하고 주문 상태 배지만 한글로 표시함
+    const orderStatusLabels = {
+        PENDING: '배송 대기 중',
+        PAID: '결제 완료',
+        SHIPPING: '배송 중',
+        COMPLETED: '배송 완료',
+        CANCELED: '주문 취소'
+    };
+
     refs.orderForm.addEventListener('submit', createOrder);
     refs.orders.addEventListener('click', handleOrderAction);
 
@@ -426,14 +577,18 @@
 
     function renderOrders(orders) {
         refs.ordersEmpty.style.display = orders.length ? 'none' : 'block';
-        refs.orders.innerHTML = orders.map(order => `
+        refs.orders.innerHTML = orders.map(order => {
+            // 주문 상태 비교용 원본값과 화면 표시용 한글 라벨을 분리함
+            const orderStatusLabel = formatOrderStatus(order.orderStatus);
+
+            return `
             <article class="order-card" data-order-id="${order.orderId}">
                 <div class="order-head">
                     <div>
                         <h3>주문 ${escapeHtml(order.orderNumber)}</h3>
                         <div class="muted">${formatDate(order.orderDate)} · ${formatMoney(order.totalAmount)}원</div>
                     </div>
-                    <span class="badge">${escapeHtml(order.orderStatus)}</span>
+                    <span class="badge">${escapeHtml(orderStatusLabel)}</span>
                 </div>
                 <div class="items">
                     ${(order.items || []).map(item => `
@@ -462,7 +617,8 @@
                     <button class="btn btn-danger" type="button" data-action="cancel" ${order.orderStatus !== 'PENDING' ? 'disabled' : ''}>주문 취소</button>
                 </div>
             </article>
-        `).join('');
+        `;
+        }).join('');
     }
 
     async function createOrder(event) {
@@ -537,6 +693,11 @@
             ? new Date(value[0], value[1] - 1, value[2], value[3] || 0, value[4] || 0)
             : new Date(value);
         return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString('ko-KR');
+    }
+
+    // 새 주문 상태가 추가돼도 원본 상태값을 보여줄 수 있게 기본값을 둠
+    function formatOrderStatus(status) {
+        return orderStatusLabels[status] || status;
     }
 
     function escapeHtml(value) {
