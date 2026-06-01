@@ -82,11 +82,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             log.warn("OAuth2 사용자 식별자를 찾을 수 없습니다: provider={}", registrationId);
         }
 
-        // 기본 성공 URL로 리다이렉트
-//        super.onAuthenticationSuccess(request, response, authentication);
-        // 성공 핸들러의 최종 이동 경로를 JSON으로 남겨 흐름 종료 지점을 바로 확인하게 추가함 -3/17
-        logJson("success.redirect", Map.of("location", "/loginSuccess"));
-        response.sendRedirect("/loginSuccess");
+        // OAuth2 로그인도 일반 로그인과 같은 홈 화면으로 이동하게 맞춤
+        logJson("success.redirect", Map.of("location", "/"));
+        response.sendRedirect("/");
     }
 
     // OAuth2 사용자 저장도 정규화 profile 값과 email을 함께 반영
