@@ -190,6 +190,67 @@
             color: #274c82;
         }
 
+        /* 로컬 로그인 입력 폼을 소셜 로그인 버튼과 같은 카드 흐름 안에 배치함 */
+        .local-login-form {
+            display: grid;
+            gap: 10px;
+            margin-top: 4px;
+        }
+
+        .field {
+            display: grid;
+            gap: 7px;
+        }
+
+        .field label {
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .field input {
+            width: 100%;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 13px 14px;
+            color: var(--ink);
+            background: #fff;
+            outline: none;
+        }
+
+        .field input:focus {
+            border-color: var(--brand-blue);
+            box-shadow: 0 0 0 3px rgba(53, 102, 255, 0.12);
+        }
+
+        .login-message {
+            min-height: 20px;
+            margin: 0;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .login-message.error {
+            color: #d63d32;
+        }
+
+        .divider {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 10px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: "";
+            height: 1px;
+            background: var(--line);
+        }
+
         .btn {
             width: 100%;
             border: 0;
@@ -299,9 +360,10 @@
         <section class="hero">
             <h1>로그인 후 맞춤 추천과<br>빠른 구매 동선을 바로 사용하세요</h1>
             <p>
-                현재 인증은 네이버 OAuth2로 연결됩니다.
+                아이디 로그인과 소셜 인증을 같은 화면에서 선택할 수 있습니다.
             </p>
             <div class="chips">
+                <span class="chip">Local</span>
                 <span class="chip">OAuth2</span>
                 <span class="chip">Naver</span>
                 <span class="chip">Thymeleaf</span>
@@ -313,7 +375,7 @@
             <p class="eyebrow">LOGIN CENTER</p>
             <h1 class="title">계정 로그인</h1>
             <p class="desc">
-                버튼 클릭 시 선택한 소셜 인증 페이지로 이동합니다.
+                아이디와 비밀번호로 로그인하거나 선택한 소셜 인증 페이지로 이동합니다.
                 로그인 이후 홈에서 사용자 상태를 바로 확인할 수 있습니다.
             </p>
 
@@ -321,6 +383,26 @@
                 이미 로그인되어 있습니다.
                 <strong th:text="${displayName}">user</strong> 님 계정이 연결되어 있습니다.
             </div>
+
+            <!-- 일반 계정 로그인은 JSON API로 세션을 만든 뒤 홈으로 이동하게 함 -->
+            <form id="local-login-form" class="local-login-form" th:if="${!isLoggedIn}">
+                <div class="field">
+                    <label for="loginId">아이디</label>
+                    <input id="loginId" name="loginId" type="text" autocomplete="username" required>
+                </div>
+                <div class="field">
+                    <label for="password">비밀번호</label>
+                    <input id="password" name="password" type="password" autocomplete="current-password" required>
+                </div>
+                <button class="btn btn-primary" type="submit">아이디로 로그인</button>
+                <p id="local-login-message" class="login-message"></p>
+            </form>
+
+            <!-- 회원가입은 별도 화면에서 처리하도록 로그인 폼 아래에 진입 버튼을 둠 -->
+            <a class="btn btn-ghost" th:if="${!isLoggedIn}" th:href="@{/signup}">회원가입</a>
+
+            <!-- 소셜 로그인과 일반 로그인을 시각적으로 분리함 -->
+            <div class="divider" th:if="${!isLoggedIn}">또는</div>
 
             <a class="btn btn-naver" th:if="${!isLoggedIn}" th:href="@{/oauth2/authorization/naver}">네이버로 로그인</a>
             <!-- 구글 OAuth2 registration 추가에 맞춰 로그인 진입 버튼을 함께 제공함 -->
@@ -347,5 +429,48 @@
         </section>
     </main>
 </div>
+<script>
+    const localLoginForm = document.getElementById('local-login-form');
+    const localLoginMessage = document.getElementById('local-login-message');
+
+    if (localLoginForm) {
+        localLoginForm.addEventListener('submit', handleLocalLogin);
+    }
+
+    // 로컬 로그인 API 응답으로 세션이 만들어지면 홈에서 로그인 상태를 다시 렌더링하게 이동함
+    async function handleLocalLogin(event) {
+        event.preventDefault();
+        setLocalLoginMessage('로그인 중입니다.', '');
+
+        const payload = Object.fromEntries(new FormData(localLoginForm).entries());
+
+        try {
+            const response = await fetch('/api/user/signin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const message = await response.text();
+                throw new Error(message || '아이디 또는 비밀번호를 확인해 주세요.');
+            }
+
+            setLocalLoginMessage('로그인되었습니다. 홈으로 이동합니다.', '');
+            window.location.href = '/';
+        } catch (error) {
+            setLocalLoginMessage(error.message || '로그인에 실패했습니다.', 'error');
+        }
+    }
+
+    // 로그인 실패 메시지를 폼 내부에 표시해 페이지 이동 없이 원인을 확인하게 함
+    function setLocalLoginMessage(message, type) {
+        if (!localLoginMessage) {
+            return;
+        }
+        localLoginMessage.textContent = message;
+        localLoginMessage.className = `login-message ${type || ''}`;
+    }
+</script>
 </body>
 </html>

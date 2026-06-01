@@ -541,7 +541,8 @@
     </style>
 </head>
 
-<body>
+<!-- 홈 헤더에서 현재 로그인 사용자 ID를 읽어 장바구니 종류 수 API 호출 기준으로 사용함 -->
+<body th:attr="data-current-user-id=${currentUserId},data-logged-in=${isLoggedIn}">
 <header class="utility-bar">
     <div class="container utility-inner">
         <span>오늘 도착처럼 빠르게, 장인 제품도 간편하게.</span>
@@ -587,7 +588,8 @@
             <!-- 홈에서 바로 장바구니 페이지로 이동할 수 있게 정적 링크를 실제 라우트로 연결한다. -->
             <a class="header-link" th:href="@{/cart}">
                 장바구니
-                <strong>0</strong>
+                <!-- 홈 헤더 장바구니 숫자를 JS에서 현재 장바구니 상품 종류 수로 갱신함 -->
+                <strong id="home-cart-count">0</strong>
             </a>
             <!-- 홈 상단에서 주문내역 페이지로 바로 이동할 수 있게 연결함 -->
             <a class="header-link" th:if="${isLoggedIn}" th:href="@{/orders}">
@@ -647,6 +649,8 @@
             <h3>로그인하고<br>맞춤 추천 받기</h3>
             <p>계정 연결 후 최근 인기 상품과 취향 기반 제안을 확인할 수 있습니다.</p>
             <a class="cta-btn cta-login" th:href="@{/login}">로그인 페이지 이동</a>
+            <!-- 비로그인 홈 패널에서도 새 계정 생성 화면으로 바로 이동하게 함 -->
+            <a class="cta-btn cta-ghost" th:href="@{/signup}">회원가입</a>
             <a class="cta-btn cta-oauth" th:href="@{/oauth2/authorization/naver}">네이버 로그인 시작</a>
             <!-- 홈에서도 구글 OAuth2 로그인 진입 경로를 바로 제공함 -->
             <a class="cta-btn cta-google" th:href="@{/oauth2/authorization/google}">구글 로그인 시작</a>
@@ -839,12 +843,50 @@
         return response.json();
     }
 
+    // 로그인 사용자 장바구니를 조회해 헤더 숫자를 상품 종류 수로 갱신함
+    async function hydrateHomeCartCount() {
+        const countEl = document.getElementById('home-cart-count');
+        const userId = getCurrentUserId();
+
+        if (!countEl || !userId) {
+            return;
+        }
+
+        try {
+            const cart = await fetchJson(`/api/carts/${userId}`);
+            countEl.textContent = String(calculateCartItemKindCount(cart));
+        } catch (error) {
+            console.warn('홈 장바구니 종류 수 동기화 실패:', error);
+            countEl.textContent = '0';
+        }
+    }
+
+    // 비로그인 상태에서는 장바구니 API를 호출하지 않도록 사용자 ID를 검증함
+    function getCurrentUserId() {
+        if (document.body.dataset.loggedIn !== 'true') {
+            return null;
+        }
+
+        const userId = Number(document.body.dataset.currentUserId);
+        return Number.isInteger(userId) && userId > 0 ? userId : null;
+    }
+
+    // 장바구니 카드 한 칸을 한 종류로 보고 cartItems 길이를 헤더 숫자로 사용함
+    function calculateCartItemKindCount(cart) {
+        const items = Array.isArray(cart?.cartItems) ? cart.cartItems : [];
+        return items.length;
+    }
+
     // 홈 카드 가격 형식을 한글 로케일로 통일해 숫자 가독성을 맞춘다.
     function formatPriceNumber(value) {
         return Number(value ?? 0).toLocaleString('ko-KR');
     }
 
-    document.addEventListener('DOMContentLoaded', hydrateHomeProducts);
+    // 홈 초기화 시 추천 상품과 장바구니 종류 수를 함께 불러오게 함
+    document.addEventListener('DOMContentLoaded', () => {
+        hydrateHomeProducts();
+        hydrateHomeCartCount();
+    });
 </script>
 </body>
 </html>
