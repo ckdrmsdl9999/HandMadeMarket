@@ -41,6 +41,8 @@ public class SecurityConfig {
                         // 관리자 화면과 사용자 목록 API는 관리자 권한으로 제한함
                         .requestMatchers(antMatcher("/admin/**")).hasRole("ADMIN")
                         .requestMatchers(antMatcher(HttpMethod.GET, "/api/user/list")).hasRole("ADMIN")
+                        // 내 상품 목록은 공개 상품 조회보다 먼저 제한해 판매자와 관리자만 접근하게 함
+                        .requestMatchers(antMatcher(HttpMethod.GET, "/api/products/mine")).hasAnyRole("SELLER", "ADMIN")
                         .requestMatchers(antMatcher(HttpMethod.GET, "/api/products"), antMatcher(HttpMethod.GET, "/api/products/**"), antMatcher(HttpMethod.GET, "/products/**")).permitAll()
                         // 상품 관리 화면과 변경 API는 판매자와 관리자만 접근하도록 제한함
                         .requestMatchers(antMatcher("/seller/**")).hasAnyRole("SELLER", "ADMIN")
@@ -48,6 +50,13 @@ public class SecurityConfig {
                         .requestMatchers(antMatcher(HttpMethod.PUT, "/api/products/**")).hasAnyRole("SELLER", "ADMIN")
                         .requestMatchers(antMatcher(HttpMethod.PATCH, "/api/products/**")).hasAnyRole("SELLER", "ADMIN")
                         .requestMatchers(antMatcher(HttpMethod.DELETE, "/api/products/**")).hasAnyRole("SELLER", "ADMIN")
+                        // 배송 관리 역할 정책을 SecurityConfig로 모아 컨트롤러의 중복 role 검사를 줄임
+                        .requestMatchers(antMatcher(HttpMethod.GET, "/api/delivery")).hasRole("ADMIN")
+                        .requestMatchers(antMatcher(HttpMethod.PUT, "/api/delivery/**")).hasAnyRole("SELLER", "ADMIN")
+                        .requestMatchers(antMatcher(HttpMethod.DELETE, "/api/delivery/**")).hasRole("ADMIN")
+                        // 주문 운영 역할 정책을 SecurityConfig로 모아 컨트롤러의 중복 role 검사를 줄임
+                        .requestMatchers(antMatcher(HttpMethod.GET, "/api/orders")).hasRole("ADMIN")
+                        .requestMatchers(antMatcher(HttpMethod.PATCH, "/api/orders/*/status")).hasRole("ADMIN")
                         .requestMatchers(antMatcher("/orders"), antMatcher("/api/carts/**"), antMatcher("/api/orders/**")).authenticated()
                         .requestMatchers(antMatcher("/api/user/admin/**")).hasRole("ADMIN")
                         .anyRequest().authenticated())

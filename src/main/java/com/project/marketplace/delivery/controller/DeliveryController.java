@@ -26,9 +26,8 @@ public class DeliveryController {
     private final UserService userService;
 
     @GetMapping
-    public ResponseEntity<List<DeliveryUpdateResponseDto>> getAllDeliveries(Authentication authentication) {
-        // 전체 배송 목록은 관리자만 조회
-        getAdminUser(authentication);
+    public ResponseEntity<List<DeliveryUpdateResponseDto>> getAllDeliveries() {
+        // 전체 배송 목록 관리자 제한은 SecurityConfig에서 처리함
         return ResponseEntity.ok(deliveryService.findAllDeliveryWithDto());
     }
 
@@ -45,16 +44,15 @@ public class DeliveryController {
             @PathVariable Long id,
             Authentication authentication,
             @RequestBody DeliveryUpdateRequestDto requestDto) {
-        // 배송 수정은 관리자 또는 해당 주문 상품의 판매자만 가능하도록 제한함
-        User user = getDeliveryManager(authentication);
+        // 배송 수정 role 제한은 SecurityConfig에서 처리하고 실제 담당 판매자 여부는 서비스에서 검증함
+        User user = getAuthenticatedUser(authentication, "로그인 후 이용할 수 있습니다.");
         boolean admin = user.getRole() == UserRole.ADMIN;
         return ResponseEntity.ok(deliveryService.updateDeliveryWithDto(id, user.getId(), admin, requestDto));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteDelivery(@PathVariable Long id, Authentication authentication) {
-        // 배송 삭제는 관리자만 허용함
-        getAdminUser(authentication);
+    public ResponseEntity<Void> deleteDelivery(@PathVariable Long id) {
+        // 배송 삭제 관리자 제한은 SecurityConfig에서 처리함
         deliveryService.deleteDelivery(id);
         return ResponseEntity.noContent().build();
     }
@@ -65,21 +63,4 @@ public class DeliveryController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, unauthorizedMessage));
     }
 
-    // 배송 관리 API는 관리자만 접근하도록 공통 권한 검사를 사용함
-    private User getAdminUser(Authentication authentication) {
-        User user = getAuthenticatedUser(authentication, "로그인 후 이용할 수 있습니다.");
-        if (user.getRole() != UserRole.ADMIN) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "관리자만 이용할 수 있습니다.");
-        }
-        return user;
-    }
-
-    // 배송 수정 권한은 관리자와 판매자에게만 열고 실제 담당 판매자 여부는 서비스에서 검증함
-    private User getDeliveryManager(Authentication authentication) {
-        User user = getAuthenticatedUser(authentication, "로그인 후 이용할 수 있습니다.");
-        if (user.getRole() != UserRole.ADMIN && user.getRole() != UserRole.SELLER) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "배송 수정 권한이 없습니다.");
-        }
-        return user;
-    }
 }

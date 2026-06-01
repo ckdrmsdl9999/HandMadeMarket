@@ -6,7 +6,6 @@ import com.project.marketplace.order.dto.OrderUpdateRequestDto;
 import com.project.marketplace.order.entity.OrderStatus;
 import com.project.marketplace.order.service.OrderService;
 import com.project.marketplace.user.entity.User;
-import com.project.marketplace.user.entity.UserRole;
 import com.project.marketplace.user.service.UserService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -79,9 +78,8 @@ public class OrderController {
      * 모든 주문을 조회합니다.
      */
     @GetMapping // /api/orders
-    public ResponseEntity<List<OrderResponseDto>> getAllOrders(Authentication authentication) {
-        // 전체 주문 목록은 모든 사용자 주문이 노출되므로 관리자만 조회하도록 제한함
-        getAdminUser(authentication);
+    public ResponseEntity<List<OrderResponseDto>> getAllOrders() {
+        // 전체 주문 목록 관리자 제한은 SecurityConfig에서 처리함
         List<OrderResponseDto> orders = orderService.getAllOrders();
         return ResponseEntity.ok(orders);
     }
@@ -92,11 +90,9 @@ public class OrderController {
     @PatchMapping("/{orderId}/status") // /api/orders/{orderId}/status
     public ResponseEntity<Void> updateOrderStatus(
             @PathVariable Long orderId,
-            Authentication authentication,
             @RequestBody Map<String, String> statusUpdate) {
 
-        // 주문 상태 변경은 운영자 권한 작업이므로 관리자만 허용함
-        getAdminUser(authentication);
+        // 주문 상태 변경 관리자 제한은 SecurityConfig에서 처리함
         String orderStatus = statusUpdate.get("orderStatus");
 
         if (orderStatus == null) {
@@ -144,12 +140,4 @@ public class OrderController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, unauthorizedMessage));
     }
 
-    // 관리자 전용 주문 API에서 같은 권한 검사를 반복하지 않도록 분리함
-    private User getAdminUser(Authentication authentication) {
-        User user = getAuthenticatedUser(authentication, "로그인 후 이용할 수 있습니다.");
-        if (user.getRole() != UserRole.ADMIN) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "관리자만 이용할 수 있습니다.");
-        }
-        return user;
-    }
 }
