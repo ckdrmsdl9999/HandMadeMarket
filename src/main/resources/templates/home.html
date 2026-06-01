@@ -647,6 +647,8 @@
             <h3>로그인하고<br>맞춤 추천 받기</h3>
             <p>계정 연결 후 최근 인기 상품과 취향 기반 제안을 확인할 수 있습니다.</p>
             <a class="cta-btn cta-login" th:href="@{/login}">로그인 페이지 이동</a>
+            <!-- 비로그인 홈 패널에서도 새 계정 생성 화면으로 바로 이동하게 함 -->
+            <a class="cta-btn cta-ghost" th:href="@{/signup}">회원가입</a>
             <a class="cta-btn cta-oauth" th:href="@{/oauth2/authorization/naver}">네이버 로그인 시작</a>
             <!-- 홈에서도 구글 OAuth2 로그인 진입 경로를 바로 제공함 -->
             <a class="cta-btn cta-google" th:href="@{/oauth2/authorization/google}">구글 로그인 시작</a>

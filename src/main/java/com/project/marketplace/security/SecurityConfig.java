@@ -35,7 +35,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Swagger UI와 OpenAPI 명세는 로그인 없이 확인할 수 있게 허용함
                         .requestMatchers(antMatcher("/swagger-ui.html"), antMatcher("/swagger-ui/**"), antMatcher("/v3/api-docs/**")).permitAll()
-                        .requestMatchers(antMatcher("/"), antMatcher("/shop"), antMatcher("/login"), antMatcher("/loginSuccess"), antMatcher("/oauth2/**"), antMatcher("/error")).permitAll()
+                        // 비로그인 사용자도 회원가입 화면과 인증 진입 화면에 접근할 수 있게 허용함
+                        .requestMatchers(antMatcher("/"), antMatcher("/shop"), antMatcher("/login"), antMatcher("/signup"), antMatcher("/loginSuccess"), antMatcher("/oauth2/**"), antMatcher("/error")).permitAll()
                         .requestMatchers(antMatcher(HttpMethod.POST, "/api/user/signup"), antMatcher(HttpMethod.POST, "/api/user/signin")).permitAll()
                         // 관리자 화면과 사용자 목록 API는 관리자 권한으로 제한함
                         .requestMatchers(antMatcher("/admin/**")).hasRole("ADMIN")

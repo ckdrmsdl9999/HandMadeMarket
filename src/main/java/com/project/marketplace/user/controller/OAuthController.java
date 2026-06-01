@@ -91,6 +91,13 @@ public class OAuthController {//일단 만들어보자구
         return "login";
     }
 
+    // 회원가입 버튼이 실제 화면으로 이동하도록 별도 회원가입 뷰를 연결함
+    @GetMapping("/signup")
+    public String signup(Model model, Authentication authentication) {
+        addAuthInfoToModel(model, authentication);
+        return "signup";
+    }
+
     // 전체 상품 탐색 화면을 API 상품 목록과 연결함
     @GetMapping("/shop")
     public String shop(Model model, Authentication authentication) {
