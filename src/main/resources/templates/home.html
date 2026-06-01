@@ -663,7 +663,6 @@
         <aside class="panel login-panel" th:if="${isLoggedIn}">
             <h3 th:text="'환영합니다, ' + ${displayName} + '님'">환영합니다</h3>
             <p>현재 로그인된 계정으로 특가 알림과 빠른 주문 기능을 사용할 수 있습니다.</p>
-            <a class="cta-btn cta-login" th:href="@{/loginSuccess}">내 인증 정보 보기</a>
             <!-- 로그인 후 상품 등록 화면으로 바로 이동 -->
             <a class="cta-btn cta-oauth" th:href="@{/seller/products/new}">상품 등록 페이지</a>
             <!-- 주문 도메인 기능을 화면에서 바로 확인할 수 있게 주문내역 진입 링크를 추가함 -->
@@ -675,9 +674,9 @@
                 <button class="cta-btn cta-ghost" type="submit">로그아웃</button>
             </form>
             <div class="login-meta">
-                <span th:text="'인증 방식: ' + (provider != null ? provider : 'unknown')">인증 방식</span><br>
+                <!-- provider/authName 원본값 대신 사용자가 이해하기 쉬운 회원 유형만 표시함 -->
+                <span th:text="'회원 유형: ' + ${providerLabel}">회원 유형</span><br>
                 <span th:if="${email != null}" th:text="'이메일: ' + ${email}">이메일</span><br th:if="${email != null}">
-                <span th:text="'인증 이름: ' + ${authName}">인증 이름</span>
             </div>
         </aside>
     </section>

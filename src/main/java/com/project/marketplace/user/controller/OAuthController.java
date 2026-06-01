@@ -37,52 +37,33 @@ public class OAuthController {//일단 만들어보자구
     private final ObjectMapper objectMapper;
 
     @GetMapping("/loginSuccess")
-    public String loginSuccess(@AuthenticationPrincipal OAuth2User oauth2User, Model model, Authentication authentication) {
-    // oauth2User가 null인 경우 처리 (직접 URL 접속 시)
-        if (oauth2User == null) {
-            System.out.println("oauth2User is null!");
-            return "redirect:/"; // 홈페이지로 리다이렉트
+    public String loginSuccess(Model model, Authentication authentication) {
+        // 내 정보 화면은 OAuth2User가 아닌 DB 사용자 기준으로 구성해 로컬 로그인도 접근 가능하게 함
+        Optional<User> currentUser = resolveCurrentUser(authentication);
+        if (currentUser.isEmpty()) {
+            return "redirect:/login";
         }
-        System.out.println("oauth2User attributes(/loginsuccess): " + oauth2User.getAttributes());
 
-        try {
+        addAuthInfoToModel(model, authentication);
+        User user = currentUser.get();
 
-            Map<String, Object> attributes = oauth2User.getAttributes();
-            // 로그인 성공 화면 값을 provider 공통 attributes와 DB 사용자 기준으로 구성
-            String provider = resolveProvider(authentication, attributes);
-            String providerId = (String) attributes.get("providerId");
-            Object name = resolveOAuthAttribute(oauth2User, "name");
-            Object email = resolveOAuthAttribute(oauth2User, "email");
-            Object mobile = resolveOAuthAttribute(oauth2User, "mobile");
-            // 로그인 성공 화면으로 넘어온 원본 attributes를 JSON으로 남겨 successHandler 다음 값을 바로 확인하게 맞춤
-            logJson("controller.loginSuccess.attributes", attributes);
+        model.addAttribute("userId", user.getId());
+        model.addAttribute("loginId", user.getLoginId());
+        model.addAttribute("userName", user.getUserName());
+        model.addAttribute("provider", user.getProvider());
+        // provider 원본값 대신 화면에서 이해하기 쉬운 회원 유형 라벨을 함께 내려줌
+        model.addAttribute("providerLabel", resolveProviderLabel(user.getProvider()));
+        model.addAttribute("providerId", user.getLoginId());
+        model.addAttribute("email", user.getEmail());
+        model.addAttribute("role", user.getRole().name());
 
-            model.addAttribute("userName", name);
-            model.addAttribute("email", email);
-            model.addAttribute("mobile", mobile);
-            model.addAttribute("provider", provider);
-            model.addAttribute("providerId", providerId);
-
-            // 화면에 전달한 최종 모델 값을 JSON으로 남겨 템플릿에서 보는 값과 대조하기 쉽게 맞춤
-            Map<String, Object> modelPayload = new LinkedHashMap<>();
-            modelPayload.put("userName", name);
-            modelPayload.put("email", email);
-            modelPayload.put("mobile", mobile);
-            modelPayload.put("provider", provider);
-            modelPayload.put("providerId", providerId);
-            logJson("controller.loginSuccess.model", modelPayload);
-
-            return "login-success"; // 뷰 이름 반환
-        } catch (Exception e) {
-            // 예외 처리
-            return "redirect:/";
-        }
+        return "login-success";
     }
 
     @GetMapping("/oauth2/callback")
-    public String loginSuccess3(@AuthenticationPrincipal OAuth2User oauth2User, Model model, Authentication authentication) {
-        // callback 화면 처리도 loginSuccess와 같은 공통 OAuth2 모델 구성을 사용
-        return loginSuccess(oauth2User, model, authentication);
+    public String loginSuccess3(Model model, Authentication authentication) {
+        // callback 화면 처리도 DB 사용자 기준 내 정보 화면으로 통일함
+        return loginSuccess(model, authentication);
     }
 
     @GetMapping("/login")
@@ -226,9 +207,15 @@ public class OAuthController {//일단 만들어보자구
         // 화면 표시 이름과 이메일은 provider별 response가 아니라 DB 사용자 기준으로 맞춤
         currentUser.ifPresentOrElse(user -> {
             model.addAttribute("provider", user.getProvider());
+            // 공통 로그인 상태 영역에서도 provider 원본값 대신 회원 유형 라벨을 표시하게 함
+            model.addAttribute("providerLabel", resolveProviderLabel(user.getProvider()));
             model.addAttribute("displayName", user.getUserName() != null ? user.getUserName() : authentication.getName());
             model.addAttribute("email", user.getEmail());
-        }, () -> model.addAttribute("displayName", authentication.getName()));
+        }, () -> {
+            // DB 사용자 조회가 실패해도 화면에는 원본 인증 이름 대신 기본 회원 유형을 표시함
+            model.addAttribute("displayName", authentication.getName());
+            model.addAttribute("providerLabel", resolveProviderLabel(null));
+        });
     }
 
     private Long resolveCurrentUserId(Authentication authentication) {
@@ -257,6 +244,21 @@ public class OAuthController {//일단 만들어보자구
         }
         Object provider = attributes.get("provider");
         return provider instanceof String providerText ? providerText : "unknown";
+    }
+
+    // provider 저장값을 사용자에게 보이는 회원 유형 이름으로 변환함
+    private String resolveProviderLabel(String provider) {
+        if ("naver".equalsIgnoreCase(provider)) {
+            return "네이버 방식 회원";
+        }
+        if ("google".equalsIgnoreCase(provider)) {
+            return "구글 방식 회원";
+        }
+        if ("local".equalsIgnoreCase(provider)) {
+            return "일반 회원";
+        }
+
+        return "기타 회원";
     }
 
     private Object resolveOAuthAttribute(OAuth2User oauth2User, String key) {
