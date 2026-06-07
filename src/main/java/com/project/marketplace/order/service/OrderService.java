@@ -71,7 +71,9 @@ public class OrderService{
             int quantity = cartItem.getQuantity();
             int unitPrice = product.getPrice();
 
-            if (product.getQuantity() < quantity) {
+            // 재고 확인과 차감을 조건부 update 한 번으로 처리해 동시 주문 초과 차감을 막음
+            int updatedRows = productRepository.decreaseStockIfEnough(product.getId(), quantity);
+            if (updatedRows == 0) {
                 throw new RuntimeException("상품 재고가 부족합니다. 상품명: " + product.getName());
             }
 
@@ -82,10 +84,6 @@ public class OrderService{
                     quantity
             ));
             totalAmount += unitPrice * quantity;
-
-            product.setQuantity(product.getQuantity() - quantity);
-            product.setSalesCount(product.getSalesCount() + quantity);
-            product.setIsSoldOut(product.getQuantity() <= 0);
         }
 
         order.setTotalAmount(totalAmount);
