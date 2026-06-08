@@ -171,11 +171,10 @@ public class ProductService {
 
     @Transactional
     public void purchaseProduct(Long productId, Integer quantity) {
-        updateProductQuantity(productId, -quantity);
-
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다."));
-        product.setSalesCount(product.getSalesCount() + quantity);
-        productRepository.save(product);
+        // 바로 구매도 조건부 update로 재고 차감과 판매 수량 증가를 원자적으로 처리함
+        int updatedRows = productRepository.decreaseStockIfEnough(productId, quantity);
+        if (updatedRows == 0) {
+            throw new RuntimeException("상품 재고가 부족합니다.");
+        }
     }
 }

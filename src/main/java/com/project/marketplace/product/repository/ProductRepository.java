@@ -4,6 +4,7 @@ package com.project.marketplace.product.repository;
 import com.project.marketplace.product.entity.Product;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -25,4 +26,17 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // 판매자 페이지에서 내 상품 목록을 한 번에 조회
     @Query("SELECT p FROM Product p JOIN FETCH p.seller WHERE p.seller.id = :sellerId ORDER BY p.id DESC")
     List<Product> findProductsBySellerId(@Param("sellerId") Long sellerId);
+
+    // 재고 확인과 차감을 한 SQL로 처리해 동시 주문 시 초과 판매를 막음
+    @Modifying(flushAutomatically = true)
+    @Query(value = """
+            update products
+            set quantity = quantity - :quantity,
+                sales_count = sales_count + :quantity,
+                is_sold_out = (quantity - :quantity) <= 0
+            where id = :productId
+              and quantity >= :quantity
+              and :quantity > 0
+            """, nativeQuery = true)
+    int decreaseStockIfEnough(@Param("productId") Long productId, @Param("quantity") Integer quantity);
 }
