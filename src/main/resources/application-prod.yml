@@ -26,10 +26,10 @@ spring:
             client-secret: ${NAVER_CLIENT_SECRET}
             redirect-uri: https://hmadeshop.com/login/oauth2/code/naver
             authorization-grant-type: authorization_code
+            # OAuth2 사용자 저장 흐름에서 사용하는 이름과 이메일 동의 항목만 요청하도록 맞춤
             scope:
               - name
               - email
-              - mobile
             client-name: Naver
 
           google:
