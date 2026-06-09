@@ -28,7 +28,8 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public List<ProductDto> getAllProducts() {
-        return productRepository.findAll()
+        // DTO 변환에서 seller 정보를 바로 쓰므로 fetch join 조회로 판매자 추가 조회를 막음
+        return productRepository.findAllWithSeller()
                 .stream()
                 .map(ProductDto::fromEntity)
                 .collect(Collectors.toList());

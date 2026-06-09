@@ -12,6 +12,10 @@ import java.util.List;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
+    // 상품 목록 응답에서 판매자 이름을 항상 사용하므로 상품과 판매자를 함께 조회해 N+1 추가 쿼리를 막음
+    @Query("SELECT p FROM Product p JOIN FETCH p.seller ORDER BY p.id DESC")
+    List<Product> findAllWithSeller();
+
     // 상품 카테고리별 조회
     List<Product> findByCategory(String category);
 
