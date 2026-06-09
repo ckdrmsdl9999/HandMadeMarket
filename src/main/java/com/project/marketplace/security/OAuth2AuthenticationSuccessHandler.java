@@ -54,22 +54,22 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         authPayload.put("attributes", attributes);
         logJson("success.authentication", authPayload);
 
-        // OAuth2 성공 세션 값도 provider별 response가 아니라 공통 profile로 구성
+        // 네이버 동의 항목을 이름/이메일로 맞춰 세션 값에서도 휴대폰 정보를 제외함
         OAuth2Profile profile = resolveOAuth2Profile(attributes);
         if (profile.providerId() != null) {
             HttpSession session = request.getSession(true);
             session.setAttribute("name", profile.name());
+            session.setAttribute("email", profile.email());
             session.setAttribute("providerId", profile.providerId());
             session.setAttribute("provider", registrationId);
-            session.setAttribute("mobile", profile.mobile());
 
-            // 세션에 저장한 값을 JSON으로 남겨 다음 컨트롤러 단계와 비교하기 쉽게 맞춤
+            // 세션 확인 로그도 실제 저장하는 이름/이메일 중심으로 맞춤
             Map<String, Object> sessionPayload = new LinkedHashMap<>();
             sessionPayload.put("sessionId", session.getId());
             sessionPayload.put("name", profile.name());
+            sessionPayload.put("email", profile.email());
             sessionPayload.put("providerId", profile.providerId());
             sessionPayload.put("provider", registrationId);
-            sessionPayload.put("mobile", profile.mobile());
             logJson("success.session", sessionPayload);
 
             // DB 저장도 provider 공통 profile 기준으로 처리
@@ -123,22 +123,20 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     }
 
     private OAuth2Profile resolveOAuth2Profile(Map<String, Object> attributes) {
-        // CustomOAuth2UserService가 정규화한 값을 우선 사용하고 provider 원본 응답은 fallback으로만 사용
+        // 네이버/구글 공통으로 쓰는 식별자, 이름, 이메일만 profile로 정규화함
         String providerId = asText(attributes.get("providerId"));
         String name = asText(attributes.get("name"));
         String email = asText(attributes.get("email"));
-        String mobile = asText(attributes.get("mobile"));
 
         Object responseObj = attributes.get("response");
         if (responseObj instanceof Map<?, ?> response) {
             providerId = firstNonBlank(providerId, asText(response.get("id")));
             name = firstNonBlank(name, asText(response.get("name")));
             email = firstNonBlank(email, asText(response.get("email")));
-            mobile = firstNonBlank(mobile, asText(response.get("mobile")));
         }
 
         providerId = firstNonBlank(providerId, asText(attributes.get("sub")));
-        return new OAuth2Profile(providerId, name, email, mobile);
+        return new OAuth2Profile(providerId, name, email);
     }
 
     private String firstNonBlank(String value, String fallback) {
@@ -155,7 +153,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         return text.isBlank() ? null : text;
     }
 
-    private record OAuth2Profile(String providerId, String name, String email, String mobile) {
+    private record OAuth2Profile(String providerId, String name, String email) {
     }
 
     // OAuth2 성공 처리 중 객체 로그를 JSON 한 형태로 남기기 쉽게 추가함 -3/17
