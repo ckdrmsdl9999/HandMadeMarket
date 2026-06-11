@@ -1,0 +1,56 @@
+# dev 브랜치에 반영된 코드만 EC2 운영 서버로 배포하도록 추가함
+name: CD
+
+# dev 브랜치에 push 또는 merge된 코드만 운영 배포를 실행하도록 추가함
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  deploy:
+    # GitHub에서 제공하는 리눅스 실행 환경으로 배포 절차를 실행하도록 추가함
+    runs-on: ubuntu-latest
+
+    steps:
+      # 배포 전에 저장소 코드를 내려받아 빌드 검증 대상이 되도록 추가함
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      # 프로젝트의 Java 17 설정과 맞춰 배포 전 빌드 환경을 고정하도록 추가함
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      # 리눅스 CI 환경에서 Gradle wrapper를 실행할 수 있도록 권한을 부여함
+      - name: Grant execute permission for Gradle
+        run: chmod +x ./gradlew
+
+      # 배포 전 컴파일, 테스트, 패키징이 모두 통과하는지 확인하도록 추가함
+      - name: Build with Gradle
+        run: ./gradlew clean build
+
+      # GitHub Actions가 EC2에 SSH로 접속할 수 있도록 키와 known_hosts를 준비함
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2_key
+          chmod 600 ~/.ssh/ec2_key
+          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+
+      # EC2에서 dev 최신 코드를 받고 빌드한 뒤 Spring Boot 서비스를 재시작하도록 추가함
+      - name: Deploy to EC2
+        run: |
+          ssh -i ~/.ssh/ec2_key ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            set -e
+            cd "${{ secrets.EC2_APP_DIR }}"
+            git fetch origin dev
+            git switch dev
+            git pull --ff-only origin dev
+            ./gradlew clean build
+            sudo systemctl restart "${{ secrets.EC2_SERVICE_NAME }}"
+            sudo systemctl is-active --quiet "${{ secrets.EC2_SERVICE_NAME }}"
+          EOF
