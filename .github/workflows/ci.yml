@@ -35,6 +35,6 @@ jobs:
       - name: Grant execute permission for Gradle
         run: chmod +x ./gradlew
 
-      # 테스트 환경 정리 전까지 컴파일과 패키징 성공 여부만 먼저 확인하도록 추가함
+      # 컴파일, 테스트, 패키징이 모두 통과하는지 확인하도록 수정
       - name: Build with Gradle
-        run: ./gradlew clean build -x test
+        run: ./gradlew clean build
