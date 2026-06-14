@@ -134,20 +134,6 @@
             font-size: 15px;
         }
 
-        .chips {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .chip {
-            border: 1px solid rgba(255, 255, 255, 0.78);
-            border-radius: 999px;
-            padding: 7px 11px;
-            font-size: 12px;
-            font-weight: 700;
-        }
-
         .panel {
             background: var(--surface);
             border: 1px solid var(--line);
@@ -347,7 +333,8 @@
 <body>
 <header class="utility-bar">
     <div class="container utility-inner">
-        <span>홈 화면과 동일한 로그인 동선을 제공합니다.</span>
+        <!-- 로그인 상단 문구를 기술 설명 대신 쇼핑몰 이용 안내로 맞춤 -->
+        <span>계정 연결 후 주문과 장바구니를 더 편하게 이용하세요.</span>
         <nav class="utility-links">
             <a th:href="@{/}">홈</a>
             <a th:href="@{/loginSuccess}">내 정보</a>
@@ -366,25 +353,19 @@
 
     <main class="layout">
         <section class="hero">
-            <h1>로그인 후 맞춤 추천과<br>빠른 구매 동선을 바로 사용하세요</h1>
+            <!-- 로그인 소개 영역에서 개발 용어를 제거하고 쇼핑몰 가치 중심으로 수정 -->
+            <h1>로그인하고<br>나만의 마켓을 이어가세요</h1>
             <p>
-                아이디 로그인과 소셜 인증을 같은 화면에서 선택할 수 있습니다.
+                장바구니, 주문 내역, 계정 정보를 한 곳에서 확인할 수 있습니다.
             </p>
-            <div class="chips">
-                <span class="chip">Local</span>
-                <span class="chip">OAuth2</span>
-                <span class="chip">Naver</span>
-                <span class="chip">Thymeleaf</span>
-                <span class="chip">Session Ready</span>
-            </div>
         </section>
 
         <section class="panel">
             <p class="eyebrow">LOGIN CENTER</p>
             <h1 class="title">계정 로그인</h1>
             <p class="desc">
-                아이디와 비밀번호로 로그인하거나 선택한 소셜 인증 페이지로 이동합니다.
-                로그인 이후 홈에서 사용자 상태를 바로 확인할 수 있습니다.
+                아이디와 비밀번호로 로그인하거나 간편 로그인을 이용할 수 있습니다.
+                로그인 후 장바구니와 주문 내역을 이어서 확인할 수 있습니다.
             </p>
 
             <div class="status" th:if="${isLoggedIn}">
@@ -392,7 +373,14 @@
                 <strong th:text="${displayName}">user</strong> 님 계정이 연결되어 있습니다.
             </div>
 
-            <!-- 일반 계정 로그인은 JSON API로 세션을 만든 뒤 홈으로 이동하게 함 -->
+            <!-- 소셜 로그인을 먼저 선택할 수 있도록 로그인 버튼 순서를 위로 맞춤 -->
+            <a class="btn btn-naver" th:if="${!isLoggedIn}" th:href="@{/oauth2/authorization/naver}">네이버로 로그인</a>
+            <a class="btn btn-google" th:if="${!isLoggedIn}" th:href="@{/oauth2/authorization/google}">구글로 로그인</a>
+
+            <!-- 소셜 로그인과 일반 로그인을 시각적으로 분리함 -->
+            <div class="divider" th:if="${!isLoggedIn}">또는</div>
+
+            <!-- 일반 계정 로그인은 소셜 로그인 아래에서 선택하도록 순서를 조정함 -->
             <form id="local-login-form" class="local-login-form" th:if="${!isLoggedIn}">
                 <div class="field">
                     <label for="loginId">아이디</label>
@@ -410,15 +398,9 @@
                    th:text="${param.oauthError != null ? (param.oauthError[0] == 'account_deleted' ? '탈퇴한 이력이 있는 아이디입니다' : '소셜 로그인에 실패했습니다') : ''}"></p>
             </form>
 
-            <!-- 회원가입은 별도 화면에서 처리하도록 로그인 폼 아래에 진입 버튼을 둠 -->
+            <!-- 회원가입은 아이디 로그인 흐름 아래에서 이어서 선택하도록 위치를 맞춤 -->
             <a class="btn btn-ghost" th:if="${!isLoggedIn}" th:href="@{/signup}">회원가입</a>
 
-            <!-- 소셜 로그인과 일반 로그인을 시각적으로 분리함 -->
-            <div class="divider" th:if="${!isLoggedIn}">또는</div>
-
-            <a class="btn btn-naver" th:if="${!isLoggedIn}" th:href="@{/oauth2/authorization/naver}">네이버로 로그인</a>
-            <!-- 구글 OAuth2 registration 추가에 맞춰 로그인 진입 버튼을 함께 제공함 -->
-            <a class="btn btn-google" th:if="${!isLoggedIn}" th:href="@{/oauth2/authorization/google}">구글로 로그인</a>
             <form th:if="${isLoggedIn}" th:action="@{/logout/naver}" method="post">
                 <button class="btn btn-ghost" type="submit">로그아웃</button>
             </form>
@@ -431,9 +413,7 @@
             </div>
 
             <div class="links">
-                <!-- OAuth2 공급자별 정식 시작 경로를 화면에서 바로 확인하게 분리함 -->
-                <a class="link" th:href="@{/oauth2/authorization/naver}">네이버 OAuth</a>
-                <a class="link" th:href="@{/oauth2/authorization/google}">구글 OAuth</a>
+                <!-- 중복 소셜 로그인 링크를 제거하고 홈 이동만 남겨 로그인 선택 흐름을 단순화함 -->
                 <a class="link" th:href="@{/}">홈으로</a>
             </div>
         </section>
