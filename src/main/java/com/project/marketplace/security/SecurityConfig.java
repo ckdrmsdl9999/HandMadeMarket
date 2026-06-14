@@ -66,6 +66,16 @@ public class SecurityConfig {
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService))
                         .successHandler(oauth2AuthenticationSuccessHandler)
+                        // OAuth2 로그인 실패 원인을 로그인 화면 쿼리로 넘겨 사용자에게 안내함
+                        .failureHandler((request, response, exception) -> {
+                            String errorCode = "oauth_failed";
+                            if (exception instanceof org.springframework.security.oauth2.core.OAuth2AuthenticationException oauthException
+                                    && "account_deleted".equals(oauthException.getError().getErrorCode())) {
+                                errorCode = "account_deleted";
+                            }
+
+                            response.sendRedirect("/login?oauthError=" + errorCode);
+                        })
                 )
         ;
 

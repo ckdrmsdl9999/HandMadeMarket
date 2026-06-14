@@ -65,8 +65,9 @@ public class UserService {
         User user = userRepository.findByProviderAndLoginId(LOCAL_PROVIDER, loginId)
                 .orElseThrow(() -> new RuntimeException("아이디 또는 비밀번호가 올바르지 않습니다"));
 
+        // 탈퇴 계정 안내 문구를 OAuth2 실패 화면 메시지와 맞춤
         if (user.isDeleted()) {
-            throw new RuntimeException("탈퇴 처리된 계정입니다");
+            throw new RuntimeException("탈퇴한 이력이 있는 아이디입니다");
         }
 
         if (user.getPassword() == null

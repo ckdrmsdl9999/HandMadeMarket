@@ -95,6 +95,13 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         } else {
             // 기존 사용자면 provider에서 다시 받아온 표시 정보만 갱신함
             user = userOptional.get();
+            // 탈퇴 처리된 OAuth2 계정은 화면 안내와 같은 문구로 로그인 자체를 막음
+            if (user.isDeleted()) {
+                throw new OAuth2AuthenticationException(
+                        new OAuth2Error("account_deleted"),
+                        "탈퇴한 이력이 있는 아이디입니다"
+                );
+            }
 
             // 이메일이 변경되었거나 없는 경우 업데이트
             if (email != null && (user.getEmail() == null || !email.equals(user.getEmail()))) {
