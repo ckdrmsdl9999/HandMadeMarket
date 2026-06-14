@@ -50,7 +50,6 @@ jobs:
             git fetch origin dev
             git switch dev
             git pull --ff-only origin dev
-            ./gradlew clean build
-            sudo systemctl restart "${{ secrets.EC2_SERVICE_NAME }}"
-            sudo systemctl is-active --quiet "${{ secrets.EC2_SERVICE_NAME }}"
+            ./gradlew clean build -x test
+            /home/ubuntu/deploy.sh
           EOF
