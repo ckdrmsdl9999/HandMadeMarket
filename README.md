@@ -21,8 +21,10 @@
 - 장바구니 조회, 추가, 수량 변경, 삭제
 - 주문/배송 도메인 기본 구조 구현
 - 서버에 배포해서 실제로 동작 확인
-- `Swagger(OpenAPI)` 기반 API 문서화 추가 예정
-- CI/CD 및 무중단 배포 구현
+- `Swagger(OpenAPI)` 기반 API 문서화 추가 
+- GitHub Actions 기반 CI/CD 적용 
+- AWS EC2 서버 배포 및 무중단 배포 환경 구현
+- HTTPS 적용 및 Nginx 기반 Reverse Proxy 설정
 
 ### 2차 고도화 예정
 
