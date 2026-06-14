@@ -206,6 +206,26 @@
             border: 1px solid var(--line);
         }
 
+        /* 회원탈퇴 버튼은 다른 보조 버튼과 구분되도록 위험 작업 색상으로 표시함 */
+        .btn-danger {
+            color: #fff;
+            background: #dc2626;
+        }
+
+        /* 회원탈퇴 처리 결과를 버튼 묶음 아래에서 바로 안내함 */
+        .account-delete-status {
+            width: 100%;
+            margin: 6px 0 0;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        /* 회원탈퇴 실패 메시지는 일반 안내와 구분되도록 강조함 */
+        .account-delete-status.error {
+            color: #dc2626;
+        }
+
         .profile-card h2 {
             margin: 24px 0 14px;
             font-size: 22px;
@@ -368,9 +388,50 @@
                 <form th:action="@{/logout/naver}" method="post">
                     <button class="btn btn-ghost" type="submit">로그아웃</button>
                 </form>
+                <!-- 회원탈퇴 API를 내 정보 화면에서 직접 호출할 수 있게 버튼을 추가함 -->
+                <button class="btn btn-danger" id="delete-account-button" type="button">회원탈퇴</button>
+                <!-- 회원탈퇴 처리 결과를 버튼 묶음 아래에서 안내함 -->
+                <p class="account-delete-status" id="delete-account-status" role="status" aria-live="polite"></p>
             </div>
         </article>
     </section>
 </main>
+<script>
+    // 회원탈퇴 버튼과 결과 영역이 있을 때만 이벤트를 연결함
+    const deleteAccountButton = document.getElementById('delete-account-button');
+    const deleteAccountStatus = document.getElementById('delete-account-status');
+
+    // 내 정보 화면의 회원탈퇴 버튼을 현재 로그인 사용자 탈퇴 API와 연결함
+    if (deleteAccountButton && deleteAccountStatus) {
+        deleteAccountButton.addEventListener('click', async () => {
+            if (!window.confirm('회원탈퇴 후에는 같은 계정으로 다시 로그인할 수 없습니다. 탈퇴하시겠습니까?')) {
+                return;
+            }
+
+            deleteAccountButton.disabled = true;
+            deleteAccountStatus.className = 'account-delete-status';
+            deleteAccountStatus.textContent = '회원탈퇴를 처리하는 중입니다.';
+
+            try {
+                const response = await fetch('/api/user/me', {
+                    method: 'DELETE'
+                });
+                const message = await response.text();
+
+                if (!response.ok) {
+                    throw new Error(message || '회원탈퇴에 실패했습니다.');
+                }
+
+                deleteAccountStatus.textContent = message || '회원탈퇴가 완료되었습니다.';
+                window.alert(message || '회원탈퇴가 완료되었습니다.');
+                window.location.href = '/';
+            } catch (error) {
+                deleteAccountStatus.className = 'account-delete-status error';
+                deleteAccountStatus.textContent = error.message || '회원탈퇴 중 오류가 발생했습니다.';
+                deleteAccountButton.disabled = false;
+            }
+        });
+    }
+</script>
 </body>
 </html>

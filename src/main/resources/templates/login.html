@@ -231,8 +231,16 @@
             line-height: 1.5;
         }
 
+        /* 일반/OAuth2 로그인 실패 메시지를 같은 경고 박스 형태로 통일함 */
         .login-message.error {
-            color: #d63d32;
+            width: 100%;
+            margin: 12px 0 0;
+            padding: 12px 14px;
+            border: 1px solid #f2b8b5;
+            border-radius: 10px;
+            color: #b42318;
+            background: #fff1f0;
+            font-weight: 800;
         }
 
         .divider {
@@ -395,7 +403,11 @@
                     <input id="password" name="password" type="password" autocomplete="current-password" required>
                 </div>
                 <button class="btn btn-primary" type="submit">아이디로 로그인</button>
-                <p id="local-login-message" class="login-message"></p>
+                <!-- 로컬/OAuth2 로그인 실패 메시지를 같은 위치에서 표시함 -->
+                <p id="local-login-message"
+                   class="login-message"
+                   th:classappend="${param.oauthError != null} ? ' error' : ''"
+                   th:text="${param.oauthError != null ? (param.oauthError[0] == 'account_deleted' ? '탈퇴한 이력이 있는 아이디입니다' : '소셜 로그인에 실패했습니다') : ''}"></p>
             </form>
 
             <!-- 회원가입은 별도 화면에서 처리하도록 로그인 폼 아래에 진입 버튼을 둠 -->
@@ -449,9 +461,10 @@
                 body: JSON.stringify(payload)
             });
 
+            // 일반 로그인 실패 응답의 message 필드만 표시해 OAuth2 실패 안내와 형식을 맞춤
             if (!response.ok) {
-                const message = await response.text();
-                throw new Error(message || '아이디 또는 비밀번호를 확인해 주세요.');
+                const errorBody = await response.json().catch(() => null);
+                throw new Error(errorBody?.message || '아이디 또는 비밀번호를 확인해 주세요.');
             }
 
             setLocalLoginMessage('로그인되었습니다. 홈으로 이동합니다.', '');
