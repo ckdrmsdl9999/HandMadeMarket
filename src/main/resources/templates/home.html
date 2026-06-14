@@ -609,7 +609,7 @@
         <a href="#">인테리어 소품</a>
         <a href="#">패브릭/니트</a>
         <a href="#">선물 추천</a>
-        <a th:href="@{/login}">로그인 센터</a>
+        <!-- 상단 계정 영역과 중복되는 로그인 센터 링크를 제거함 -->
     </div>
 </nav>
 
@@ -656,7 +656,7 @@
             <a class="cta-btn cta-google" th:href="@{/oauth2/authorization/google}">구글 로그인 시작</a>
             <div class="login-meta">
                 비로그인 상태입니다.<br>
-                홈에서 바로 로그인/로그아웃 동선을 제공합니다.
+                로그인하면 장바구니와 추천 상품을 이어서 확인할 수 있습니다.
             </div>
         </aside>
 
@@ -738,55 +738,7 @@
         </div>
     </section>
 
-    <section class="section" style="animation-delay: 0.4s;">
-        <div class="section-head">
-            <h2 class="section-title">로그인 관련 바로가기</h2>
-            <a th:href="@{/login}">로그인 센터</a>
-        </div>
-        <div class="product-grid">
-            <a class="product-card" th:href="@{/login}">
-                <div class="thumb thumb-1">L1</div>
-                <div class="card-body">
-                    <span class="badge">기본 경로</span>
-                    <p class="name"><code>/login</code> 페이지 열기</p>
-                    <p class="price">GO<small>></small></p>
-                </div>
-            </a>
-            <a class="product-card" th:href="@{/oauth2/authorization/naver}">
-                <div class="thumb thumb-2">L2</div>
-                <div class="card-body">
-                    <span class="badge">네이버 OAuth</span>
-                    <p class="name"><code>/oauth2/authorization/naver</code></p>
-                    <p class="price">GO<small>></small></p>
-                </div>
-            </a>
-            <!-- 로그인 바로가기 카드도 provider별 OAuth2 시작 경로로 분리함 -->
-            <a class="product-card" th:href="@{/oauth2/authorization/google}">
-                <div class="thumb thumb-3">L3</div>
-                <div class="card-body">
-                    <span class="badge">구글 OAuth</span>
-                    <p class="name"><code>/oauth2/authorization/google</code></p>
-                    <p class="price">GO<small>></small></p>
-                </div>
-            </a>
-            <a class="product-card" th:href="@{/loginSuccess}">
-                <div class="thumb thumb-4">L4</div>
-                <div class="card-body">
-                    <span class="badge">사용자 정보</span>
-                    <p class="name"><code>/loginSuccess</code> 확인</p>
-                    <p class="price">GO<small>></small></p>
-                </div>
-            </a>
-            <a class="product-card" th:href="@{/}">
-                <div class="thumb thumb-5">L5</div>
-                <div class="card-body">
-                    <span class="badge">홈</span>
-                    <p class="name">메인 홈으로 이동</p>
-                    <p class="price">GO<small>></small></p>
-                </div>
-            </a>
-        </div>
-    </section>
+    <!-- 개발용 로그인 바로가기 섹션이 쇼핑몰 메인 흐름을 방해해 제거함 -->
 </main>
 <script>
     // 홈 추천 상품 카드를 API 데이터로 교체해 클릭 시 실제 상품 상세 ID로 이동되게 한다.
