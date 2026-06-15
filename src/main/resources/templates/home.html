@@ -488,6 +488,72 @@
             line-height: 1.65;
         }
 
+        /* 상품 상세에만 있던 정책 링크 푸터를 홈에도 노출해 하단 정보 구성을 맞춤 */
+        .footer {
+            background: #2d3b63;
+            color: #fff;
+            padding: 40px 0;
+            margin-top: 4px;
+        }
+
+        .footer-container {
+            width: min(1240px, 100% - 28px);
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+        }
+
+        .footer-section {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .footer-section h3 {
+            margin: 0 0 20px;
+            font-size: 18px;
+            color: #f1f1f1;
+        }
+
+        .footer-section p {
+            margin: 0;
+            color: #d6dbe8;
+            line-height: 1.7;
+        }
+
+        .footer-links {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+
+        .footer-links a {
+            color: #d6dbe8;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: #fff;
+        }
+
+        .copyright {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #d6dbe8;
+            width: 100%;
+        }
+
+        .copyright p {
+            margin: 0;
+        }
+
         @media (max-width: 1180px) {
             .main-header-inner {
                 grid-template-columns: 1fr;
@@ -740,6 +806,41 @@
 
     <!-- 개발용 로그인 바로가기 섹션이 쇼핑몰 메인 흐름을 방해해 제거함 -->
 </main>
+
+<!-- 상품 상세 페이지와 같은 회사/정책 링크를 홈 하단에도 제공해 페이지 간 정보 노출을 통일함 -->
+<footer class="footer">
+    <div class="footer-container">
+        <div class="footer-section">
+            <h3>수제품 마켓</h3>
+            <p>장인의 손길이 담긴 특별한 제품을 만나보세요.</p>
+        </div>
+
+        <div class="footer-section">
+            <h3>고객 지원</h3>
+            <ul class="footer-links">
+                <li><a href="#">자주 묻는 질문</a></li>
+                <li><a href="#">교환 및 환불 정책</a></li>
+                <li><a href="#">배송 안내</a></li>
+                <li><a href="#">문의하기</a></li>
+            </ul>
+        </div>
+
+        <div class="footer-section">
+            <h3>회사 정보</h3>
+            <ul class="footer-links">
+                <li><a href="#">회사 소개</a></li>
+                <li><a href="#">작가 입점 안내</a></li>
+                <li><a href="#">이용약관</a></li>
+                <li><a href="#">개인정보처리방침</a></li>
+            </ul>
+        </div>
+
+        <div class="copyright">
+            <p>&copy; 2025 수제품 마켓. All Rights Reserved.</p>
+        </div>
+    </div>
+</footer>
+
 <script>
     // 홈 추천 상품 카드를 API 데이터로 교체해 클릭 시 실제 상품 상세 ID로 이동되게 한다.
     async function hydrateHomeProducts() {
