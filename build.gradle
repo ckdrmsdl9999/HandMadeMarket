@@ -17,6 +17,7 @@ configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
 	}
+	jmeter
 }
 
 repositories {
@@ -24,18 +25,68 @@ repositories {
 }
 
 dependencies {
-
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.4'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	runtimeOnly 'org.postgresql:postgresql'
-//	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	// API 명세와 Swagger UI를 자동 생성해 현재 구현된 REST API를 문서화함
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.11'
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	// CI 테스트가 운영 DB 없이 H2 메모리 DB로 Spring 컨텍스트를 띄우도록 추가함
+	testRuntimeOnly 'com.h2database:h2'
+
+	//세션 사용위한 의존성추가
+//	implementation 'org.springframework.session:spring-session-jdbc'
+//	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+
+	// OAuth2 의존성 추가
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+
+	// JWT 의존성
+	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+	implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
+	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+
+	//임시 테스트위한 thymeleaf추가
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+	// JMeter 의존성
+	jmeter 'org.apache.jmeter:ApacheJMeter_core:5.6.3'
+	jmeter 'org.apache.jmeter:ApacheJMeter_components:5.6.3'
+	jmeter 'org.apache.jmeter:ApacheJMeter_http:5.6.3'
+	jmeter 'org.apache.jmeter:ApacheJMeter_java:5.6.3'
+	jmeter 'org.apache.jmeter:ApacheJMeter_jdbc:5.6.3'
+	jmeter 'kg.apc:jmeter-plugins-standard:1.4.0'
+}
+
+// JMeter 테스트를 실행하는 태스크 정의
+task jmeter() {
+	doLast {
+		// JMeter 테스트 결과 디렉토리 생성
+		mkdir("${buildDir}/jmeter-results")
+
+		// 테스트를 실행할 JMX 파일 경로 지정
+		def jmxFile = "${projectDir}/src/test/jmeter/test-plan.jmx"
+
+		// JMeter 명령을 실행
+		javaexec {
+			mainClass = 'org.apache.jmeter.NewDriver'
+			classpath = configurations.jmeter
+			args = [
+					'-n',                       // non-GUI 모드로 실행
+					'-t', jmxFile,             // 테스트 파일
+					'-l', "${buildDir}/jmeter-results/results.jtl",  // 결과 파일
+					'-j', "${buildDir}/jmeter-results/jmeter.log"    // 로그 파일
+			]
+		}
+	}
 }
 
 tasks.named('test') {

@@ -1,0 +1,60 @@
+# main 브랜치에 반영된 코드만 EC2 운영 서버로 배포하도록 설정함
+name: CD
+
+# main 브랜치에 push 또는 merge된 코드만 운영 배포를 실행하도록 설정함
+on:
+  push:
+    branches:
+      - main
+
+# GitHub Actions가 저장소 코드를 읽는 권한만 가지도록 최소 권한으로 설정함
+permissions:
+  contents: read
+
+# main 배포가 동시에 여러 번 실행되지 않도록 설정함
+# 예를 들어 main에 연속 push가 들어와도 Blue-Green 배포 스크립트가 동시에 꼬이지 않게 막는 역할임
+concurrency:
+  group: cd-main
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # GitHub에서 제공하는 ubuntu-latest 서버가 아니라,
+    # EC2에 설치한 self-hosted runner에서 배포 절차를 직접 실행하도록 설정함
+    runs-on: [self-hosted, Linux, X64]
+
+    steps:
+      # 배포 전에 저장소 코드를 내려받아 빌드 검증 대상이 되도록 설정함
+      # self-hosted runner의 작업 폴더에 현재 main 브랜치 코드가 체크아웃됨
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      # 프로젝트의 Java 17 설정과 맞춰 배포 전 빌드 환경을 고정하도록 설정함
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      # 리눅스 환경에서 Gradle wrapper를 실행할 수 있도록 권한을 부여함
+      - name: Grant execute permission for Gradle
+        run: chmod +x ./gradlew
+
+      # 배포 전에 컴파일, 테스트, 패키징이 모두 통과하는지 확인함
+      # 여기서 실패하면 실제 EC2 서비스 재시작까지 가지 않음
+      - name: Build with Gradle
+        run: ./gradlew clean build
+
+      # EC2 서버 안의 실제 운영 프로젝트 디렉토리를 main 브랜치 최신 코드로 갱신한 뒤,
+      # 테스트를 제외하고 운영용 jar를 다시 빌드하고 Blue-Green 배포 스크립트를 실행함
+      - name: Deploy
+        run: |
+          set -e
+          cd /home/ubuntu/HandMadeMarket
+          git fetch origin main
+          git switch main
+          git pull --ff-only origin main
+          chmod +x ./gradlew
+          ./gradlew clean build -x test
+          /home/ubuntu/deploy.sh

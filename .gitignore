@@ -1,9 +1,13 @@
 HELP.md
 .gradle
+.gradle-user-home/
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+.env*
+application-secret.yml
+application.yml
 
 ### STS ###
 .apt_generated

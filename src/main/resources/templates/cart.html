@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HandMade Market | Cart</title>
+    <style>
+        :root {
+            --bg: #eef3fb;
+            --surface: #ffffff;
+            --line: #dce4f2;
+            --ink: #0f1729;
+            --muted: #667084;
+            --brand: #295bff;
+            --brand-dark: #1f47c8;
+            --warn: #d23535;
+            --ok: #087f3f;
+            --shadow: 0 14px 34px rgba(26, 53, 117, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            color: var(--ink);
+            font-family: "SUIT", "Pretendard", "Noto Sans KR", sans-serif;
+            background:
+                    radial-gradient(circle at 95% 2%, rgba(41, 91, 255, 0.18), transparent 24%),
+                    radial-gradient(circle at 3% 1%, rgba(255, 140, 72, 0.14), transparent 26%),
+                    var(--bg);
+        }
+
+        .container {
+            width: min(1100px, 100% - 28px);
+            margin: 0 auto;
+        }
+
+        .topbar {
+            border-bottom: 1px solid var(--line);
+            background: #fff;
+        }
+
+        .topbar-inner {
+            min-height: 66px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .logo {
+            text-decoration: none;
+            color: var(--ink);
+            font-size: 28px;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+        }
+
+        .logo em {
+            font-style: normal;
+            color: var(--brand);
+        }
+
+        .top-links {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+        }
+
+        .top-links a {
+            text-decoration: none;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .top-links a.active {
+            color: var(--brand-dark);
+        }
+
+        main {
+            padding: 22px 0 44px;
+        }
+
+        .panel {
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: var(--surface);
+            box-shadow: var(--shadow);
+            padding: 18px;
+        }
+
+        .panel + .panel {
+            margin-top: 14px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 30px;
+            letter-spacing: -0.6px;
+        }
+
+        .desc {
+            margin: 8px 0 0;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .user-control {
+            margin-top: 14px;
+            display: flex;
+            align-items: end;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .input-group {
+            display: grid;
+            gap: 6px;
+        }
+
+        .input-group label {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .input-group input {
+            width: 170px;
+            min-height: 40px;
+            border-radius: 10px;
+            border: 1px solid var(--line);
+            padding: 0 12px;
+            font-size: 15px;
+        }
+
+        .btn {
+            min-height: 40px;
+            border-radius: 10px;
+            border: 0;
+            padding: 0 16px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            color: #fff;
+            background: linear-gradient(145deg, var(--brand), var(--brand-dark));
+        }
+
+        .btn-danger {
+            color: #fff;
+            background: linear-gradient(145deg, #eb4e4e, #c63131);
+        }
+
+        .btn-light {
+            border: 1px solid var(--line);
+            background: #fff;
+            color: var(--ink);
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr) auto;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .metric {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 12px;
+            background: #fbfcff;
+        }
+
+        .metric span {
+            display: block;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .metric strong {
+            margin-top: 4px;
+            display: block;
+            font-size: 22px;
+            letter-spacing: -0.3px;
+        }
+
+        .status {
+            margin-bottom: 12px;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .status.info {
+            display: block;
+            color: #114477;
+            border: 1px solid #b3cff5;
+            background: #eaf4ff;
+        }
+
+        .status.success {
+            display: block;
+            color: var(--ok);
+            border: 1px solid #a9dfc1;
+            background: #e8f8ef;
+        }
+
+        .status.error {
+            display: block;
+            color: #932626;
+            border: 1px solid #f0b8b8;
+            background: #ffecec;
+        }
+
+        .empty {
+            border: 1px dashed var(--line);
+            border-radius: 12px;
+            padding: 24px 16px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 760px;
+        }
+
+        th,
+        td {
+            border-bottom: 1px solid var(--line);
+            padding: 12px 10px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        th {
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        td strong {
+            font-size: 15px;
+        }
+
+        .qty-wrap {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .qty-wrap input {
+            width: 56px;
+            min-height: 34px;
+            text-align: center;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+        }
+
+        .qty-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .row-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .hint {
+            margin-top: 8px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        @media (max-width: 900px) {
+            .summary {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            h1 {
+                font-size: 26px;
+            }
+
+            .summary {
+                grid-template-columns: 1fr;
+            }
+
+            .topbar-inner {
+                min-height: 60px;
+            }
+
+            .top-links {
+                font-size: 13px;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<!-- 로그인 사용자 ID를 body data 속성으로 내려 장바구니 페이지가 현재 사용자 기준으로만 동작하게 한다. -->
+<body th:attr="data-current-user-id=${currentUserId}">
+<header class="topbar">
+    <div class="container topbar-inner">
+        <a class="logo" th:href="@{/}">HandMade <em>Market</em></a>
+        <nav class="top-links">
+            <a th:href="@{/}">홈</a>
+            <a class="active" th:href="@{/cart}">장바구니</a>
+            <a th:if="${!isLoggedIn}" th:href="@{/login}">로그인</a>
+            <a th:if="${isLoggedIn}" th:href="@{/loginSuccess}" th:text="${displayName} + '님'">내 정보</a>
+        </nav>
+    </div>
+</header>
+
+<main class="container">
+    <section class="panel">
+        <h1>장바구니</h1>
+        <!-- 수동 userId 입력을 제거하고 로그인 상태에 따라 자동 조회 또는 안내만 보여준다. -->
+        <p class="desc" th:if="${isLoggedIn}">현재 로그인한 계정의 장바구니를 자동으로 불러옵니다.</p>
+        <p class="desc" th:if="${!isLoggedIn}">로그인 후 내 장바구니를 확인할 수 있습니다.</p>
+    </section>
+
+    <section class="panel summary">
+        <div class="metric">
+            <span>사용자 ID</span>
+            <strong id="summary-user-id">-</strong>
+        </div>
+        <div class="metric">
+            <span>상품 종류</span>
+            <strong id="summary-item-count">0개</strong>
+        </div>
+        <div class="metric">
+            <span>총 결제 금액</span>
+            <strong id="summary-total-amount">0원</strong>
+        </div>
+        <!-- 장바구니에서 주문서 화면으로 바로 넘어가게 주문 페이지 진입 링크를 추가함 -->
+        <a class="btn btn-primary" th:href="@{/orders}">주문하기</a>
+        <button id="clear-cart-btn" class="btn btn-danger" type="button" disabled>장바구니 비우기</button>
+    </section>
+
+    <section class="panel">
+        <div id="status" class="status"></div>
+        <div id="cart-empty" class="empty">장바구니가 비어 있습니다.</div>
+        <div id="cart-table-wrap" class="table-wrap" style="display: none;">
+            <table>
+                <thead>
+                <tr>
+                    <th>상품명</th>
+                    <th>단가</th>
+                    <th>수량</th>
+                    <th>합계</th>
+                    <th>작업</th>
+                </tr>
+                </thead>
+                <tbody id="cart-items-body"></tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<script>
+    // 장바구니 페이지에서 공통으로 쓰는 요소 참조와 상태를 초기화해 이벤트 핸들러에서 재조회 비용을 줄였다.
+    const refs = {};
+    const state = {
+        userId: null,
+        cart: null
+    };
+
+    // 장바구니 페이지는 body data 속성으로 내려온 로그인 사용자 ID만 초기값으로 사용한다.
+    function resolveInitialUserId() {
+        return parsePositiveInt(document.body.dataset.currentUserId);
+    }
+
+    // API 경로에 잘못된 값이 들어가지 않도록 로그인 사용자 userId만 상태와 요약 영역에 반영한다.
+    function setUserId(userId) {
+        const parsed = parsePositiveInt(userId);
+        if (!parsed) {
+            return false;
+        }
+        state.userId = parsed;
+        refs.summaryUserId.textContent = String(parsed);
+        return true;
+    }
+
+    // 사용자 작업 결과를 한 위치에서 보여줘 성공/실패 원인을 빠르게 확인할 수 있게 했다.
+    function showStatus(message, type) {
+        refs.status.className = `status ${type}`;
+        refs.status.textContent = message;
+    }
+
+    // 사용자 입력이 없을 때 이전 안내를 지워 화면 잡음을 줄이기 위해 상태 메시지를 숨긴다.
+    function hideStatus() {
+        refs.status.className = 'status';
+        refs.status.textContent = '';
+    }
+
+    // 초기 렌더 직후 로그인 사용자 장바구니를 자동 조회하고 비로그인 상태면 안내만 보여준다.
+    async function initializeCartPage() {
+        refs.clearCartButton = document.getElementById('clear-cart-btn');
+        refs.summaryUserId = document.getElementById('summary-user-id');
+        refs.summaryItemCount = document.getElementById('summary-item-count');
+        refs.summaryTotalAmount = document.getElementById('summary-total-amount');
+        refs.cartEmpty = document.getElementById('cart-empty');
+        refs.cartTableWrap = document.getElementById('cart-table-wrap');
+        refs.cartItemsBody = document.getElementById('cart-items-body');
+        refs.status = document.getElementById('status');
+
+        refs.clearCartButton.addEventListener('click', clearCart);
+        refs.cartItemsBody.addEventListener('click', handleTableClick);
+
+        const initialUserId = resolveInitialUserId();
+        if (initialUserId && setUserId(initialUserId)) {
+            await loadCart();
+        } else {
+            renderCart({ userId: null, cartItems: [], totalAmount: 0 });
+            showStatus('로그인 후 장바구니를 확인할 수 있습니다.', 'info');
+        }
+    }
+
+    // 클릭한 버튼 종류별로 수량 변경/삭제를 분기해 각 행에 개별 이벤트를 붙이지 않도록 단일 핸들러를 사용한다.
+    async function handleTableClick(event) {
+        const row = event.target.closest('tr[data-cart-item-id]');
+        if (!row) {
+            return;
+        }
+
+        const cartItemId = Number(row.dataset.cartItemId);
+        if (!cartItemId) {
+            return;
+        }
+
+        const quantityInput = row.querySelector('input[data-role="quantity"]');
+        const currentQuantity = parsePositiveInt(quantityInput.value) || 1;
+
+        if (event.target.matches('button[data-action="minus"]')) {
+            quantityInput.value = String(Math.max(1, currentQuantity - 1));
+            return;
+        }
+
+        if (event.target.matches('button[data-action="plus"]')) {
+            quantityInput.value = String(currentQuantity + 1);
+            return;
+        }
+
+        if (event.target.matches('button[data-action="update"]')) {
+            await updateItemQuantity(cartItemId, quantityInput.value);
+            return;
+        }
+
+        if (event.target.matches('button[data-action="remove"]')) {
+            await removeItem(cartItemId);
+        }
+    }
+
+    // 서버 응답을 상태에 반영하고 렌더링을 갱신해 수동 새로고침 없이 최신 장바구니를 확인할 수 있게 했다.
+    async function loadCart() {
+        if (!state.userId) {
+            showStatus('로그인 후 장바구니를 확인할 수 있습니다.', 'error');
+            return;
+        }
+
+        try {
+            const cart = await requestJson(`/api/carts/${state.userId}`);
+            state.cart = cart;
+            renderCart(cart);
+            showStatus('장바구니를 불러왔습니다.', 'success');
+        } catch (error) {
+            renderCart({ userId: state.userId, cartItems: [], totalAmount: 0 });
+            showStatus(`장바구니 조회 실패: ${error.message}`, 'error');
+        }
+    }
+
+    function renderCart(cart) {
+        const items = Array.isArray(cart.cartItems) ? cart.cartItems : [];
+
+        refs.summaryUserId.textContent = cart.userId ? String(cart.userId) : '-';
+        refs.summaryItemCount.textContent = `${items.length}개`;
+        refs.summaryTotalAmount.textContent = formatPrice(cart.totalAmount || 0);
+        refs.clearCartButton.disabled = items.length === 0;
+
+        if (items.length === 0) {
+            refs.cartEmpty.style.display = 'block';
+            refs.cartTableWrap.style.display = 'none';
+            refs.cartItemsBody.innerHTML = '';
+            return;
+        }
+
+        refs.cartItemsBody.innerHTML = items.map((item) => `
+            <tr data-cart-item-id="${item.cartItemId}">
+                <td><strong>${escapeHtml(item.productNameSnapshot)}</strong><br><small>#${item.productId}</small></td>
+                <td>${formatPrice(item.unitPriceSnapshot)}</td>
+                <td>
+                    <div class="qty-wrap">
+                        <button class="qty-btn" type="button" data-action="minus">-</button>
+                        <input type="number" min="1" data-role="quantity" value="${item.quantity}">
+                        <button class="qty-btn" type="button" data-action="plus">+</button>
+                    </div>
+                </td>
+                <td>${formatPrice(item.lineAmount)}</td>
+                <td>
+                    <div class="row-actions">
+                        <button class="btn btn-light" type="button" data-action="update">수량반영</button>
+                        <button class="btn btn-light" type="button" data-action="remove">삭제</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+
+        refs.cartEmpty.style.display = 'none';
+        refs.cartTableWrap.style.display = 'block';
+    }
+
+    // 장바구니 항목 수량 변경을 API와 동기화해 총액 계산이 서버 기준으로 다시 맞춰지도록 했다.
+    async function updateItemQuantity(cartItemId, quantity) {
+        if (!state.userId) {
+            showStatus('로그인 후 장바구니를 수정할 수 있습니다.', 'error');
+            return;
+        }
+
+        const parsedQuantity = parsePositiveInt(quantity);
+        if (!parsedQuantity) {
+            showStatus('수량은 1 이상의 숫자여야 합니다.', 'error');
+            return;
+        }
+
+        try {
+            const cart = await requestJson(`/api/carts/${state.userId}/items/${cartItemId}`, {
+                method: 'PATCH',
+                body: JSON.stringify({ quantity: parsedQuantity })
+            });
+            state.cart = cart;
+            renderCart(cart);
+            showStatus('수량을 변경했습니다.', 'success');
+        } catch (error) {
+            showStatus(`수량 변경 실패: ${error.message}`, 'error');
+        }
+    }
+
+    // 단일 항목 삭제 API를 연결해 장바구니 페이지에서 바로 행 단위 정리가 가능하게 했다.
+    async function removeItem(cartItemId) {
+        if (!state.userId) {
+            showStatus('로그인 후 장바구니를 수정할 수 있습니다.', 'error');
+            return;
+        }
+
+        try {
+            const cart = await requestJson(`/api/carts/${state.userId}/items/${cartItemId}`, {
+                method: 'DELETE'
+            });
+            state.cart = cart;
+            renderCart(cart);
+            showStatus('항목을 삭제했습니다.', 'success');
+        } catch (error) {
+            showStatus(`항목 삭제 실패: ${error.message}`, 'error');
+        }
+    }
+
+    // 전체 비우기 버튼을 API와 연결해 테스트 중 장바구니 상태를 빠르게 초기화할 수 있게 했다.
+    async function clearCart() {
+        if (!state.userId) {
+            showStatus('로그인 후 장바구니를 비울 수 있습니다.', 'error');
+            return;
+        }
+
+        if (!window.confirm('장바구니를 모두 비우시겠습니까?')) {
+            return;
+        }
+
+        try {
+            const cart = await requestJson(`/api/carts/${state.userId}/items`, {
+                method: 'DELETE'
+            });
+            state.cart = cart;
+            renderCart(cart);
+            showStatus('장바구니를 비웠습니다.', 'success');
+        } catch (error) {
+            showStatus(`전체 삭제 실패: ${error.message}`, 'error');
+        }
+    }
+
+    // fetch 응답 코드를 공통 처리해 API 실패 시 각 함수에서 중복 파싱 코드를 줄였다.
+    async function requestJson(url, options = {}) {
+        const response = await fetch(url, {
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            ...options
+        });
+
+        if (!response.ok) {
+            const text = await response.text();
+            throw new Error(text || `HTTP ${response.status}`);
+        }
+
+        const contentType = response.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+            return response.json();
+        }
+        return null;
+    }
+
+    // 숫자 입력 검증을 한 함수로 묶어 userId와 수량 필드의 유효성 규칙을 통일했다.
+    function parsePositiveInt(value) {
+        const number = Number(value);
+        if (!Number.isInteger(number) || number <= 0) {
+            return null;
+        }
+        return number;
+    }
+
+    // 상품명이 스냅샷으로 저장돼 내려올 때 HTML 태그로 해석되지 않도록 이스케이프 처리한다.
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    // 금액 표시 형식을 통일해 요약/테이블 숫자가 같은 단위 규칙으로 보이게 했다.
+    function formatPrice(value) {
+        return `${Number(value || 0).toLocaleString('ko-KR')}원`;
+    }
+
+    document.addEventListener('DOMContentLoaded', initializeCartPage);
+</script>
+</body>
+</html>

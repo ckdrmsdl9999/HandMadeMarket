@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>내 정보 | HandMade Market</title>
+    <style>
+        /* 홈/로그인 화면과 같은 브랜드 토큰으로 내 정보 페이지 색감을 통일함 */
+        :root {
+            --bg: #f4f7fd;
+            --surface: #ffffff;
+            --ink: #0f1729;
+            --muted: #5e6778;
+            --line: #dde4f0;
+            --brand-blue: #3566ff;
+            --brand-blue-dark: #224fd6;
+            --accent: #ff6f2c;
+            --soft: #edf2ff;
+            --shadow: 0 14px 34px rgba(28, 58, 125, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        /* 내 정보 화면도 다른 주요 화면과 같은 배경과 폰트를 사용함 */
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "SUIT", "Pretendard", "Noto Sans KR", sans-serif;
+            color: var(--ink);
+            background:
+                    radial-gradient(circle at 8% 2%, rgba(53, 102, 255, 0.18), transparent 24%),
+                    radial-gradient(circle at 94% 0%, rgba(255, 111, 44, 0.14), transparent 22%),
+                    var(--bg);
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        button {
+            font: inherit;
+        }
+
+        .container {
+            width: min(1140px, 100% - 28px);
+            margin: 0 auto;
+        }
+
+        .utility-bar,
+        .main-header,
+        .gnb {
+            background: #fff;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .utility-inner {
+            min-height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .utility-links,
+        .header-actions,
+        .gnb-inner {
+            display: flex;
+            align-items: center;
+        }
+
+        .utility-links,
+        .header-actions {
+            gap: 14px;
+        }
+
+        .utility-links button {
+            border: 0;
+            background: none;
+            color: var(--muted);
+            padding: 0;
+            cursor: pointer;
+        }
+
+        .main-header-inner {
+            min-height: 82px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .logo {
+            color: var(--ink);
+            font-size: 30px;
+            line-height: 1;
+            font-weight: 900;
+            letter-spacing: -0.7px;
+        }
+
+        .logo em {
+            color: var(--brand-blue);
+            font-style: normal;
+        }
+
+        .header-link {
+            color: var(--muted);
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .header-link strong {
+            display: block;
+            color: var(--ink);
+            font-size: 15px;
+            margin-top: 3px;
+        }
+
+        .gnb-inner {
+            min-height: 50px;
+            gap: 18px;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .gnb-inner a {
+            color: var(--ink);
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .gnb-inner a.highlight {
+            color: var(--accent);
+        }
+
+        main {
+            padding: 24px 0 56px;
+        }
+
+        /* 내 정보는 한 카드 안에서 위에서 아래로 읽히게 구성함 */
+        .profile-layout {
+            max-width: 720px;
+            margin: 0 auto;
+        }
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .eyebrow {
+            margin: 0 0 8px;
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        .profile-card {
+            padding: 26px;
+        }
+
+        .profile-card h1 {
+            margin: 0;
+            font-size: 32px;
+            letter-spacing: -0.4px;
+        }
+
+        .profile-card p {
+            margin: 10px 0 0;
+            color: var(--muted);
+            line-height: 1.65;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 22px;
+        }
+
+        .btn {
+            width: auto;
+            min-width: 150px;
+            border: 0;
+            border-radius: 11px;
+            padding: 12px 14px;
+            text-align: center;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            color: #fff;
+            background: linear-gradient(145deg, var(--brand-blue) 0%, var(--brand-blue-dark) 100%);
+        }
+
+        .btn-ghost {
+            color: var(--ink);
+            background: #fff;
+            border: 1px solid var(--line);
+        }
+
+        /* 회원탈퇴 버튼은 다른 보조 버튼과 구분되도록 위험 작업 색상으로 표시함 */
+        .btn-danger {
+            color: #fff;
+            background: #dc2626;
+        }
+
+        /* 회원탈퇴 처리 결과를 버튼 묶음 아래에서 바로 안내함 */
+        .account-delete-status {
+            width: 100%;
+            margin: 6px 0 0;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        /* 회원탈퇴 실패 메시지는 일반 안내와 구분되도록 강조함 */
+        .account-delete-status.error {
+            color: #dc2626;
+        }
+
+        .profile-card h2 {
+            margin: 24px 0 14px;
+            font-size: 22px;
+        }
+
+        /* 계정 정보 항목을 세로 목록으로 배치해 카드 안에서 자연스럽게 읽히게 함 */
+        .info-grid {
+            display: grid;
+            gap: 10px;
+        }
+
+        .info-box {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            gap: 14px;
+            align-items: center;
+            border: 1px solid var(--line);
+            border-radius: 13px;
+            background: #fbfcff;
+            padding: 16px;
+        }
+
+        .info-box span {
+            display: block;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .info-box strong {
+            display: block;
+            min-height: 22px;
+            overflow-wrap: anywhere;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            width: fit-content;
+            border-radius: 999px;
+            padding: 5px 10px;
+            background: var(--soft);
+            color: var(--brand-blue-dark);
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        @media (max-width: 860px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .main-header-inner {
+                align-items: flex-start;
+                flex-direction: column;
+                padding: 14px 0;
+            }
+        }
+
+        @media (max-width: 620px) {
+            .actions {
+                display: grid;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .info-box {
+                grid-template-columns: 1fr;
+                gap: 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- 내 정보 페이지에서도 공통 상단 유틸리티 링크를 제공함 -->
+<header class="utility-bar">
+    <div class="container utility-inner">
+        <span th:text="'안녕하세요, ' + ${displayName} + '님'">안녕하세요, 사용자님</span>
+        <nav class="utility-links">
+            <a th:href="@{/}">홈</a>
+            <a th:href="@{/shop}">상품</a>
+            <form th:action="@{/logout/naver}" method="post">
+                <button type="submit">로그아웃</button>
+            </form>
+        </nav>
+    </div>
+</header>
+
+<!-- 홈/상품 페이지와 같은 브랜드 헤더로 내 정보 화면의 위치를 맞춤 -->
+<header class="main-header">
+    <div class="container main-header-inner">
+        <a class="logo" th:href="@{/}">HandMade <em>Market</em></a>
+        <nav class="header-actions">
+            <a class="header-link" th:href="@{/shop}">
+                상품
+                <strong>둘러보기</strong>
+            </a>
+            <a class="header-link" th:href="@{/cart}">
+                장바구니
+                <strong>보기</strong>
+            </a>
+            <a class="header-link" th:href="@{/orders}">
+                주문
+                <strong>내역</strong>
+            </a>
+        </nav>
+    </div>
+</header>
+
+<!-- 현재 화면이 내 정보임을 GNB에서 바로 알 수 있게 강조함 -->
+<nav class="gnb">
+    <div class="container gnb-inner">
+        <a th:href="@{/shop}">상품 둘러보기</a>
+        <a th:href="@{/cart}">장바구니</a>
+        <a th:href="@{/orders}">주문내역</a>
+        <a class="highlight" th:href="@{/loginSuccess}">내 정보</a>
+    </div>
+</nav>
+
+<main class="container">
+    <section class="profile-layout">
+        <article class="panel profile-card">
+            <p class="eyebrow">MY PAGE</p>
+            <h1 th:text="${displayName}">사용자</h1>
+            <p>현재 로그인된 계정의 기본 정보와 회원 유형을 확인할 수 있습니다.</p>
+
+            <h2>계정 정보</h2>
+            <div class="info-grid">
+                <div class="info-box">
+                    <span>이름</span>
+                    <strong th:text="${userName != null ? userName : displayName}">사용자</strong>
+                </div>
+                <div class="info-box">
+                    <!-- 소셜 provider ID는 숨기고 사용자가 이해하기 쉬운 회원 유형만 표시함 -->
+                    <span>회원 유형</span>
+                    <strong class="badge" th:text="${providerLabel}">일반 회원</strong>
+                </div>
+                <div class="info-box" th:if="${provider == 'local'}">
+                    <span>로그인 아이디</span>
+                    <strong th:text="${loginId}">loginId</strong>
+                </div>
+                <div class="info-box">
+                    <span>이메일</span>
+                    <strong th:text="${email != null ? email : '등록된 이메일 없음'}">email</strong>
+                </div>
+                <div class="info-box">
+                    <span>회원 권한</span>
+                    <strong th:text="${role}">USER</strong>
+                </div>
+                <div class="info-box">
+                    <span>내부 사용자 번호</span>
+                    <strong th:text="${userId}">1</strong>
+                </div>
+            </div>
+
+            <div class="actions">
+                <a class="btn btn-primary" th:href="@{/orders}">주문내역 보기</a>
+                <a class="btn btn-ghost" th:href="@{/cart}">장바구니 보기</a>
+                <form th:action="@{/logout/naver}" method="post">
+                    <button class="btn btn-ghost" type="submit">로그아웃</button>
+                </form>
+                <!-- 회원탈퇴 API를 내 정보 화면에서 직접 호출할 수 있게 버튼을 추가함 -->
+                <button class="btn btn-danger" id="delete-account-button" type="button">회원탈퇴</button>
+                <!-- 회원탈퇴 처리 결과를 버튼 묶음 아래에서 안내함 -->
+                <p class="account-delete-status" id="delete-account-status" role="status" aria-live="polite"></p>
+            </div>
+        </article>
+    </section>
+</main>
+<script>
+    // 회원탈퇴 버튼과 결과 영역이 있을 때만 이벤트를 연결함
+    const deleteAccountButton = document.getElementById('delete-account-button');
+    const deleteAccountStatus = document.getElementById('delete-account-status');
+
+    // 내 정보 화면의 회원탈퇴 버튼을 현재 로그인 사용자 탈퇴 API와 연결함
+    if (deleteAccountButton && deleteAccountStatus) {
+        deleteAccountButton.addEventListener('click', async () => {
+            if (!window.confirm('회원탈퇴 후에는 같은 계정으로 다시 로그인할 수 없습니다. 탈퇴하시겠습니까?')) {
+                return;
+            }
+
+            deleteAccountButton.disabled = true;
+            deleteAccountStatus.className = 'account-delete-status';
+            deleteAccountStatus.textContent = '회원탈퇴를 처리하는 중입니다.';
+
+            try {
+                const response = await fetch('/api/user/me', {
+                    method: 'DELETE'
+                });
+                const message = await response.text();
+
+                if (!response.ok) {
+                    throw new Error(message || '회원탈퇴에 실패했습니다.');
+                }
+
+                deleteAccountStatus.textContent = message || '회원탈퇴가 완료되었습니다.';
+                window.alert(message || '회원탈퇴가 완료되었습니다.');
+                window.location.href = '/';
+            } catch (error) {
+                deleteAccountStatus.className = 'account-delete-status error';
+                deleteAccountStatus.textContent = error.message || '회원탈퇴 중 오류가 발생했습니다.';
+                deleteAccountButton.disabled = false;
+            }
+        });
+    }
+</script>
+</body>
+</html>

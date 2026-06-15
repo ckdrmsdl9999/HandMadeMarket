@@ -5,7 +5,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-@MapperScan("com.project.marketplace.user.mapper")
+//@MapperScan("com.project.marketplace")
 public class MarketApplication {
 //	MarketuserApplication
 	public static void main(String[] args) {
