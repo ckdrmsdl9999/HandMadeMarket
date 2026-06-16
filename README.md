@@ -8,7 +8,7 @@
 ## 프로젝트 목표
 
 - 회원, 상품, 장바구니, 주문, 배송 기능 구현
-- 세션 기반 인증과 네이버, 구글 OAuth2 로그인 적용
+- 세션 기반 인증과 (네이버,구글) OAuth2 로그인 적용
 - Swagger(OpenAPI) 기반 API 문서화
 - AWS EC2 서버 배포 및 운영
 - GitHub Actions 기반 CI/CD 적용
