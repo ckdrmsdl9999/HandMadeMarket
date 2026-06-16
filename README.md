@@ -127,7 +127,8 @@
 - Nginx 기반 Reverse Proxy 설정
 
 ## 인프라설계도
-<img width="1068" height="662" alt="(ver1 1)핸드메이드마켓 drawio" src="https://github.com/user-attachments/assets/aa1eb096-2802-410d-9d8d-d64c076ab5b0" />
+<img width="1068" height="662" alt="(ver1 2)핸드메이드마켓 drawio" src="https://github.com/user-attachments/assets/183104d1-96e4-4356-b7ee-aab8f33e1e82" />
+
 
 ## 기술 스택
 
