@@ -126,6 +126,10 @@
 - HTTPS 적용
 - Nginx 기반 Reverse Proxy 설정
 
+###설계도
+<img width="1068" height="662" alt="(ver1 2)핸드메이드마켓 drawio" src="https://github.com/user-attachments/assets/09f8774e-4a9d-4dd8-9e97-c77b9bfade4d" />
+
+
 ## 기술 스택
 
 ### Backend
