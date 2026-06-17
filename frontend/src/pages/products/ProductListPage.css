@@ -1,0 +1,144 @@
+.product-list-page {
+    padding: 32px 0;
+}
+
+.product-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.product-list-header h2 {
+    margin: 0;
+    font-size: 28px;
+}
+
+.product-list-header p {
+    margin: 8px 0 0;
+    color: #666;
+}
+
+.product-list-header span {
+    color: #666;
+    font-size: 14px;
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.product-card {
+    border: 1px solid #e5e5e5;
+    border-radius: 16px;
+    overflow: hidden;
+    background-color: #fff;
+}
+
+.product-image-box {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background-color: #f5f5f5;
+}
+
+.product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.product-image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    font-size: 14px;
+}
+
+.product-info {
+    padding: 16px;
+}
+
+.product-category {
+    margin-bottom: 8px;
+    color: #888;
+    font-size: 13px;
+}
+
+.product-name {
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.4;
+}
+
+.product-seller {
+    margin: 8px 0 16px;
+    color: #666;
+    font-size: 14px;
+}
+
+.product-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.product-price {
+    font-size: 18px;
+}
+
+.stock-badge {
+    padding: 4px 8px;
+    border-radius: 999px;
+    background-color: #eef7ee;
+    color: #2f7d32;
+    font-size: 12px;
+}
+
+.sold-out-badge {
+    padding: 4px 8px;
+    border-radius: 999px;
+    background-color: #f2f2f2;
+    color: #777;
+    font-size: 12px;
+}
+
+.empty-message,
+.error-message {
+    padding: 40px 0;
+    text-align: center;
+    color: #666;
+}
+
+.error-message {
+    color: #d32f2f;
+}
+
+@media (max-width: 1024px) {
+    .product-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .product-list-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .product-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 480px) {
+    .product-grid {
+        grid-template-columns: 1fr;
+    }
+}
