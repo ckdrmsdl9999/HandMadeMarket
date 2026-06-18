@@ -6,6 +6,11 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 // 현재 로그인 사용자 정보를 장바구니와 주문 화면에서 재사용하려고 API 함수로 분리함
 export async function getCurrentUser() {
     const response = await api.get("/api/user/me");
+    // 비로그인 redirect HTML을 로그인 사용자로 오판하지 않도록 응답 모양을 검증함
+    if (!isCurrentUserResponse(response.data)) {
+        throw new Error("LOGIN_REQUIRED");
+    }
+
     return response.data;
 }
 
@@ -38,4 +43,12 @@ function getBackendUrl(path) {
     }
 
     return new URL(path, API_BASE_URL).toString();
+}
+
+// 내 정보 API의 정상 응답은 사용자 id를 가진 JSON 객체여야 하므로 그 외 응답은 비로그인으로 처리함
+function isCurrentUserResponse(data) {
+    return data !== null
+        && typeof data === "object"
+        && !Array.isArray(data)
+        && data.id != null;
 }
