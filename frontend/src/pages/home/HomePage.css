@@ -1,0 +1,416 @@
+.home-page {
+    padding: 0 0 8px;
+}
+
+/* 홈 첫 영역을 타임리프 home.html처럼 카테고리, 배너, 계정 패널 3열로 구성함 */
+.home-hero-grid {
+    display: grid;
+    grid-template-columns: 230px minmax(0, 1fr) 300px;
+    gap: 16px;
+    align-items: stretch;
+    margin: 20px 0;
+}
+
+/* 홈의 좌우 패널은 기존 상품 카드와 같은 흰 표면으로 맞춤 */
+.home-category-panel,
+.home-account-panel,
+.home-featured-section {
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+}
+
+/* 카테고리 패널 내부 여백을 작게 두어 빠른 이동 목록처럼 보이게 함 */
+.home-category-panel {
+    padding: 16px;
+}
+
+/* 카테고리 제목은 패널 안에서만 쓰이므로 과하게 크지 않게 맞춤 */
+.home-category-panel h2 {
+    margin: 0 0 12px;
+    font-size: 18px;
+}
+
+/* 카테고리 링크는 세로 목록으로 배치해 모바일 전환이 쉽도록 함 */
+.home-category-list {
+    display: grid;
+    gap: 8px;
+}
+
+/* 카테고리 한 칸 전체를 클릭 영역으로 만들어 상품 목록 이동을 쉽게 함 */
+.home-category-link {
+    display: grid;
+    gap: 4px;
+    padding: 11px 10px;
+    border-radius: 12px;
+    color: var(--ink);
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* hover 시 기존 Thymeleaf 카테고리 메뉴처럼 연한 파란 배경을 보여줌 */
+.home-category-link:hover {
+    background: #f2f6ff;
+    color: var(--brand-blue-dark);
+}
+
+/* 카테고리 보조 설명은 상품명보다 낮은 밀도로 보여줌 */
+.home-category-link span {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+/* 중앙 배너 두 개를 위아래로 쌓아 타임리프 홈의 프로모션 영역을 대체함 */
+.home-banner-stack {
+    display: grid;
+    gap: 12px;
+}
+
+/* 배너 내부는 문구와 버튼을 양쪽으로 나눠 큰 화면에서 시선 흐름을 유지함 */
+.home-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    min-height: 176px;
+    padding: 24px;
+    border-radius: 16px;
+    color: #fff;
+    box-shadow: var(--shadow);
+}
+
+/* 첫 배너는 브랜드 파란색 계열로 주요 쇼핑 진입을 강조함 */
+.home-banner.primary {
+    background: linear-gradient(122deg, #365cf4 0%, #2c84ff 52%, #3abff5 100%);
+}
+
+/* 두 번째 배너는 기존 accent 색으로 로그인 진입을 구분함 */
+.home-banner.accent {
+    background: linear-gradient(122deg, #ff7f38 0%, #ff5d35 44%, #e94925 100%);
+}
+
+/* 배너 제목은 한 줄이 길어져도 자연스럽게 줄바꿈되게 함 */
+.home-banner strong {
+    display: block;
+    max-width: 560px;
+    font-size: 28px;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+/* 배너 설명은 제목 아래에서 짧게 보조 역할만 하게 함 */
+.home-banner p {
+    margin: 9px 0 0;
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* 배너 CTA는 흰 테두리 버튼으로 보여 기존 타임리프 버튼 톤과 맞춤 */
+.home-banner a {
+    flex: 0 0 auto;
+    padding: 9px 15px;
+    border: 1px solid rgba(255, 255, 255, 0.82);
+    border-radius: 999px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+/* 계정 패널은 로그인 상태에 따라 버튼과 정보를 세로로 안정적으로 배치함 */
+.home-account-panel {
+    display: grid;
+    align-content: start;
+    gap: 12px;
+    padding: 20px 18px;
+}
+
+/* 작은 라벨은 패널 성격을 알려주되 본문보다 약하게 표시함 */
+.home-panel-eyebrow {
+    margin: 0;
+    color: var(--accent-dark);
+    font-size: 12px;
+    font-weight: 900;
+}
+
+/* 계정 패널 제목은 긴 이름도 박스 밖으로 나가지 않게 함 */
+.home-account-panel h2 {
+    margin: 0;
+    font-size: 22px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+/* 계정 패널 설명은 보조 색으로 낮춰 버튼이 먼저 보이게 함 */
+.home-account-panel p:not(.home-panel-eyebrow) {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.65;
+}
+
+/* 계정 관련 버튼은 한 열로 쌓아 누를 대상을 명확히 함 */
+.home-account-actions {
+    display: grid;
+    gap: 8px;
+}
+
+/* 홈 주요 버튼은 브랜드 파란색으로 로그인/주문 같은 핵심 이동을 강조함 */
+.home-primary-button,
+.home-secondary-button,
+.home-oauth-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 0 12px;
+    border-radius: 11px;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+/* 주요 버튼은 다른 페이지의 primary 액션과 같은 색을 사용함 */
+.home-primary-button {
+    border: 0;
+    background: var(--brand-blue);
+    color: #fff;
+}
+
+/* 보조 버튼은 백엔드 화면 이동도 섞여 있어 흰 테두리 버튼으로 구분함 */
+.home-secondary-button {
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--ink);
+}
+
+/* 네이버 OAuth 버튼은 로그인 화면과 같은 서비스 색으로 표시함 */
+.home-oauth-button.naver {
+    background: #03c75a;
+    color: #fff;
+}
+
+/* 구글 OAuth 버튼은 흰 배경과 테두리로 다른 버튼과 충돌하지 않게 함 */
+.home-oauth-button.google {
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--ink);
+}
+
+/* 로그인 계정 정보는 라벨과 값을 두 열로 나눠 빠르게 읽히게 함 */
+.home-account-meta {
+    display: grid;
+    gap: 9px;
+    margin: 0;
+    padding-top: 10px;
+    border-top: 1px dashed var(--line);
+}
+
+/* 계정 정보 한 줄은 좁은 패널에서 값이 길어도 줄바꿈되게 함 */
+.home-account-meta div {
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    gap: 8px;
+}
+
+/* 계정 정보 라벨은 보조 텍스트로 낮춰 값을 더 잘 보이게 함 */
+.home-account-meta dt {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+/* 계정 정보 값은 이메일처럼 긴 문자열도 안전하게 줄바꿈함 */
+.home-account-meta dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+/* 추천 상품 영역은 홈 아래쪽에서 독립된 흰 섹션으로 보이게 함 */
+.home-featured-section {
+    padding: 18px;
+}
+
+/* 추천 상품 제목과 전체 보기 링크를 양쪽 끝에 배치함 */
+.home-section-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+/* 추천 상품 제목은 기존 목록 페이지 제목보다 한 단계 작게 맞춤 */
+.home-section-head h2 {
+    margin: 4px 0 0;
+    font-size: 24px;
+}
+
+/* 전체 보기 링크는 보조 액션이지만 눈에 띄도록 브랜드 색을 사용함 */
+.home-section-head > a {
+    color: var(--brand-blue-dark);
+    font-size: 14px;
+    font-weight: 800;
+}
+
+/* 홈 추천 상품은 타임리프 홈처럼 한 줄에 여러 카드를 보여줌 */
+.home-product-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+}
+
+/* 추천 상품 카드는 전체가 상세 이동 링크로 동작함 */
+.home-product-card {
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 13px;
+    background: #fff;
+    color: inherit;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* 카드 hover는 목록 카드와 같은 상승 느낌으로 맞춤 */
+.home-product-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 28px rgba(28, 58, 125, 0.14);
+}
+
+/* 추천 카드 이미지 영역은 고정 비율로 유지해 카드 높이 흔들림을 막음 */
+.home-product-image-box {
+    width: 100%;
+    aspect-ratio: 1 / 0.82;
+    background: linear-gradient(135deg, #5888ff, #2d57db);
+}
+
+/* 실제 이미지가 있으면 카드 영역을 꽉 채우게 함 */
+.home-product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 이미지가 설명 문자열일 때는 카테고리 텍스트를 대체 비주얼로 보여줌 */
+.home-product-placeholder {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    padding: 12px;
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 14px;
+    font-weight: 800;
+    text-align: center;
+}
+
+/* 추천 상품 본문은 이름, 판매자, 가격 순서로 읽히게 함 */
+.home-product-body {
+    display: grid;
+    gap: 7px;
+    padding: 12px;
+}
+
+/* 카테고리 배지는 작은 pill 형태로 표시해 상품 분류를 빨리 알게 함 */
+.home-product-badge {
+    width: fit-content;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--soft);
+    color: var(--brand-blue-dark);
+    font-size: 11px;
+    font-weight: 800;
+}
+
+/* 상품명은 두 줄 정도까지 자연스럽게 보이도록 높이를 확보함 */
+.home-product-body h3 {
+    min-height: 40px;
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.35;
+}
+
+/* 판매자 이름은 보조 정보라 연한 색으로 낮춤 */
+.home-product-body p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+/* 가격과 재고 상태를 하단 한 줄에서 비교하기 쉽게 배치함 */
+.home-product-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 2px;
+}
+
+/* 추천 카드 가격은 작지만 굵게 보여 상품 카드 핵심 정보를 살림 */
+.home-product-bottom strong {
+    font-size: 18px;
+    font-weight: 900;
+}
+
+/* 재고나 판매량 문구는 가격보다 작게 표시함 */
+.home-product-bottom span {
+    color: var(--green);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+/* 품절 상품은 회색 문구로 일반 재고와 구분함 */
+.home-product-bottom span.sold-out {
+    color: #777;
+}
+
+/* 홈 추천 상품 로딩과 빈 상태 문구는 섹션 안에서 중앙 정렬함 */
+.home-state-message {
+    margin: 0;
+    padding: 42px 0;
+    color: var(--muted);
+    text-align: center;
+}
+
+/* 추천 상품 오류는 실패 상태임을 색으로 구분함 */
+.home-state-message.error {
+    color: #b42318;
+}
+
+@media (max-width: 1180px) {
+    /* 좁은 화면에서는 홈 첫 영역을 한 열로 바꿔 패널 겹침을 막음 */
+    .home-hero-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* 태블릿에서는 추천 상품을 3열로 줄여 카드 폭을 확보함 */
+    .home-product-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    /* 모바일 배너는 문구와 버튼을 세로 배치해 텍스트가 좁아지지 않게 함 */
+    .home-banner,
+    .home-section-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    /* 모바일 배너 제목은 화면 폭에 맞춰 조금 줄임 */
+    .home-banner strong {
+        font-size: 24px;
+    }
+
+    /* 모바일에서는 추천 상품을 2열로 보여 스크롤과 정보량을 균형 있게 맞춤 */
+    .home-product-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 480px) {
+    /* 작은 화면에서는 상품 카드를 한 열로 보여 버튼과 텍스트 겹침을 방지함 */
+    .home-product-grid {
+        grid-template-columns: 1fr;
+    }
+}

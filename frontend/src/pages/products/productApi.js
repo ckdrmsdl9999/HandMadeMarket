@@ -5,6 +5,14 @@ export async function getProducts() {
     return response.data;
 }
 
+// 홈 추천 상품은 백엔드 인기 상품 API를 먼저 쓰도록 분리함
+export async function getPopularProducts(limit = 5) {
+    const response = await api.get("/api/products/popular", {
+        params: { limit },
+    });
+    return response.data;
+}
+
 // 카테고리 선택 시 백엔드 카테고리 조회 API를 호출하도록 분리함
 export async function getProductsByCategory(category) {
     const response = await api.get(`/api/products/category/${encodeURIComponent(category)}`);
