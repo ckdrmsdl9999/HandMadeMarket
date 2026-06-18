@@ -3,6 +3,7 @@ package com.project.marketplace.security;
 
 import com.project.marketplace.user.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -26,6 +27,10 @@ import static org.springframework.security.web.util.matcher.AntPathRequestMatche
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+
+    // OAuth2 실패 시에도 React 로그인 화면으로 돌아가게 프론트 주소를 설정값으로 분리함
+    @Value("${app.frontend-url:http://localhost:5173}")
+    private String frontendUrl;
 
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler oauth2AuthenticationSuccessHandler;
@@ -81,7 +86,8 @@ public class SecurityConfig {
                                 errorCode = "account_deleted";
                             }
 
-                            response.sendRedirect("/login?oauthError=" + errorCode);
+                            // OAuth2 실패도 백엔드 로그인 화면이 아니라 React 로그인 화면으로 이동하게 수정함
+                            response.sendRedirect(buildFrontendRedirectUrl("/login?oauthError=" + errorCode));
                         })
                 )
         ;
@@ -104,6 +110,13 @@ public class SecurityConfig {
         return source;
     }
 
+    // frontendUrl 끝 슬래시와 path 시작 슬래시가 겹치지 않도록 정리함
+    private String buildFrontendRedirectUrl(String path) {
+        String baseUrl = frontendUrl.endsWith("/")
+                ? frontendUrl.substring(0, frontendUrl.length() - 1)
+                : frontendUrl;
+        return baseUrl + path;
+    }
 
 
     @Bean

@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -29,6 +30,10 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     private final UserRepository userRepository;
     // OAuth2 성공 직후 세션과 인증값을 JSON으로 같은 형식에 찍을 준비를 맞춤 -3/17
     private final ObjectMapper objectMapper;
+
+    // OAuth2 성공 후 백엔드 홈이 아니라 React 화면으로 돌아가게 프론트 주소를 설정값으로 분리함
+    @Value("${app.frontend-url:http://localhost:5173}")
+    private String frontendUrl;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -82,9 +87,10 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             log.warn("OAuth2 사용자 식별자를 찾을 수 없습니다: provider={}", registrationId);
         }
 
-        // OAuth2 로그인도 일반 로그인과 같은 홈 화면으로 이동하게 맞춤
-        logJson("success.redirect", Map.of("location", "/"));
-        response.sendRedirect("/");
+        // OAuth2 성공 후 백엔드 홈이 아니라 React 홈 화면으로 이동하게 수정함
+        String redirectUrl = buildFrontendRedirectUrl("/");
+        logJson("success.redirect", Map.of("location", redirectUrl));
+        response.sendRedirect(redirectUrl);
     }
 
     // OAuth2 사용자 저장도 정규화 profile 값과 email을 함께 반영
@@ -154,6 +160,14 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     }
 
     private record OAuth2Profile(String providerId, String name, String email) {
+    }
+
+    // frontendUrl 끝 슬래시와 path 시작 슬래시가 겹치지 않도록 정리함
+    private String buildFrontendRedirectUrl(String path) {
+        String baseUrl = frontendUrl.endsWith("/")
+                ? frontendUrl.substring(0, frontendUrl.length() - 1)
+                : frontendUrl;
+        return baseUrl + path;
     }
 
     // OAuth2 성공 처리 중 객체 로그를 JSON 한 형태로 남기기 쉽게 추가함 -3/17
