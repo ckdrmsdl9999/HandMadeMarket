@@ -1,6 +1,50 @@
-import { Link } from "react-router";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router";
+// 공통 헤더에서도 로그인 상태를 보여주기 위해 사용자 API를 확인함
+import { getCurrentUser, logoutUser } from "../../pages/auth/authApi";
 
 function Header() {
+  // 현재 로그인 사용자를 헤더 링크 전환에 사용함
+  const [currentUser, setCurrentUser] = useState(null);
+  // 라우트가 바뀐 뒤 로그인 상태를 다시 확인해 로그인 직후 헤더를 갱신함
+  const location = useLocation();
+  // 로그아웃 후 로그인 화면으로 이동시키기 위해 navigate를 사용함
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function fetchCurrentUser() {
+      try {
+        const user = await getCurrentUser();
+        if (!ignore) {
+          setCurrentUser(user);
+        }
+      } catch {
+        if (!ignore) {
+          setCurrentUser(null);
+        }
+      }
+    }
+
+    // 페이지 이동마다 세션 상태를 다시 읽어 헤더의 로그인 표시를 맞춤
+    fetchCurrentUser();
+
+    return () => {
+      ignore = true;
+    };
+  }, [location.pathname]);
+
+  // 로그아웃 API 호출 후 헤더 상태를 비우고 로그인 화면으로 보냄
+  async function handleLogout() {
+    try {
+      await logoutUser();
+    } finally {
+      setCurrentUser(null);
+      navigate("/login");
+    }
+  }
+
   return (
     // Thymeleaf 쇼핑 화면의 상단 구조와 톤을 맞추기 위해 공통 헤더를 2단으로 정리함
     <header className="site-header">
@@ -8,7 +52,16 @@ function Header() {
         <div className="site-container utility-inner">
           <span>오늘 도착처럼 빠르게, 장인 제품도 간편하게.</span>
           <nav className="utility-links" aria-label="계정 메뉴">
-            <Link to="/login">로그인</Link>
+            {currentUser ? (
+              <>
+                <Link to="/login">{currentUser.userName || currentUser.loginId}님</Link>
+                <button className="utility-button" type="button" onClick={handleLogout}>
+                  로그아웃
+                </button>
+              </>
+            ) : (
+              <Link to="/login">로그인</Link>
+            )}
             <Link to="/cart">장바구니</Link>
           </nav>
         </div>
