@@ -32,6 +32,10 @@ public class SecurityConfig {
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
 
+    // React와 백엔드를 분리 배포할 때 허용할 프론트 주소를 환경변수로 바꿀 수 있게 함
+    @Value("#{'${app.cors.allowed-origins:http://localhost:5173}'.split(',')}")
+    private List<String> corsAllowedOrigins;
+
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler oauth2AuthenticationSuccessHandler;
 //    private final OAuth2LoginAuthenticationProvider oAuth2LoginAuthenticationProvider;
@@ -99,7 +103,13 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+        // 쉼표로 들어온 CORS 주소의 공백을 제거해 운영 프론트 주소를 정확히 허용함
+        List<String> allowedOrigins = corsAllowedOrigins.stream()
+                .map(String::trim)
+                .filter(origin -> !origin.isBlank())
+                .toList();
+
+        configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

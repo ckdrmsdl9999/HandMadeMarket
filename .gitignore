@@ -6,6 +6,9 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 .env*
+!.env.example
+!frontend/.env.example
+!frontend/.env.production.example
 application-secret.yml
 application.yml
 

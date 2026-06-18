@@ -1,6 +1,13 @@
 server:
   port: 8080
   forward-headers-strategy: framework
+  servlet:
+    session:
+      cookie:
+        # 분리 배포된 React에서 백엔드 세션 쿠키를 credentials 요청에 실어 보낼 수 있게 함
+        same-site: none
+        # SameSite=None 쿠키는 HTTPS에서만 허용되므로 운영 세션 쿠키를 보안 쿠키로 맞춤
+        secure: true
 
 spring:
   datasource:
@@ -24,7 +31,8 @@ spring:
           naver:
             client-id: ${NAVER_CLIENT_ID}
             client-secret: ${NAVER_CLIENT_SECRET}
-            redirect-uri: https://hmadeshop.com/login/oauth2/code/naver
+            # 백엔드 배포 주소가 바뀌어도 OAuth callback 주소를 환경변수로 맞출 수 있게 함
+            redirect-uri: ${BACKEND_BASE_URL:https://hmadeshop.com}/login/oauth2/code/naver
             authorization-grant-type: authorization_code
             # OAuth2 사용자 저장 흐름에서 사용하는 이름과 이메일 동의 항목만 요청하도록 맞춤
             scope:
@@ -35,7 +43,8 @@ spring:
           google:
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
-            redirect-uri: https://hmadeshop.com/login/oauth2/code/google
+            # 구글 OAuth callback도 백엔드 운영 주소 기준으로 계산하게 맞춤
+            redirect-uri: ${BACKEND_BASE_URL:https://hmadeshop.com}/login/oauth2/code/google
             scope:
               - openid
               - profile
@@ -49,4 +58,8 @@ spring:
             user-name-attribute: response
 
 app:
+  # OAuth 성공/실패 후 이동할 React 운영 주소를 환경변수로 분리함
   frontend-url: ${FRONTEND_URL:https://hmadeshop.com}
+  cors:
+    # 로컬 React와 운영 React 주소를 함께 허용해 분리 배포 API 호출을 열어둠
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,https://hmadeshop.com}
