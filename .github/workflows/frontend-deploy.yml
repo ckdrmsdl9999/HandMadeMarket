@@ -26,15 +26,15 @@ jobs:
     runs-on: [self-hosted, Linux, X64]
 
     steps:
-      # workflow workspace에 현재 main 코드를 체크아웃해 Actions 기본 컨텍스트를 맞춤
+      # Node 24 기반 공식 액션으로 올려 배포 workflow의 구버전 런타임 경고를 제거함
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      # 프론트 빌드에 필요한 Node 버전을 self-hosted runner에서도 고정함
-      - name: Set up Node 20
-        uses: actions/setup-node@v4
+      # Vite 8 지원 범위에 맞춰 EC2 프론트 배포 빌드 Node를 24로 고정함
+      - name: Set up Node 24
+        uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '24'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
