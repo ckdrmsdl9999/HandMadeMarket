@@ -8,6 +8,9 @@ import { getPopularProducts, getProducts } from "../products/productApi";
 import { formatPrice, isImageUrl } from "../products/productDisplay";
 import "./HomePage.css";
 
+// CloudFront 기본 주소가 없으면 빈 값으로 두어 기존 그라데이션 배너를 유지함
+const HOME_IMAGE_BASE_URL = normalizeHomeImageBaseUrl(import.meta.env.VITE_CLOUDFRONT_IMAGE_BASE_URL);
+
 // 홈 빠른 카테고리는 실제 상품 목록 필터와 같은 값만 노출함
 const CATEGORY_LINKS = [
     { label: "비누", description: "수제 비누와 생활용품" },
@@ -21,6 +24,8 @@ const HERO_BANNERS = [
     {
         title: "오늘 단 하루 핸드메이드 슈퍼딜",
         description: "장인 셀렉트 상품을 한 화면에서 빠르게 둘러보세요.",
+        // CloudFront 설정 후 같은 경로에 이미지를 올리면 홈 배너에 바로 표시함
+        imageUrl: getHomeImageUrl("home/hero-shopping.jpg"),
         to: "/products",
         action: "상품 보러가기",
         tone: "primary",
@@ -28,6 +33,8 @@ const HERO_BANNERS = [
     {
         title: "첫 구매는 로그인 후 이어가기",
         description: "장바구니와 주문 내역을 계정에 저장해 편하게 관리할 수 있습니다.",
+        // 로그인 배너도 CloudFront 이미지가 없으면 기존 색상 배너로 fallback함
+        imageUrl: getHomeImageUrl("home/hero-login.jpg"),
         to: "/login",
         action: "로그인하기",
         tone: "accent",
@@ -121,9 +128,15 @@ function HomePage() {
 
                 <div className="home-banner-stack">
                     {HERO_BANNERS.map((banner) => (
-                        // 홈 중앙 배너는 상품 목록과 로그인으로 이어지는 주요 동선만 남김
-                        <article className={`home-banner ${banner.tone}`} key={banner.title}>
-                            <div>
+                        // 이미지 URL이 있을 때만 배너 이미지를 얹어 CloudFront 설정 전 fallback을 유지함
+                        <article
+                            className={`home-banner ${banner.tone} ${banner.imageUrl ? "has-image" : ""}`}
+                            key={banner.title}
+                        >
+                            {banner.imageUrl && (
+                                <img className="home-banner-image" src={banner.imageUrl} alt="" />
+                            )}
+                            <div className="home-banner-content">
                                 <strong>{banner.title}</strong>
                                 <p>{banner.description}</p>
                             </div>
@@ -183,8 +196,6 @@ function HomePage() {
                 ) : (
                     <aside className="home-account-panel">
                         <p className="home-panel-eyebrow">LOGIN</p>
-                        <h2>로그인하고 맞춤 기능을 이어가세요</h2>
-                        <p>로그인하면 장바구니, 주문 내역, 계정 정보를 React 화면에서 확인할 수 있습니다.</p>
 
                         <div className="home-account-actions">
                             <Link className="home-primary-button" to="/login">
@@ -259,6 +270,24 @@ function HomePage() {
             </section>
         </section>
     );
+}
+
+// CloudFront 주소 끝의 슬래시를 정리해 이미지 경로 조합이 중복 슬래시를 만들지 않게 함
+function normalizeHomeImageBaseUrl(baseUrl) {
+    if (!baseUrl) {
+        return "";
+    }
+
+    return baseUrl.replace(/\/+$/, "");
+}
+
+// 홈 배너 이미지 경로를 CloudFront 기본 주소와 조합하고 설정이 없으면 빈 값으로 fallback함
+function getHomeImageUrl(imagePath) {
+    if (!HOME_IMAGE_BASE_URL) {
+        return "";
+    }
+
+    return `${HOME_IMAGE_BASE_URL}/${imagePath.replace(/^\/+/, "")}`;
 }
 
 // 인기 상품 API 응답을 화면에 바로 쓸 수 있는 상품 배열로 정리함
