@@ -1,0 +1,283 @@
+.cart-page {
+    padding: 20px 0 8px;
+}
+
+/* 장바구니 상단을 상품 목록과 같은 안내 패널 형태로 맞춤 */
+.cart-hero {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 20px 0 16px;
+    padding: 22px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+}
+
+/* 장바구니 제목은 상품 목록 화면과 같은 크기로 맞춤 */
+.cart-hero h2 {
+    margin: 0;
+    font-size: 30px;
+}
+
+/* 장바구니 안내 문구는 보조 정보로 낮춰 표시함 */
+.cart-hero p {
+    margin: 8px 0 0;
+    color: var(--muted);
+}
+
+/* 상품 목록으로 돌아가는 링크를 보조 버튼처럼 보여줌 */
+.cart-continue-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 0 14px;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    background: var(--surface);
+    color: var(--ink);
+    font-weight: 700;
+}
+
+/* 장바구니 요약 영역을 카드 그리드로 배치해 총액과 작업 버튼을 한눈에 보이게 함 */
+.cart-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto auto;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+}
+
+/* 요약 카드 안의 라벨과 값을 세로로 정리함 */
+.cart-summary-card {
+    display: grid;
+    gap: 8px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #f8fbff;
+}
+
+/* 요약 라벨은 회색으로 낮춰 값이 더 잘 보이게 함 */
+.cart-summary-card span {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+/* 요약 값은 굵게 표시해 상품 종류와 총액을 강조함 */
+.cart-summary-card strong {
+    font-size: 20px;
+}
+
+/* 주문하기와 비우기 버튼은 같은 크기로 맞춰 요약 영역 작업 버튼처럼 보이게 함 */
+.cart-order-button,
+.cart-clear-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100%;
+    padding: 0 16px;
+    border-radius: 11px;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+/* 주문하기는 주요 액션이므로 브랜드 파란색으로 표시함 */
+.cart-order-button {
+    border: 0;
+    background: var(--brand-blue);
+    color: #fff;
+}
+
+/* 비우기는 위험도가 있는 작업이라 빨간 계열로 분리함 */
+.cart-clear-button {
+    border: 0;
+    background: #d92d20;
+    color: #fff;
+    cursor: pointer;
+}
+
+/* 비활성 버튼은 작업할 항목이 없음을 명확히 보여줌 */
+.cart-order-button:disabled,
+.cart-clear-button:disabled {
+    background: #c8cdd7;
+    cursor: not-allowed;
+}
+
+/* 상태 메시지는 요약과 테이블 사이에 짧게 노출함 */
+.cart-status {
+    margin: 0 0 16px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+/* 성공 메시지는 브랜드 색상으로 표시함 */
+.cart-status.success {
+    color: var(--brand-blue);
+}
+
+/* 정보 메시지는 일반 보조 텍스트 색으로 표시함 */
+.cart-status.info {
+    color: var(--muted);
+}
+
+/* 오류 메시지는 빨간색으로 표시해 로그인 실패나 API 실패를 구분함 */
+.cart-status.error {
+    color: #d32f2f;
+}
+
+/* 장바구니 목록 패널을 상품 화면과 같은 흰 카드로 맞춤 */
+.cart-panel {
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+}
+
+/* 작은 화면에서 테이블이 넘치지 않도록 가로 스크롤을 허용함 */
+.cart-table-wrap {
+    overflow-x: auto;
+}
+
+/* 장바구니 테이블은 행 단위 정보를 읽기 쉽게 정리함 */
+.cart-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 760px;
+}
+
+/* 테이블 헤더는 보조 배경으로 구분함 */
+.cart-table th {
+    padding: 14px 12px;
+    background: #f8fbff;
+    color: var(--muted);
+    font-size: 13px;
+    text-align: left;
+}
+
+/* 테이블 셀은 행 간격과 하단선을 유지함 */
+.cart-table td {
+    padding: 16px 12px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: middle;
+}
+
+/* 상품명 링크는 굵게 보여 상세 이동 가능성을 알림 */
+.cart-product-link {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--ink);
+    font-weight: 800;
+}
+
+/* 상품 ID는 작은 보조 정보로 표시함 */
+.cart-table small {
+    color: var(--muted);
+}
+
+/* 수량 조절 버튼을 한 줄 스테퍼 형태로 배치함 */
+.cart-quantity-control {
+    display: inline-grid;
+    grid-template-columns: 38px 54px 38px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    background: var(--surface);
+}
+
+/* 수량 버튼은 같은 크기를 유지해 클릭해도 레이아웃이 흔들리지 않게 함 */
+.cart-quantity-control button {
+    width: 38px;
+    height: 38px;
+    border: 0;
+    background: #f7f9fc;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+/* 현재 수량은 가운데에서 고정 폭으로 보여줌 */
+.cart-quantity-control span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-right: 1px solid var(--line);
+    border-left: 1px solid var(--line);
+    font-weight: 800;
+}
+
+/* 수량 조절 중에는 버튼을 비활성화해 중복 요청을 막음 */
+.cart-quantity-control button:disabled {
+    color: #aaa;
+    cursor: not-allowed;
+}
+
+/* 삭제 버튼은 행 안 보조 작업으로 작게 유지함 */
+.cart-remove-button {
+    min-height: 38px;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+    font-weight: 700;
+}
+
+/* 삭제 중에는 버튼을 흐리게 표시함 */
+.cart-remove-button:disabled {
+    color: #aaa;
+    cursor: not-allowed;
+}
+
+/* 빈 장바구니 안내는 중앙 정렬 카드로 보여줌 */
+.cart-empty {
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    padding: 48px 20px;
+    color: var(--muted);
+    text-align: center;
+}
+
+/* 빈 장바구니 제목은 조금 더 강하게 보여줌 */
+.cart-empty strong {
+    color: var(--ink);
+    font-size: 20px;
+}
+
+/* 빈 장바구니 상품 이동 링크는 주요 행동으로 표시함 */
+.cart-empty a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 0 14px;
+    border-radius: 11px;
+    background: var(--brand-blue);
+    color: #fff;
+    font-weight: 800;
+}
+
+@media (max-width: 1024px) {
+    /* 태블릿 이하에서는 요약 카드와 버튼을 2열 흐름으로 줄임 */
+    .cart-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    /* 모바일에서는 상단 안내와 요약 영역을 세로 배치함 */
+    .cart-hero,
+    .cart-summary {
+        align-items: flex-start;
+        grid-template-columns: 1fr;
+    }
+}

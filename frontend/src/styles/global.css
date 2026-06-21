@@ -1,0 +1,163 @@
+* {
+  box-sizing: border-box;
+}
+
+/* Thymeleaf 쇼핑 화면의 브랜드 색상과 표면 색을 React 전역에서도 재사용함 */
+:root {
+  --bg: #f4f7fd;
+  --surface: #ffffff;
+  --ink: #0f1729;
+  --muted: #5e6778;
+  --line: #dde4f0;
+  --brand-blue: #3566ff;
+  --brand-blue-dark: #224fd6;
+  --accent: #ff6f2c;
+  --accent-dark: #df5616;
+  --soft: #edf2ff;
+  --green: #1f7a4d;
+  --shadow: 0 14px 34px rgba(28, 58, 125, 0.12);
+}
+
+/* 상품 페이지와 홈이 같은 배경 톤을 쓰도록 전역 배경을 정리함 */
+body {
+  margin: 0;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 8% 2%, rgba(53, 102, 255, 0.16), transparent 24%),
+    radial-gradient(circle at 94% 0%, rgba(255, 111, 44, 0.12), transparent 22%),
+    var(--bg);
+  font-family: "SUIT", "Pretendard", "Noto Sans KR", Arial, sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* 버튼과 입력도 같은 글꼴을 쓰게 해 화면 톤을 맞춤 */
+button,
+input,
+select {
+  font: inherit;
+}
+
+/* Thymeleaf 컨테이너 폭과 맞춰 공통 정렬 기준을 통일함 */
+.site-container {
+  width: min(1240px, 100% - 28px);
+  margin: 0 auto;
+}
+
+/* 상단 유틸리티 바를 추가해 쇼핑 화면의 첫인상을 맞춤 */
+.utility-bar {
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+/* 유틸리티 내부는 짧은 안내와 계정 링크만 담아 과하지 않게 구성함 */
+.utility-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 38px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* 계정 링크 간격을 Thymeleaf 상단 링크처럼 작게 유지함 */
+.utility-links {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* 로그아웃 버튼도 상단 텍스트 링크와 같은 톤으로 보이게 함 */
+.utility-button {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+}
+
+/* 메인 헤더는 브랜드와 주요 메뉴를 한 줄에 정렬함 */
+.main-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+/* 큰 검색 헤더 대신 현재 React 라우트에 맞는 단순 브랜드 헤더로 정리함 */
+.main-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 76px;
+  gap: 24px;
+}
+
+/* 브랜드 표기는 Thymeleaf 로고처럼 굵고 선명하게 맞춤 */
+.logo {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+/* 브랜드 강조 색을 기존 쇼핑 화면과 같은 파란색으로 맞춤 */
+.logo em {
+  color: var(--brand-blue);
+  font-style: normal;
+}
+
+/* 주요 메뉴는 GNB 느낌을 유지하되 현재 구현된 라우트만 노출함 */
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* 메인 콘텐츠 폭을 헤더와 맞추고 상품 페이지 패널이 중앙에 놓이게 함 */
+.main {
+  min-height: calc(100vh - 130px);
+  width: min(1240px, 100% - 28px);
+  margin: 0 auto;
+  padding: 28px 0 56px;
+}
+
+/* 하단 영역은 흰 표면과 얇은 구분선으로 정리함 */
+.footer {
+  border-top: 1px solid var(--line);
+  background-color: var(--surface);
+}
+
+/* 푸터 내부도 공통 폭을 써서 헤더/본문과 정렬을 맞춤 */
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* 모바일에서는 헤더 메뉴가 줄바꿈돼도 겹치지 않도록 정리함 */
+@media (max-width: 768px) {
+  .utility-inner,
+  .main-header-inner,
+  .footer-inner {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 12px 0;
+  }
+
+  .nav {
+    flex-wrap: wrap;
+  }
+}

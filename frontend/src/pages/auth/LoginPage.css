@@ -1,0 +1,351 @@
+.login-page {
+    padding: 20px 0 8px;
+}
+
+/* 로그인 화면을 Thymeleaf login.html처럼 소개 영역과 로그인 패널 2열로 배치함 */
+.login-layout {
+    display: grid;
+    grid-template-columns: 1.08fr 0.92fr;
+    gap: 18px;
+    align-items: stretch;
+    margin: 20px 0 16px;
+}
+
+/* 로그인 소개 영역은 쇼핑몰 가치가 먼저 보이도록 컬러 패널로 구성함 */
+.login-hero {
+    display: grid;
+    align-content: center;
+    gap: 14px;
+    min-height: 440px;
+    padding: 30px;
+    border-radius: 18px;
+    background: linear-gradient(126deg, #365cf4 0%, #2c84ff 52%, #3abff5 100%);
+    color: #fff;
+    box-shadow: var(--shadow);
+}
+
+/* 로그인 소개 제목은 첫 화면에서 충분히 크게 보이게 함 */
+.login-hero h2 {
+    margin: 0;
+    font-size: 34px;
+    line-height: 1.24;
+}
+
+/* 로그인 소개 문구는 제목보다 낮은 밀도로 보여줌 */
+.login-hero p {
+    margin: 0;
+    line-height: 1.7;
+}
+
+/* 작은 영문 라벨은 기존 로그인 화면의 LOGIN CENTER 느낌을 유지함 */
+.login-eyebrow {
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 0;
+}
+
+/* 컬러 소개 영역 안의 라벨은 흰색 계열로 보이게 예외 처리함 */
+.login-hero .login-eyebrow {
+    color: rgba(255, 255, 255, 0.82);
+}
+
+/* 로그인 패널은 상품/장바구니 카드와 같은 흰 표면으로 맞춤 */
+.login-panel {
+    display: grid;
+    align-content: start;
+    gap: 12px;
+    padding: 24px 22px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+}
+
+/* 패널 제목과 홈 이동 링크를 상단에서 정렬함 */
+.login-panel-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+/* 로그인 패널 제목 여백을 줄여 폼과 가까이 보이게 함 */
+.login-panel-header h3 {
+    margin: 4px 0 0;
+    font-size: 28px;
+}
+
+/* 홈 이동 링크는 보조 버튼처럼 표시함 */
+.login-panel-header a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    color: var(--ink);
+    font-weight: 800;
+}
+
+/* 로그인 설명은 보조 텍스트 색으로 낮춰 폼을 방해하지 않게 함 */
+.login-description {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.65;
+}
+
+/* 소셜 로그인 버튼은 한 줄 전체 폭 버튼으로 배치함 */
+.login-social-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+/* 네이버 로그인은 서비스 고유 색으로 구분함 */
+.login-social-button.naver {
+    background: #03c75a;
+    color: #fff;
+}
+
+/* 구글 로그인은 흰 버튼과 테두리로 구분함 */
+.login-social-button.google {
+    border: 1px solid #d7deea;
+    background: #fff;
+    color: var(--ink);
+}
+
+/* 소셜 로그인과 로컬 로그인 사이를 시각적으로 나눔 */
+.login-divider {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 10px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+/* 구분선 양쪽에 얇은 선을 표시함 */
+.login-divider::before,
+.login-divider::after {
+    content: "";
+    height: 1px;
+    background: var(--line);
+}
+
+/* 로컬 로그인 폼은 입력 흐름이 위에서 아래로 읽히게 함 */
+.login-form {
+    display: grid;
+    gap: 10px;
+}
+
+/* 로그인 입력 라벨과 필드를 세로로 묶음 */
+.login-form label {
+    display: grid;
+    gap: 7px;
+}
+
+/* 입력 라벨은 보조 색으로 표시함 */
+.login-form span {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+/* 로그인 입력 필드 크기와 모서리를 기존 폼과 맞춤 */
+.login-form input {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 13px 14px;
+    background: #fff;
+    color: var(--ink);
+}
+
+/* 입력 중인 필드는 브랜드 색상 포커스로 표시함 */
+.login-form input:focus {
+    border-color: var(--brand-blue);
+    box-shadow: 0 0 0 3px rgba(53, 102, 255, 0.12);
+    outline: none;
+}
+
+/* 아이디 로그인 버튼은 주요 액션이라 파란색으로 강조함 */
+.login-submit-button {
+    min-height: 48px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--brand-blue);
+    color: #fff;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+/* 로그인 요청 중에는 버튼이 비활성 상태임을 보여줌 */
+.login-submit-button:disabled {
+    background: #c8cdd7;
+    cursor: not-allowed;
+}
+
+/* 회원가입은 아직 백엔드 화면으로 이동하므로 보조 버튼으로 표시함 */
+.login-signup-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--ink);
+    font-weight: 800;
+}
+
+/* 로그인 상태 박스는 현재 세션 정보를 한 카드 안에서 보여줌 */
+.login-profile-box {
+    display: grid;
+    gap: 14px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: #fbfcff;
+}
+
+/* 로그인 사용자 안내 문구를 조금 더 강하게 표시함 */
+.login-profile-box > strong {
+    font-size: 18px;
+}
+
+/* 사용자 정보는 라벨과 값을 두 열로 정리함 */
+.login-profile-box dl {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+}
+
+/* 계정 정보 한 줄은 테두리 없이 간결하게 보여줌 */
+.login-profile-box dl div {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: 12px;
+}
+
+/* 계정 정보 라벨은 보조 색으로 낮춤 */
+.login-profile-box dt {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+/* 계정 정보 값은 줄바꿈 안전하게 처리함 */
+.login-profile-box dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-weight: 800;
+}
+
+/* 로그인 상태에서 이동 버튼을 한 줄로 배치함 */
+.login-profile-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+/* 로그인 후 주요 이동 버튼은 브랜드 색으로 표시함 */
+.login-primary-link,
+.login-secondary-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 13px;
+    border-radius: 11px;
+    cursor: pointer;
+    font-weight: 800;
+}
+
+/* 주문 내역 이동은 주요 버튼으로 보여줌 */
+.login-primary-link {
+    border: 0;
+    background: var(--brand-blue);
+    color: #fff;
+}
+
+/* 장바구니와 로그아웃은 보조 버튼으로 보여줌 */
+.login-secondary-link {
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--ink);
+}
+
+/* 로그아웃 진행 중 버튼 클릭을 막음 */
+.login-secondary-link:disabled {
+    color: #999;
+    cursor: not-allowed;
+}
+
+/* 로그인 처리 메시지는 폼 아래에서 타입별 색상으로 안내함 */
+.login-message {
+    min-height: 20px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+/* 로그인 성공 메시지는 브랜드 색으로 표시함 */
+.login-message.success {
+    color: var(--brand-blue);
+}
+
+/* 로그인 정보 메시지는 보조 색으로 표시함 */
+.login-message.info {
+    color: var(--muted);
+}
+
+/* 로그인 실패 메시지는 경고 박스 형태로 표시함 */
+.login-message.error {
+    padding: 12px 14px;
+    border: 1px solid #f2b8b5;
+    border-radius: 10px;
+    background: #fff1f0;
+    color: #b42318;
+}
+
+@media (max-width: 960px) {
+    /* 태블릿 이하에서는 소개 영역과 로그인 패널을 세로로 배치함 */
+    .login-layout {
+        grid-template-columns: 1fr;
+    }
+
+    /* 모바일에 가까워질수록 소개 영역 높이를 줄여 폼 접근성을 높임 */
+    .login-hero {
+        min-height: 280px;
+    }
+}
+
+@media (max-width: 640px) {
+    /* 작은 화면에서는 패널 제목과 버튼 묶음이 자연스럽게 줄바꿈되게 함 */
+    .login-panel-header,
+    .login-profile-actions {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    /* 모바일에서는 계정 정보를 한 열로 보여줌 */
+    .login-profile-box dl div {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+
+    /* 모바일 버튼은 손가락으로 누르기 쉽게 전체 폭으로 맞춤 */
+    .login-primary-link,
+    .login-secondary-link,
+    .login-panel-header a {
+        width: 100%;
+    }
+}

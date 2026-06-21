@@ -6,6 +6,8 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 .env*
+!.env.example
+!frontend/.env.example
 application-secret.yml
 application.yml
 
@@ -39,3 +41,9 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# React frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+.vite/

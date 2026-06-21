@@ -3,15 +3,22 @@ package com.project.marketplace.security;
 
 import com.project.marketplace.user.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 
@@ -21,12 +28,21 @@ import static org.springframework.security.web.util.matcher.AntPathRequestMatche
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    // OAuth2 실패 시에도 React 로그인 화면으로 돌아가게 프론트 주소를 설정값으로 분리함
+    @Value("${app.frontend-url:http://localhost:5173}")
+    private String frontendUrl;
+
+    // 로컬 Vite와 EC2 React 도메인을 환경변수로 허용할 수 있게 함
+    @Value("#{'${app.cors.allowed-origins:http://localhost:5173}'.split(',')}")
+    private List<String> corsAllowedOrigins;
+
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler oauth2AuthenticationSuccessHandler;
 //    private final OAuth2LoginAuthenticationProvider oAuth2LoginAuthenticationProvider;
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
@@ -74,7 +90,8 @@ public class SecurityConfig {
                                 errorCode = "account_deleted";
                             }
 
-                            response.sendRedirect("/login?oauthError=" + errorCode);
+                            // OAuth2 실패도 백엔드 로그인 화면이 아니라 React 로그인 화면으로 이동하게 수정함
+                            response.sendRedirect(buildFrontendRedirectUrl("/login?oauthError=" + errorCode));
                         })
                 )
         ;
@@ -83,7 +100,39 @@ public class SecurityConfig {
     }
 
     @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        // 쉼표로 들어온 CORS 주소의 공백을 제거해 운영 프론트 주소를 정확히 허용함
+        List<String> allowedOrigins = corsAllowedOrigins.stream()
+                .map(String::trim)
+                .filter(origin -> !origin.isBlank())
+                .toList();
+
+        configuration.setAllowedOrigins(allowedOrigins);
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+
+        return source;
+    }
+
+    // frontendUrl 끝 슬래시와 path 시작 슬래시가 겹치지 않도록 정리함
+    private String buildFrontendRedirectUrl(String path) {
+        String baseUrl = frontendUrl.endsWith("/")
+                ? frontendUrl.substring(0, frontendUrl.length() - 1)
+                : frontendUrl;
+        return baseUrl + path;
+    }
+
+
+    @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
+
 }

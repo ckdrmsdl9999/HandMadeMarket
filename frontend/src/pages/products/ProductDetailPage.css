@@ -1,0 +1,371 @@
+.product-detail-page {
+    padding: 20px 0 8px;
+}
+
+/* 목록 복귀 링크를 버튼처럼 보이게 해 상세 화면 탐색 위치를 고정함 */
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    padding: 8px 14px;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    background-color: var(--surface);
+    color: inherit;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+/* 상세 본문을 이미지와 상품 정보 두 영역으로 나눠 목록 화면과 역할을 분리함 */
+.product-detail-card {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    gap: 32px;
+    align-items: flex-start;
+    padding: 24px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background-color: var(--surface);
+    box-shadow: var(--shadow);
+}
+
+/* 대표 이미지가 없을 때도 상세 화면 높이가 흔들리지 않도록 고정 비율을 둠 */
+.product-detail-image-box {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 16px;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.42), transparent 25%),
+        linear-gradient(135deg, #5888ff, #2d57db);
+}
+
+.product-detail-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 이미지 URL이 아닌 설명 문자열이 내려오는 기존 DTO 상황을 시각적으로 처리함 */
+.product-detail-image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 15px;
+}
+
+.product-detail-info {
+    padding: 8px 0;
+}
+
+.product-detail-category {
+    margin: 0 0 8px;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.product-detail-info h2 {
+    margin: 0 0 12px;
+    font-size: 32px;
+}
+
+.product-detail-seller {
+    margin: 0 0 24px;
+    color: var(--muted);
+}
+
+.product-detail-price {
+    display: block;
+    margin-bottom: 16px;
+    color: var(--brand-blue);
+    font-size: 28px;
+}
+
+.product-detail-status {
+    margin-bottom: 24px;
+}
+
+/* DTO의 설명 문자열을 상세 페이지 본문으로 노출함 */
+.product-detail-description {
+    margin: 0 0 24px;
+    color: #344054;
+    line-height: 1.7;
+}
+
+/* 상품 수량 선택 영역을 버튼과 현재 값으로 나눠 장바구니 요청 수량을 명확히 보여줌 */
+.quantity-section {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+/* 수량 라벨은 본문보다 조금 작게 두어 입력 영역의 제목처럼 보이게 함 */
+.quantity-label {
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+/* 수량 버튼과 값을 한 줄에 고정해 클릭해도 레이아웃이 흔들리지 않게 함 */
+.quantity-control {
+    display: inline-grid;
+    grid-template-columns: 44px 64px 44px;
+    width: max-content;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    overflow: hidden;
+    background-color: var(--surface);
+}
+
+/* 수량 증감 버튼은 비활성 상태까지 같은 크기를 유지하도록 맞춤 */
+.quantity-button {
+    width: 44px;
+    height: 44px;
+    border: 0;
+    background-color: #f7f9fc;
+    color: var(--ink);
+    cursor: pointer;
+    font-size: 18px;
+}
+
+/* 선택 수량은 버튼 사이 중앙에 고정해 현재 요청 값을 바로 확인하게 함 */
+.quantity-value {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 64px;
+    border-right: 1px solid var(--line);
+    border-left: 1px solid var(--line);
+    font-weight: 700;
+}
+
+/* 비활성 수량 버튼은 클릭 불가 상태를 시각적으로 구분함 */
+.quantity-button:disabled {
+    color: #aaa;
+    cursor: not-allowed;
+}
+
+/* 상세 액션 버튼을 한 줄에 배치해 장바구니 담기와 이동을 같은 흐름으로 묶음 */
+.product-detail-actions {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+/* 장바구니와 바로구매 버튼은 같은 높이로 맞춰 상세 주요 액션을 안정적으로 배치함 */
+.cart-button,
+.buy-now-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 18px;
+    border-radius: 11px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+/* 장바구니 담기 버튼은 서버 요청 액션이라 진한 색상으로 표시함 */
+.cart-button {
+    border: 0;
+    background-color: var(--brand-blue);
+    color: #fff;
+    cursor: pointer;
+}
+
+/* 바로구매 버튼은 구매 흐름을 강조하되 장바구니 버튼과 구분되게 색상을 분리함 */
+.buy-now-button {
+    border: 0;
+    background-color: var(--green);
+    color: #fff;
+    cursor: pointer;
+}
+
+/* 요청 중이거나 품절일 때 주요 액션 버튼을 비활성화해 중복 요청을 막음 */
+.cart-button:disabled,
+.buy-now-button:disabled {
+    background-color: #aaa;
+    cursor: not-allowed;
+}
+
+/* 장바구니 처리 결과 메시지를 액션 바로 아래에 표시함 */
+.cart-message {
+    margin: 0 0 24px;
+    font-size: 14px;
+}
+
+/* 성공 메시지는 기본 브랜드 색상으로 보여줌 */
+.cart-message.success {
+    color: var(--brand-blue);
+}
+
+/* 실패 메시지는 에러 색으로 구분해 로그인 필요 상태를 빠르게 알림 */
+.cart-message.error {
+    color: #d32f2f;
+}
+
+.product-detail-meta {
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.error-message {
+    color: #d32f2f;
+}
+
+/* 상세 하단 탭은 Thymeleaf 상세 페이지의 정보 구역을 React 구조로 옮김 */
+.product-detail-tabs {
+    margin-top: 44px;
+    padding: 22px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background-color: var(--surface);
+    box-shadow: var(--shadow);
+}
+
+/* 탭 버튼을 한 줄에 배치해 상세/배송/리뷰/Q&A를 빠르게 전환하게 함 */
+.detail-tab-list {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--line);
+}
+
+/* 탭 버튼은 현재 선택 상태를 하단 선으로 구분함 */
+.detail-tab-button {
+    min-height: 52px;
+    padding: 0 18px;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    background-color: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* 활성 탭은 상품 상세의 현재 정보 영역임을 명확히 보여줌 */
+.detail-tab-button.active {
+    border-bottom-color: var(--brand-blue);
+    color: var(--brand-blue);
+}
+
+/* 탭 내용은 본문처럼 읽히도록 여백과 줄간격을 분리함 */
+.detail-tab-panel {
+    padding: 24px 0;
+    color: #344054;
+    line-height: 1.7;
+}
+
+/* 탭 제목은 상세 페이지 본문 안의 중간 제목 크기로 맞춤 */
+.detail-tab-panel h3 {
+    margin: 0 0 12px;
+    font-size: 22px;
+}
+
+/* 상세 설명 목록은 기본 들여쓰기만 유지해 과한 장식을 피함 */
+.detail-tab-panel ul {
+    margin: 14px 0 0;
+    padding-left: 20px;
+}
+
+/* 장바구니 성공 모달 뒤 배경을 덮어 사용자의 선택을 모달로 모음 */
+.cart-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0.45);
+    z-index: 1000;
+}
+
+/* 성공 모달은 작은 카드로 띄워 담기 후 다음 행동을 선택하게 함 */
+.cart-modal {
+    width: min(420px, 100%);
+    padding: 24px;
+    border-radius: 10px;
+    background-color: var(--surface);
+    box-shadow: 0 18px 60px rgba(0, 0, 0, 0.2);
+}
+
+/* 모달 제목과 닫기 버튼을 한 줄에 배치함 */
+.cart-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+/* 모달 제목은 상세 제목보다 작게 유지해 팝업 역할에 맞춤 */
+.cart-modal-header h3 {
+    margin: 0;
+    font-size: 20px;
+}
+
+/* 닫기 버튼은 아이콘형 버튼으로 두어 모달 조작을 간단히 함 */
+.cart-modal-close {
+    width: 36px;
+    height: 36px;
+    border: 0;
+    background-color: transparent;
+    cursor: pointer;
+    font-size: 24px;
+}
+
+/* 모달 하단 버튼은 오른쪽 정렬로 다음 행동을 빠르게 선택하게 함 */
+.cart-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 24px;
+}
+
+/* 모달 버튼 공통 크기를 맞춰 선택지가 균형 있게 보이게 함 */
+.cart-modal-secondary,
+.cart-modal-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 14px;
+    border-radius: 11px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+/* 계속 보기 버튼은 모달을 닫는 보조 액션으로 표시함 */
+.cart-modal-secondary {
+    border: 1px solid var(--line);
+    background-color: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+}
+
+/* 장바구니 이동은 모달의 주 액션으로 표시함 */
+.cart-modal-primary {
+    border: 0;
+    background-color: var(--brand-blue);
+    color: #fff;
+}
+
+@media (max-width: 768px) {
+    .product-detail-card {
+        grid-template-columns: 1fr;
+    }
+
+    /* 모바일에서는 액션 버튼을 세로 배치해 좁은 화면에서 글자가 눌리지 않게 함 */
+    .product-detail-actions,
+    .cart-modal-actions {
+        flex-direction: column;
+    }
+
+}
