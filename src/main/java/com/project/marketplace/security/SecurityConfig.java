@@ -32,7 +32,7 @@ public class SecurityConfig {
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
 
-    // React와 백엔드를 분리 배포할 때 허용할 프론트 주소를 환경변수로 바꿀 수 있게 함
+    // 로컬 Vite와 EC2 React 도메인을 환경변수로 허용할 수 있게 함
     @Value("#{'${app.cors.allowed-origins:http://localhost:5173}'.split(',')}")
     private List<String> corsAllowedOrigins;
 

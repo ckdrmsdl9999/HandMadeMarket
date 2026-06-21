@@ -1,0 +1,50 @@
+# main 브랜치에 반영된 React 코드만 EC2 nginx 정적 파일로 배포하도록 설정함
+name: Frontend CD
+
+# frontend 또는 프론트 배포 스크립트가 바뀐 경우에만 정적 파일 배포를 실행함
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+      - 'deploy/frontend-deploy.sh'
+      - '.github/workflows/frontend-deploy.yml'
+
+# GitHub Actions가 저장소 코드를 읽는 권한만 가지도록 최소 권한으로 설정함
+permissions:
+  contents: read
+
+# 백엔드 blue-green 배포와 같은 EC2 작업 디렉터리를 쓰므로 배포 작업을 직렬화함
+concurrency:
+  group: cd-ec2-main
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # EC2에 설치된 self-hosted runner에서 프론트 정적 파일을 직접 배포함
+    runs-on: [self-hosted, Linux, X64]
+
+    steps:
+      # workflow workspace에 현재 main 코드를 체크아웃해 Actions 기본 컨텍스트를 맞춤
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      # 프론트 빌드에 필요한 Node 버전을 self-hosted runner에서도 고정함
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # EC2 운영 프로젝트 디렉터리를 main 최신 코드로 맞춘 뒤 React 정적 배포 스크립트를 실행함
+      - name: Deploy frontend
+        run: |
+          set -e
+          cd /home/ubuntu/HandMadeMarket
+          git fetch origin main
+          git switch main
+          git pull --ff-only origin main
+          chmod +x ./deploy/frontend-deploy.sh
+          ./deploy/frontend-deploy.sh
