@@ -1,20 +1,27 @@
-# main 브랜치에 반영된 코드만 EC2 운영 서버로 배포하도록 설정함
-name: CD
+# main 브랜치에 반영된 백엔드 코드만 EC2 운영 서버로 배포하도록 설정함
+name: Backend CD
 
-# main 브랜치에 push 또는 merge된 코드만 운영 배포를 실행하도록 설정함
+# 백엔드 관련 파일이 main에 반영될 때만 Spring Boot blue-green 배포를 실행함
 on:
   push:
     branches:
       - main
+    paths:
+      - 'src/**'
+      - 'deploy/backend-deploy.sh'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradle/**'
+      - 'gradlew'
+      - '.github/workflows/backend-deploy.yml'
 
 # GitHub Actions가 저장소 코드를 읽는 권한만 가지도록 최소 권한으로 설정함
 permissions:
   contents: read
 
-# main 배포가 동시에 여러 번 실행되지 않도록 설정함
-# 예를 들어 main에 연속 push가 들어와도 Blue-Green 배포 스크립트가 동시에 꼬이지 않게 막는 역할임
+# 프론트와 백엔드가 같은 EC2 작업 디렉터리를 쓰므로 배포 작업이 동시에 돌지 않게 막음
 concurrency:
-  group: cd-main
+  group: cd-ec2-main
   cancel-in-progress: false
 
 jobs:
@@ -46,8 +53,7 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew clean build
 
-      # EC2 서버 안의 실제 운영 프로젝트 디렉토리를 main 브랜치 최신 코드로 갱신한 뒤,
-      # 테스트를 제외하고 운영용 jar를 다시 빌드하고 Blue-Green 배포 스크립트를 실행함
+      # EC2 운영 프로젝트를 최신 main으로 맞춘 뒤 repo에 있는 Blue-Green 배포 스크립트를 실행함
       - name: Deploy
         run: |
           set -e
@@ -57,4 +63,5 @@ jobs:
           git pull --ff-only origin main
           chmod +x ./gradlew
           ./gradlew clean build -x test
-          /home/ubuntu/deploy.sh
+          chmod +x ./deploy/backend-deploy.sh
+          ./deploy/backend-deploy.sh

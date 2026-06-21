@@ -4,9 +4,9 @@ server:
   servlet:
     session:
       cookie:
-        # 분리 배포된 React에서 백엔드 세션 쿠키를 credentials 요청에 실어 보낼 수 있게 함
-        same-site: none
-        # SameSite=None 쿠키는 HTTPS에서만 허용되므로 운영 세션 쿠키를 보안 쿠키로 맞춤
+        # React와 API를 같은 hmadeshop.com 도메인에서 쓰므로 기본적인 외부 이동 후 세션 유지에 맞춤
+        same-site: lax
+        # 운영 nginx가 HTTPS를 처리하므로 세션 쿠키를 보안 쿠키로 유지함
         secure: true
 
 spring:
@@ -58,8 +58,8 @@ spring:
             user-name-attribute: response
 
 app:
-  # OAuth 성공/실패 후 이동할 React 운영 주소를 환경변수로 분리함
+  # OAuth 성공/실패 후 같은 EC2 nginx 도메인의 React 화면으로 이동하게 환경변수로 분리함
   frontend-url: ${FRONTEND_URL:https://hmadeshop.com}
   cors:
-    # 로컬 React와 운영 React 주소를 함께 허용해 분리 배포 API 호출을 열어둠
+    # 로컬 Vite 개발 서버와 운영 단일 도메인 React에서 API 호출을 허용함
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,https://hmadeshop.com}
