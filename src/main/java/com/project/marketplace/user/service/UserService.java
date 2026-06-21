@@ -143,16 +143,43 @@ public class UserService {
             OAuth2User oauth2User = oauthToken.getPrincipal();
             Map<String, Object> attributes = oauth2User.getAttributes();
 
-            // OAuth2 사용자 조회를 provider별 원본 응답 대신 정규화된 providerId 기준으로 통일함 -5/31
-            Object providerId = attributes.get("providerId");
-            if (providerId instanceof String providerIdText && !providerIdText.isBlank()) {
-                return userRepository.findByProviderAndLoginId(provider, providerIdText);
+            // OAuth2 현재 사용자 조회도 DB 저장 기준과 같은 providerId 우선순위로 맞춤
+            String providerId = resolveOAuthProviderId(attributes);
+            if (providerId != null) {
+                return userRepository.findByProviderAndLoginId(provider, providerId);
             }
 
             return Optional.empty();
         }
 
         return userRepository.findByProviderAndLoginId(LOCAL_PROVIDER, authentication.getName());
+    }
+
+    // provider별 principal 구조 차이를 DB 저장 기준과 같은 순서로 식별함
+    private String resolveOAuthProviderId(Map<String, Object> attributes) {
+        String providerId = asText(attributes.get("providerId"));
+
+        Object responseObj = attributes.get("response");
+        if (responseObj instanceof Map<?, ?> response) {
+            providerId = firstNonBlank(providerId, asText(response.get("id")));
+        }
+
+        return firstNonBlank(providerId, asText(attributes.get("sub")));
+    }
+
+    // 앞에서 찾은 식별자가 있으면 유지하고 없을 때만 다음 후보를 사용함
+    private String firstNonBlank(String value, String fallback) {
+        return value != null ? value : fallback;
+    }
+
+    // OAuth2 attribute 값을 빈 문자열이 아닌 문자열 또는 null로 통일함
+    private String asText(Object value) {
+        if (value == null) {
+            return null;
+        }
+
+        String text = String.valueOf(value);
+        return text.isBlank() ? null : text;
     }
 
 
