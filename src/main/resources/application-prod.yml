@@ -10,6 +10,30 @@ server:
         secure: true
 
 spring:
+  session:
+    # 운영 Blue-Green 배포에서 8080/8081이 같은 로그인 세션을 보도록 Redis 저장소를 사용함
+    store-type: redis
+    redis:
+      # Redis 안에서 이 서비스 세션 key를 구분해 다른 데이터와 섞이지 않게 함
+      namespace: handmade:session
+      # 요청이 끝날 때 변경된 세션만 저장해 Redis 쓰기 부담을 줄임
+      flush-mode: on-save
+      # 변경된 세션 속성만 저장해 OAuth2/일반 로그인 세션 갱신 범위를 줄임
+      save-mode: on-set-attribute
+
+  data:
+    redis:
+      # EC2 Redis 주소를 환경변수로 바꿀 수 있게 하되 기본은 같은 서버 localhost로 둠
+      host: ${REDIS_HOST:127.0.0.1}
+      # Redis 기본 포트를 사용하고 운영에서 필요하면 환경변수로 변경함
+      port: ${REDIS_PORT:6379}
+      # Redis DB 번호를 환경변수로 분리해 세션 저장 공간을 나눌 수 있게 함
+      database: ${REDIS_DATABASE:0}
+      # Redis 암호가 없는 로컬/EC2 구성을 기본값으로 두고 필요 시 환경변수로 주입함
+      password: ${REDIS_PASSWORD:}
+      # Redis 장애 시 요청이 오래 묶이지 않도록 연결 대기 시간을 제한함
+      timeout: ${REDIS_TIMEOUT:3s}
+
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
