@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "cart_items", uniqueConstraints = {
+@Table(name = "cart_items", uniqueConstraints = {//복합키
         @UniqueConstraint(name = "uk_cart_items_cart_product", columnNames = {"cart_id", "product_id"})
 })
 @Getter
