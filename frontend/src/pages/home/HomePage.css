@@ -2,66 +2,6 @@
     padding: 0 0 8px;
 }
 
-/* 홈 검색 폼은 상품 목록 query로 이동해 기존 검색 기능을 재사용함 */
-.home-search-form {
-    display: grid;
-    grid-template-columns: 150px minmax(0, 1fr) auto;
-    overflow: hidden;
-    margin: 20px 0 0;
-    border: 2px solid var(--brand-blue);
-    border-radius: 13px;
-    background: var(--surface);
-    box-shadow: var(--shadow);
-}
-
-/* 검색 label은 접근성만 유지하고 화면 공간은 상품 탐색 UI에 양보함 */
-.home-search-label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-}
-
-/* 홈 검색 입력은 Thymeleaf 홈 검색처럼 한 줄에서 빠르게 입력되게 맞춤 */
-.home-search-form select,
-.home-search-form input {
-    min-height: 48px;
-    border: 0;
-    background: #fff;
-    color: var(--ink);
-    font-size: 14px;
-}
-
-/* 카테고리 선택은 검색어와 구분되도록 오른쪽 경계선을 둠 */
-.home-search-form select {
-    padding: 0 12px;
-    border-right: 1px solid var(--line);
-}
-
-/* 검색어 입력은 긴 문구도 좁은 화면에서 잘리지 않게 여백만 유지함 */
-.home-search-form input {
-    min-width: 0;
-    padding: 0 14px;
-}
-
-/* 검색 입력 포커스는 폼 테두리 자체가 강조되므로 기본 outline을 제거함 */
-.home-search-form input:focus,
-.home-search-form select:focus {
-    outline: 0;
-}
-
-/* 홈 검색 버튼은 기존 홈의 강조색을 써 검색 진입점을 명확히 보여줌 */
-.home-search-button {
-    min-width: 72px;
-    border: 0;
-    background: var(--accent);
-    color: #fff;
-    font-size: 14px;
-    font-weight: 900;
-    cursor: pointer;
-}
-
 /* 홈 첫 영역을 타임리프 home.html처럼 카테고리, 배너, 계정 패널 3열로 구성함 */
 .home-hero-grid {
     display: grid;
@@ -482,16 +422,6 @@
 }
 
 @media (max-width: 768px) {
-    /* 모바일 검색은 카테고리와 입력창, 버튼을 세로로 쌓아 터치 영역을 확보함 */
-    .home-search-form {
-        grid-template-columns: 1fr;
-    }
-
-    .home-search-form select {
-        border-right: 0;
-        border-bottom: 1px solid var(--line);
-    }
-
     /* 모바일 배너는 문구와 버튼을 세로 배치해 텍스트가 좁아지지 않게 함 */
     .home-banner,
     .home-section-head {

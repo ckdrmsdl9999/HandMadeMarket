@@ -9,9 +9,6 @@ import { getProducts, getProductsByCategory, searchProducts } from "./productApi
 import { formatPrice, isImageUrl } from "./productDisplay";
 import "./ProductListPage.css";
 
-// 목록 검색 카테고리는 Thymeleaf shop.html의 선택지와 맞춤
-const CATEGORY_OPTIONS = ["비누", "목공", "패브릭", "문구"];
-
 function ProductListPage() {
     // 검색 조건을 주소창 query string과 동기화해 새로고침해도 같은 결과가 보이게 함
     const [searchParams, setSearchParams] = useSearchParams();
@@ -60,25 +57,6 @@ function ProductListPage() {
 
         fetchProducts();
     }, [keywordParam, categoryParam]);
-
-    // 검색 폼 제출 시 FormData로 입력값을 읽어 URL query로 옮김
-    function handleSearchSubmit(event) {
-        event.preventDefault();
-        const nextParams = new URLSearchParams();
-        const formData = new FormData(event.currentTarget);
-        const selectedCategory = formData.get("category")?.toString() ?? "";
-        const keyword = formData.get("keyword")?.toString().trim() ?? "";
-
-        if (selectedCategory) {
-            nextParams.set("category", selectedCategory);
-        }
-        if (keyword) {
-            nextParams.set("keyword", keyword);
-        }
-
-        setCartMessage({ type: "", text: "" });
-        setSearchParams(nextParams);
-    }
 
     // 전체보기 버튼은 URL 조건을 비워 폼과 목록을 전체 상품 기준으로 되돌림
     function handleResetSearch() {
@@ -164,47 +142,6 @@ function ProductListPage() {
                 <span>총 {products.length}개</span>
             </div>
 
-            {/* Thymeleaf shop.html의 검색 폼을 React 라우터 query 기반으로 옮김 */}
-            <form
-                className="product-search-form"
-                key={`${categoryParam}:${keywordParam}`}
-                onSubmit={handleSearchSubmit}
-            >
-                <label className="product-search-label" htmlFor="product-category">
-                    카테고리
-                </label>
-                <select
-                    id="product-category"
-                    name="category"
-                    defaultValue={categoryParam}
-                >
-                    <option value="">전체</option>
-                    {CATEGORY_OPTIONS.map((category) => (
-                        <option key={category} value={category}>
-                            {category}
-                        </option>
-                    ))}
-                </select>
-
-                <label className="product-search-label" htmlFor="product-keyword">
-                    검색어
-                </label>
-                <input
-                    id="product-keyword"
-                    name="keyword"
-                    type="search"
-                    defaultValue={keywordParam}
-                    placeholder="찾고 싶은 핸드메이드 제품을 검색해보세요"
-                />
-
-                <button className="product-search-button" type="submit">
-                    검색
-                </button>
-                <button className="product-reset-button" type="button" onClick={handleResetSearch}>
-                    전체 보기
-                </button>
-            </form>
-
             {/* 현재 적용된 검색 조건과 장바구니 처리 결과를 목록 상단에 보여줌 */}
             <div className="product-list-status">
                 <span>
@@ -212,6 +149,12 @@ function ProductListPage() {
                         ? `검색 조건: ${keywordParam || "전체"} / ${categoryParam || "전체 카테고리"}`
                         : "전체 상품을 표시합니다."}
                 </span>
+                {(keywordParam || categoryParam) && (
+                    // 검색 입력은 공통 헤더로 통일하고 목록 안에서는 조건 해제만 제공함
+                    <button className="product-clear-filter-link" type="button" onClick={handleResetSearch}>
+                        전체 보기
+                    </button>
+                )}
                 {cartMessage.text && (
                     <strong className={`product-cart-message ${cartMessage.type}`}>
                         {cartMessage.text}

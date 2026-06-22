@@ -45,6 +45,25 @@ function Header() {
     }
   }
 
+  // 헤더 검색은 상품 목록 query로 이동해 기존 검색 API 흐름을 재사용함
+  function handleHeaderSearchSubmit(event) {
+    event.preventDefault();
+
+    const formData = new FormData(event.currentTarget);
+    const keyword = formData.get("keyword")?.toString().trim() ?? "";
+    const category = formData.get("category")?.toString() ?? "";
+    const params = new URLSearchParams();
+
+    if (category) {
+      params.set("category", category);
+    }
+    if (keyword) {
+      params.set("keyword", keyword);
+    }
+
+    navigate(params.toString() ? `/products?${params.toString()}` : "/products");
+  }
+
   return (
     // Thymeleaf 쇼핑 화면의 상단 구조와 톤을 맞추기 위해 공통 헤더를 2단으로 정리함
     <header className="site-header">
@@ -74,6 +93,34 @@ function Header() {
               HandMade <em>Market</em>
             </Link>
           </h1>
+
+          {/* 공통 헤더에서 바로 상품 검색으로 이동하게 해 홈/목록 진입 검색을 통일함 */}
+          <form className="header-search-form" onSubmit={handleHeaderSearchSubmit}>
+            <label className="header-search-label" htmlFor="header-category">
+              카테고리
+            </label>
+            <select id="header-category" name="category">
+              <option value="">전체</option>
+              <option value="비누">비누</option>
+              <option value="목공">목공</option>
+              <option value="패브릭">패브릭</option>
+              <option value="문구">문구</option>
+            </select>
+
+            <label className="header-search-label" htmlFor="header-keyword">
+              검색어
+            </label>
+            <input
+              id="header-keyword"
+              name="keyword"
+              type="search"
+              placeholder="찾고 싶은 핸드메이드 제품을 검색해보세요"
+            />
+
+            <button className="header-search-button" type="submit">
+              검색
+            </button>
+          </form>
 
           <nav className="nav" aria-label="주요 메뉴">
             <Link to="/">홈</Link>
