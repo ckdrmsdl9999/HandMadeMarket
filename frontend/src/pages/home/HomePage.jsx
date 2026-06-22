@@ -22,8 +22,8 @@ const CATEGORY_LINKS = [
 // 홈 배너 문구는 기존 Thymeleaf 홈의 쇼핑 진입 흐름과 맞춤
 const HERO_BANNERS = [
     {
-        title: "오늘 단 하루 핸드메이드 슈퍼딜",
-        description: "장인 셀렉트 상품을 한 화면에서 빠르게 둘러보세요.",
+        title: "오늘 단 하루 특가(배너상품) ",
+        description: "장인이 만든 상품입니다.",
         // CloudFront 설정 후 같은 경로에 이미지를 올리면 홈 배너에 바로 표시함
         imageUrl: getHomeImageUrl("home/hero-shopping.jpg"),
         to: "/products",
