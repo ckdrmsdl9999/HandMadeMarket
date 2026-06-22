@@ -31,6 +31,10 @@ dependencies {
 	runtimeOnly 'org.postgresql:postgresql'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	// Blue-Green 전환 후에도 같은 로그인 세션을 공유하도록 HTTP 세션 저장소를 Redis로 확장함
+	implementation 'org.springframework.session:spring-session-data-redis'
+	// Spring Session Redis가 Redis 연결 팩토리와 클라이언트를 자동 구성할 수 있게 추가함
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	// API 명세와 Swagger UI를 자동 생성해 현재 구현된 REST API를 문서화함
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.11'
 	compileOnly 'org.projectlombok:lombok'
