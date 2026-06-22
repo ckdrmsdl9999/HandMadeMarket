@@ -179,6 +179,15 @@
     font-weight: 800;
 }
 
+/* 상품명 아래 판매자명을 보조 줄로 보여줘 장바구니에서 판매자를 확인하게 함 */
+.cart-seller-name {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+}
+
 /* 상품 ID는 작은 보조 정보로 표시함 */
 .cart-table small {
     color: var(--muted);

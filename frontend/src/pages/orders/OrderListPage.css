@@ -121,6 +121,48 @@
     font-size: 14px;
 }
 
+/* 주문서 카드 오른쪽에 금액과 빼기 버튼을 세로로 정리함 */
+.order-cart-item-side {
+    justify-items: end;
+    align-content: start;
+}
+
+/* 주문서에서 바로 장바구니 항목을 뺄 수 있는 보조 버튼을 추가함 */
+.order-cart-remove-button {
+    min-height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: #fff;
+    color: var(--ink);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+/* 제거 처리 중에는 중복 클릭을 막고 비활성 상태를 명확히 표시함 */
+.order-cart-remove-button:disabled {
+    background: #f2f2f2;
+    color: #999;
+    cursor: not-allowed;
+}
+
+/* 판매자 혼합 주문을 막는 안내를 주문 상품 목록 위에 눈에 띄게 표시함 */
+.order-seller-warning {
+    margin: 0;
+    padding: 11px 12px;
+    border-radius: 11px;
+    background: #fff0ef;
+    color: #d32f2f;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+/* 주문 상품 카드의 판매자명은 수량 정보와 같은 보조 톤으로 노출함 */
+.order-cart-seller {
+    font-weight: 700;
+}
+
 /* 총 결제 금액은 주문 생성 전 마지막 확인값으로 강조함 */
 .order-total {
     display: flex;
