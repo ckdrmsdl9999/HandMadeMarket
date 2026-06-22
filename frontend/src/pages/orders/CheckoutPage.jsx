@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 // 주문서 화면은 현재 로그인 사용자 정보를 수령인 기본값에 사용함
 import { getCurrentUser } from "../auth/authApi";
-// 주문 생성 전 장바구니 상품과 총액을 확인해야 하므로 장바구니 API를 조회함
-import { getCart } from "../cart/cartApi";
+// 주문서에서 상품 확인과 개별 제거를 같이 처리하도록 장바구니 API를 가져옴
+import { getCart, removeCartItem } from "../cart/cartApi";
 // 주문 생성 API만 가져와 주문내역 조회 화면과 책임을 분리함
 import { createOrder } from "./orderApi";
 import "./OrderListPage.css";
@@ -86,6 +86,10 @@ function CheckoutPage() {
     const cartItems = Array.isArray(cart.cartItems) ? cart.cartItems : [];
     // 장바구니 상품이 있을 때만 주문 생성 버튼을 활성화함
     const hasCartItems = cartItems.length > 0;
+    // 주문은 한 판매자 상품만 허용하므로 주문서에서도 판매자 혼합 여부를 계산함
+    const hasMultipleSellers = countDistinctSellers(cartItems) > 1;
+    // 주문 생성 버튼 조건을 한 값으로 묶어 화면 표시와 submit 방어가 같은 기준을 쓰게 함
+    const canCreateOrder = currentUser && hasCartItems && !hasMultipleSellers;
 
     // 주문 생성 폼 입력을 state에 반영해 제출 payload와 화면 값을 같게 유지함
     function handleOrderFormChange(event) {
@@ -110,6 +114,11 @@ function CheckoutPage() {
             return;
         }
 
+        if (hasMultipleSellers) {
+            setOrderStatus({ type: "error", text: "서로 다른 판매자의 상품은 한 번에 주문할 수 없습니다." });
+            return;
+        }
+
         try {
             setActiveAction("create");
             setOrderStatus({ type: "info", text: "주문을 생성하는 중입니다." });
@@ -124,6 +133,28 @@ function CheckoutPage() {
         } catch (error) {
             console.error(error);
             setOrderStatus({ type: "error", text: getErrorMessage(error, "주문 생성에 실패했습니다.") });
+        } finally {
+            setActiveAction("");
+        }
+    }
+
+    // 주문서에서 판매자가 섞인 상품을 바로 뺄 수 있도록 장바구니 항목 삭제를 연결함
+    async function handleRemoveCartItem(cartItemId) {
+        if (!currentUser?.id) {
+            setOrderStatus({ type: "error", text: "로그인 후 주문 상품을 뺄 수 있습니다." });
+            return;
+        }
+
+        try {
+            setActiveAction(`remove:${cartItemId}`);
+            setOrderStatus({ type: "info", text: "주문 상품에서 빼는 중입니다." });
+
+            const updatedCart = await removeCartItem(currentUser.id, cartItemId);
+            setCart(updatedCart);
+            setOrderStatus({ type: "success", text: "주문 상품에서 뺐습니다." });
+        } catch (error) {
+            console.error(error);
+            setOrderStatus({ type: "error", text: getErrorMessage(error, "주문 상품을 빼지 못했습니다.") });
         } finally {
             setActiveAction("");
         }
@@ -170,16 +201,37 @@ function CheckoutPage() {
                     </div>
 
                     <div className="order-cart-list">
+                        {hasMultipleSellers && (
+                            // 서로 다른 판매자 상품이 섞였을 때 주문 생성 전에 이유를 바로 보여줌
+                            <p className="order-seller-warning">
+                                서로 다른 판매자의 상품은 한 번에 주문할 수 없습니다.
+                            </p>
+                        )}
                         {hasCartItems ? (
                             cartItems.map((item) => (
                                 <div className="order-cart-item" key={item.cartItemId}>
                                     <div>
                                         <strong>{item.productNameSnapshot}</strong>
+                                        {/* 주문 전 상품별 판매자를 확인해 서로 다른 판매자 상품 여부를 화면에서 알 수 있게 함 */}
+                                        <span className="order-cart-seller">
+                                            판매자: {formatSellerName(item.sellerName)}
+                                        </span>
                                         <span>
                                             {formatPrice(item.unitPriceSnapshot)} x {item.quantity}개
                                         </span>
                                     </div>
-                                    <strong>{formatPrice(item.lineAmount)}</strong>
+                                    <div className="order-cart-item-side">
+                                        <strong>{formatPrice(item.lineAmount)}</strong>
+                                        {/* 주문서 상품 카드에서 불필요한 장바구니 항목을 바로 제거하게 함 */}
+                                        <button
+                                            className="order-cart-remove-button"
+                                            type="button"
+                                            onClick={() => handleRemoveCartItem(item.cartItemId)}
+                                            disabled={activeAction === "create" || activeAction === `remove:${item.cartItemId}`}
+                                        >
+                                            {activeAction === `remove:${item.cartItemId}` ? "빼는 중" : "빼기"}
+                                        </button>
+                                    </div>
                                 </div>
                             ))
                         ) : (
@@ -237,7 +289,7 @@ function CheckoutPage() {
                         <button
                             className="order-submit-button"
                             type="submit"
-                            disabled={!currentUser || !hasCartItems || activeAction === "create"}
+                            disabled={!canCreateOrder || activeAction === "create"}
                         >
                             {activeAction === "create" ? "주문 생성 중" : "주문하기"}
                         </button>
@@ -265,6 +317,20 @@ function buildOrderFormForUser(user) {
 // 금액 표기를 상품/장바구니 화면과 같은 한국어 원화 형식으로 맞춤
 function formatPrice(value) {
     return `${Number(value || 0).toLocaleString("ko-KR")}원`;
+}
+
+// 판매자명이 없는 응답도 주문서 카드에서 빈 값으로 보이지 않게 처리함
+function formatSellerName(value) {
+    return value || "알 수 없음";
+}
+
+// 판매자 ID 기준으로 서로 다른 판매자가 섞였는지 계산함
+function countDistinctSellers(cartItems) {
+    return new Set(
+        cartItems
+            .map((item) => item.sellerId)
+            .filter((sellerId) => sellerId !== null && sellerId !== undefined)
+    ).size;
 }
 
 // Axios 오류 응답에서 서버 메시지를 최대한 꺼내 사용자에게 보여줌

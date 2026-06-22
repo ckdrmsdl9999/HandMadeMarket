@@ -237,6 +237,10 @@ function CartPage() {
                                             <Link className="cart-product-link" to={`/products/${item.productId}`}>
                                                 {item.productNameSnapshot}
                                             </Link>
+                                            {/* 상품명 아래에 판매자명을 함께 보여줘 장바구니 단계에서 판매자를 확인할 수 있게 함 */}
+                                            <span className="cart-seller-name">
+                                                판매자: {formatSellerName(item.sellerName)}
+                                            </span>
                                             <small>#{item.productId}</small>
                                         </td>
                                         <td>{formatPrice(item.unitPriceSnapshot)}</td>
@@ -292,6 +296,11 @@ function CartPage() {
 // 장바구니 금액 표기를 한국어 원화 형식으로 통일함
 function formatPrice(value) {
     return `${Number(value || 0).toLocaleString("ko-KR")}원`;
+}
+
+// 판매자명이 없는 기존 응답도 화면이 비지 않도록 기본 문구로 대체함
+function formatSellerName(value) {
+    return value || "알 수 없음";
 }
 
 export default CartPage;
