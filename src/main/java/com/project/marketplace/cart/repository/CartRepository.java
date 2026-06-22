@@ -16,7 +16,9 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
     // 장바구니 상세 조회도 API 경로에서 넘기는 내부 PK로 사용자와 매칭되게 변경
     @Query("select distinct c from Cart c " +
             "left join fetch c.cartItems ci " +
-            "left join fetch ci.product " +
+            // 장바구니 응답에서 판매자명을 바로 쓰므로 상품 판매자까지 한 번에 조회함
+            "left join fetch ci.product p " +
+            "left join fetch p.seller " +
             "where c.user.id = :userId")
     Optional<Cart> findDetailByUserId(@Param("userId") Long userId);
 }

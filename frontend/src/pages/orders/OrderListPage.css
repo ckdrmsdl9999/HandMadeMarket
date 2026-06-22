@@ -42,12 +42,23 @@
     font-weight: 700;
 }
 
-/* 주문서와 주문 목록을 Thymeleaf orders.html처럼 2열로 배치함 */
-.order-layout {
+/* 주문서 화면은 상품 확인과 수령 정보를 나란히 배치함 */
+.checkout-layout {
     display: grid;
     grid-template-columns: 0.92fr 1.08fr;
     gap: 22px;
     align-items: start;
+}
+
+/* 내 주문 내역은 주문서 없이 목록만 넓게 보여주도록 단일 열로 맞춤 */
+.order-list-layout {
+    display: grid;
+    gap: 22px;
+}
+
+/* 주문서 패널은 같은 높이로 늘리지 않고 각 내용 높이에 맞게 유지함 */
+.checkout-panel {
+    align-self: start;
 }
 
 /* 주문 패널은 기존 상품/장바구니 카드 표면과 맞춤 */
@@ -108,6 +119,48 @@
 .order-cart-item span {
     color: var(--muted);
     font-size: 14px;
+}
+
+/* 주문서 카드 오른쪽에 금액과 빼기 버튼을 세로로 정리함 */
+.order-cart-item-side {
+    justify-items: end;
+    align-content: start;
+}
+
+/* 주문서에서 바로 장바구니 항목을 뺄 수 있는 보조 버튼을 추가함 */
+.order-cart-remove-button {
+    min-height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: #fff;
+    color: var(--ink);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+/* 제거 처리 중에는 중복 클릭을 막고 비활성 상태를 명확히 표시함 */
+.order-cart-remove-button:disabled {
+    background: #f2f2f2;
+    color: #999;
+    cursor: not-allowed;
+}
+
+/* 판매자 혼합 주문을 막는 안내를 주문 상품 목록 위에 눈에 띄게 표시함 */
+.order-seller-warning {
+    margin: 0;
+    padding: 11px 12px;
+    border-radius: 11px;
+    background: #fff0ef;
+    color: #d32f2f;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+/* 주문 상품 카드의 판매자명은 수량 정보와 같은 보조 톤으로 노출함 */
+.order-cart-seller {
+    font-weight: 700;
 }
 
 /* 총 결제 금액은 주문 생성 전 마지막 확인값으로 강조함 */
@@ -366,8 +419,8 @@
 }
 
 @media (max-width: 900px) {
-    /* 태블릿 이하에서는 주문서와 주문 목록을 세로로 배치함 */
-    .order-layout {
+    /* 태블릿 이하에서는 주문 상품과 수령 정보를 세로로 배치함 */
+    .checkout-layout {
         grid-template-columns: 1fr;
     }
 }
