@@ -31,7 +31,7 @@ public class CartController {
 
     @GetMapping("/{userId}")
     public ResponseEntity<CartResponseDto> getCart(@PathVariable Long userId, Authentication authentication) {
-        // 장바구니 조회를 로그인 사용자 본인에게만 허용해 임의 userId 접근을 막는다.
+        // 장바구니 조회를 로그인 사용자 본인에게만 허용해 임의 userId 접근을 막는다..
         validateCartAccess(userId, authentication);
         return ResponseEntity.ok(cartService.getCartByUserId(userId));
     }
