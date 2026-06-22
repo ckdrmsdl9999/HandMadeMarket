@@ -108,35 +108,6 @@ function HomePage() {
 
     return (
         <section className="home-page">
-            {/* 홈에서도 상품 목록의 query 검색을 바로 시작할 수 있게 /products GET 검색 폼을 복원함 */}
-            <form className="home-search-form" action="/products" method="get">
-                <label className="home-search-label" htmlFor="home-category">
-                    카테고리
-                </label>
-                <select id="home-category" name="category">
-                    <option value="">전체</option>
-                    {CATEGORY_LINKS.map((category) => (
-                        <option key={category.label} value={category.label}>
-                            {category.label}
-                        </option>
-                    ))}
-                </select>
-
-                <label className="home-search-label" htmlFor="home-keyword">
-                    검색어
-                </label>
-                <input
-                    id="home-keyword"
-                    name="keyword"
-                    type="search"
-                    placeholder="찾고 싶은 핸드메이드 제품을 검색해보세요"
-                />
-
-                <button className="home-search-button" type="submit">
-                    검색
-                </button>
-            </form>
-
             <section className="home-hero-grid">
                 <aside className="home-category-panel">
                     <h2>빠른 카테고리</h2>
