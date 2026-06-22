@@ -192,12 +192,13 @@ function CartPage() {
                     <strong>{formatPrice(cart.totalAmount)}</strong>
                 </div>
                 {hasCartItems ? (
-                    <Link className="cart-order-button" to="/orders">
-                        주문하기
+                    // 장바구니의 주문하기는 내 주문 내역이 아니라 주문서 작성 화면으로 이동함
+                    <Link className="cart-order-button" to="/checkout">
+                        주문서 작성
                     </Link>
                 ) : (
                     <button className="cart-order-button" type="button" disabled>
-                        주문하기
+                        주문서 작성
                     </button>
                 )}
                 <button
