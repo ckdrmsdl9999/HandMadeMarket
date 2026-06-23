@@ -144,7 +144,7 @@
 
 ## 인프라설계도
 
-<img width="1164" height="728" alt="(ver1 3)핸드메이드마켓 drawio" src="https://github.com/user-attachments/assets/353e2299-c1f6-47e8-9f85-e8fe6bbd6f1c" />
+<img width="1164" height="728" alt="hmarketver1 4 drawio" src="https://github.com/user-attachments/assets/504c6775-c722-4661-9f57-dce549628ac8" />
 
 
 ## 기술 스택
