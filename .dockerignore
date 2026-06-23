@@ -1,0 +1,26 @@
+# Git 메타데이터와 로컬 IDE 파일은 이미지 빌드 컨텍스트에서 제외함
+.git
+.idea
+
+# 기존 빌드 산출물은 Dockerfile 내부에서 새로 생성하므로 제외함
+build
+.gradle
+.gradle-local
+.gradle-user-home
+
+# 프론트엔드 의존성과 산출물은 백엔드 Docker 이미지에 필요하지 않아 제외함
+frontend/node_modules
+frontend/dist
+frontend/build
+
+# 로컬 환경 파일과 로그는 운영 이미지에 포함하지 않음
+.env
+.env.*
+*.log
+
+# 배포와 문서 파일은 런타임 이미지 구성에 필요하지 않아 컨텍스트에서 제외함
+.github
+deploy
+README.md
+CLAUDE.md
+AGENTS.md
