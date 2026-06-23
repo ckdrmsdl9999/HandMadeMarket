@@ -13,11 +13,15 @@ on:
       - 'settings.gradle'
       - 'gradle/**'
       - 'gradlew'
+      # Docker 이미지 빌드 구성이 바뀌면 백엔드 이미지를 새로 만들도록 포함함
+      - 'Dockerfile'
+      - '.dockerignore'
       - '.github/workflows/backend-deploy.yml'
 
-# GitHub Actions가 저장소 코드를 읽는 권한만 가지도록 최소 권한으로 설정함
+# GHCR에 백엔드 이미지를 push하기 위해 패키지 쓰기 권한을 추가함
 permissions:
   contents: read
+  packages: write
 
 # 프론트와 백엔드가 같은 EC2 작업 디렉터리를 쓰므로 배포 작업이 동시에 돌지 않게 막음
 concurrency:
@@ -25,42 +29,59 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    # GitHub에서 제공하는 ubuntu-latest 서버가 아니라,
-    # EC2에 설치한 self-hosted runner에서 배포 절차를 직접 실행하도록 설정함
-    runs-on: [self-hosted, Linux, X64]
+  build-image:
+    # 백엔드 이미지는 GitHub-hosted runner에서 만들어 EC2 배포 부하를 줄임
+    runs-on: ubuntu-latest
+
+    outputs:
+      # deploy job이 같은 이미지 태그를 pull하도록 빌드 결과 메타데이터를 전달함
+      image: ${{ steps.image-meta.outputs.image }}
+      tag: ${{ steps.image-meta.outputs.tag }}
 
     steps:
-      # Node 24 기반 공식 액션으로 올려 배포 workflow의 구버전 런타임 경고를 제거함
+      # Dockerfile 기준으로 이미지를 만들 수 있게 저장소 코드를 가져옴
       - name: Checkout source
         uses: actions/checkout@v5
 
-      # Node 24 기반 공식 액션으로 Java 17 배포 전 빌드 환경을 경고 없이 고정함
-      - name: Set up Java 17
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: '17'
-          cache: gradle
+      # GHCR 이미지 이름은 대문자를 허용하지 않아 소문자로 정규화함
+      - name: Set image metadata
+        id: image-meta
+        run: |
+          IMAGE_NAME=$(echo "ghcr.io/${GITHUB_REPOSITORY_OWNER}/handmade-market-backend" | tr '[:upper:]' '[:lower:]')
+          echo "image=$IMAGE_NAME" >> "$GITHUB_OUTPUT"
+          echo "tag=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
 
-      # 리눅스 환경에서 Gradle wrapper를 실행할 수 있도록 권한을 부여함
-      - name: Grant execute permission for Gradle
-        run: chmod +x ./gradlew
+      # workflow 기본 토큰으로 GHCR에 이미지를 올릴 수 있게 로그인함
+      - name: Login to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
 
-      # 배포 전에 컴파일, 테스트, 패키징이 모두 통과하는지 확인함
-      # 여기서 실패하면 실제 EC2 서비스 재시작까지 가지 않음
-      - name: Build with Gradle
-        run: ./gradlew clean build
+      # 커밋 SHA와 latest 태그를 함께 push해 배포는 고정 태그, 수동 확인은 latest로 가능하게 함
+      - name: Build and push Docker image
+        run: |
+          docker build \
+            -t "${{ steps.image-meta.outputs.image }}:${{ steps.image-meta.outputs.tag }}" \
+            -t "${{ steps.image-meta.outputs.image }}:latest" \
+            .
+          docker push "${{ steps.image-meta.outputs.image }}:${{ steps.image-meta.outputs.tag }}"
+          docker push "${{ steps.image-meta.outputs.image }}:latest"
 
-      # EC2 운영 프로젝트를 최신 main으로 맞춘 뒤 repo에 있는 Blue-Green 배포 스크립트를 실행함
+  deploy:
+    # 이미지 빌드가 성공한 뒤 EC2 self-hosted runner에서 실제 배포만 수행함
+    needs: build-image
+    runs-on: [self-hosted, Linux, X64]
+
+    steps:
+      # EC2 운영 프로젝트를 최신 main으로 맞춘 뒤 GHCR 이미지를 받아 Blue-Green 배포함
       - name: Deploy
+        env:
+          BACKEND_IMAGE: ${{ needs.build-image.outputs.image }}:${{ needs.build-image.outputs.tag }}
         run: |
           set -e
           cd /home/ubuntu/HandMadeMarket
           git fetch origin main
           git switch main
           git pull --ff-only origin main
-          chmod +x ./gradlew
-          ./gradlew clean build -x test
+          echo "${{ secrets.GITHUB_TOKEN }}" | sudo docker login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
+          sudo docker pull "$BACKEND_IMAGE"
           chmod +x ./deploy/backend-deploy.sh
           ./deploy/backend-deploy.sh
