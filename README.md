@@ -144,7 +144,7 @@
 
 ## 인프라설계도
 
-<img width="1164" height="728" alt="hmarketver1 4 drawio" src="https://github.com/user-attachments/assets/504c6775-c722-4661-9f57-dce549628ac8" />
+<img width="1228" height="802" alt="hmarketver1 5 drawio" src="https://github.com/user-attachments/assets/75785d77-d388-43c1-a48e-02be6652a5d8" />
 
 
 ## 기술 스택
