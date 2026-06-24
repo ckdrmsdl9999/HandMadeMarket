@@ -1,15 +1,17 @@
 package com.project.marketplace.storage;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.Set;
 import java.util.UUID;
 
@@ -38,7 +40,9 @@ public class S3ImageStorageService implements ImageStorageService {
             // S3에는 원본 파일 bytes를 저장하고 응답에는 CloudFront 기준 공개 URL만 반환함
             s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
         } catch (IOException e) {
-            throw new UncheckedIOException("이미지 파일을 읽지 못했습니다.", e);
+            throw new ImageStorageException(HttpStatus.BAD_REQUEST, "이미지 파일을 읽지 못했습니다.", e);
+        } catch (S3Exception | SdkClientException e) {
+            throw new ImageStorageException(HttpStatus.SERVICE_UNAVAILABLE, "이미지 저장소에 업로드하지 못했습니다.", e);
         }
 
         return storageProperties.buildPublicUrl(objectKey);
@@ -50,7 +54,7 @@ public class S3ImageStorageService implements ImageStorageService {
         }
 
         if (storageProperties.getS3().getBucket() == null || storageProperties.getS3().getBucket().isBlank()) {
-            throw new IllegalStateException("S3 버킷 설정이 필요합니다.");
+            throw new ImageStorageException(HttpStatus.SERVICE_UNAVAILABLE, "S3 버킷 설정이 필요합니다.");
         }
 
         long maxUploadSize = storageProperties.getS3().getMaxUploadSizeMb() * 1024L * 1024L;
