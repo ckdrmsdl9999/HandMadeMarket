@@ -18,6 +18,8 @@ public class ProductDto {
     private Boolean isSoldOut;     // 품절 여부
     private Integer quantity;      // 재고
     private Integer salesCount;    // 판매 수량
+    // 상품 상세 설명을 이미지 경로와 분리해 텍스트 설명으로 내려줌
+    private String description;     // 상품 설명
     private String mainImage;      // 메인 이미지 경로
     // 상품 응답에서 판매자 식별값과 이름을 함께 내려주기 위해 판매자 필드를 추가했다.
     private Long sellerId;         // 판매자 ID
@@ -33,7 +35,9 @@ public class ProductDto {
                 .isSoldOut(product.getIsSoldOut())
                 .quantity(product.getQuantity())
                 .salesCount(product.getSalesCount())
-                .mainImage(product.getDescription())
+                // 상품 설명과 이미지 URL을 각각 다른 응답 필드로 내려주게 수정함
+                .description(product.getDescription())
+                .mainImage(product.getMainImage())
                 // 상품 응답의 판매자 식별값을 내부 PK로 맞춰 다른 도메인과 같은 사용자 키를 쓰게 수정함
                 .sellerId(product.getSeller() != null ? product.getSeller().getId() : null)
                 .sellerName(product.getSeller() != null ? product.getSeller().getUserName() : null)
@@ -49,7 +53,9 @@ public class ProductDto {
                 .isSoldOut(dto.getIsSoldOut())
                 .quantity(dto.getQuantity())
                 .salesCount(dto.getSalesCount())
-                .description(dto.getMainImage())
+                // 상품 설명과 이미지 URL을 엔티티의 분리된 컬럼에 각각 저장함
+                .description(dto.getDescription())
+                .mainImage(dto.getMainImage())
                 .build();
     }
 }

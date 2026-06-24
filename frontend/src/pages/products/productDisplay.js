@@ -8,8 +8,13 @@ export function formatPrice(value) {
     return `${Number(value ?? 0).toLocaleString("ko-KR")}원`;
 }
 
-// 현재 DTO의 mainImage 값이 설명 문자열인 경우 상세 설명으로 사용함
+// 상품 설명은 분리된 description 필드를 우선 사용하고 기존 데이터만 mainImage 설명값으로 보완함
 export function getProductDescription(product) {
+    const description = product?.description?.trim();
+    if (description) {
+        return description;
+    }
+
     const mainImage = product?.mainImage?.trim();
 
     if (!mainImage || isImageUrl(mainImage)) {

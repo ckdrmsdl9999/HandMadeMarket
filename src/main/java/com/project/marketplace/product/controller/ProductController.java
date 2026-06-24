@@ -7,10 +7,12 @@ import com.project.marketplace.user.service.UserService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Map;
 
@@ -91,6 +93,21 @@ public class ProductController {
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("productId", productId));
     }
 
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Map<String, Long>> createProductWithImage(
+            @RequestPart("product") ProductDto productDto,
+            @RequestPart(value = "mainImageFile", required = false) MultipartFile mainImageFile,
+            Authentication authentication) {
+        // multipart 등록 요청은 이미지 파일을 S3에 저장한 뒤 상품 mainImage URL로 함께 저장함
+        Long currentUserId = resolveCurrentUserId(authentication);
+        if (currentUserId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        productDto.setSellerId(currentUserId);
+        Long productId = productService.createProduct(productDto, mainImageFile);
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("productId", productId));
+    }
+
     /**
      * 상품 정보를 수정합니다.
      */
@@ -109,6 +126,25 @@ public class ProductController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         productService.updateProduct(productDto, currentUserId);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping(path = "/{productId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Void> updateProductWithImage(
+            @PathVariable Long productId,
+            @RequestPart("product") ProductDto productDto,
+            @RequestPart(value = "mainImageFile", required = false) MultipartFile mainImageFile,
+            Authentication authentication) {
+        // multipart 수정 요청도 JSON 수정과 같은 ID 검증과 권한 검증 흐름을 사용함
+        if (!productId.equals(productDto.getProductId())) {
+            return ResponseEntity.badRequest().build();
+        }
+        Long currentUserId = resolveCurrentUserId(authentication);
+        if (currentUserId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        productService.updateProduct(productDto, currentUserId, mainImageFile);
 
         return ResponseEntity.ok().build();
     }

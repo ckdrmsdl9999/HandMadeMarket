@@ -8,8 +8,10 @@ import { getPopularProducts, getProducts } from "../products/productApi";
 import { formatPrice, isImageUrl } from "../products/productDisplay";
 import "./HomePage.css";
 
-// CloudFront 기본 주소가 없으면 빈 값으로 두어 기존 그라데이션 배너를 유지함
-const HOME_IMAGE_BASE_URL = normalizeHomeImageBaseUrl(import.meta.env.VITE_CLOUDFRONT_IMAGE_BASE_URL);
+// 백엔드 설정명과 맞춘 CloudFront 주소를 우선 사용하고 기존 이미지 전용 env는 fallback으로 유지함
+const HOME_IMAGE_BASE_URL = normalizeHomeImageBaseUrl(
+    import.meta.env.VITE_CLOUDFRONT_BASE_URL || import.meta.env.VITE_CLOUDFRONT_IMAGE_BASE_URL
+);
 
 // 홈 빠른 카테고리는 실제 상품 목록 필터와 같은 값만 노출함
 const CATEGORY_LINKS = [

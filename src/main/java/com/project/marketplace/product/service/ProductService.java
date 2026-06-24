@@ -3,6 +3,8 @@ package com.project.marketplace.product.service;
 import com.project.marketplace.product.dto.ProductDto;
 import com.project.marketplace.product.entity.Product;
 import com.project.marketplace.product.repository.ProductRepository;
+import com.project.marketplace.storage.ImageStorageService;
+import com.project.marketplace.storage.ImageUploadType;
 import com.project.marketplace.user.entity.User;
 import com.project.marketplace.user.entity.UserRole;
 import com.project.marketplace.user.repository.UserRepository;
@@ -10,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -25,6 +28,7 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final ImageStorageService imageStorageService;
 
     @Transactional(readOnly = true)
     public List<ProductDto> getAllProducts() {
@@ -88,6 +92,13 @@ public class ProductService {
     }
 
     @Transactional
+    public Long createProduct(ProductDto dto, MultipartFile mainImageFile) {
+        // 이미지 파일이 포함된 상품 등록은 S3 업로드 결과 URL을 mainImage에 넣고 기존 저장 흐름을 재사용함
+        applyMainImage(dto, mainImageFile);
+        return createProduct(dto);
+    }
+
+    @Transactional
     public void updateProduct(ProductDto dto, Long requesterUserId) {
         Product product = productRepository.findById(dto.getProductId())
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "상품을 찾을 수 없습니다."));
@@ -101,11 +112,20 @@ public class ProductService {
         product.setCategory(dto.getCategory());
         product.setPrice(dto.getPrice());
         product.setQuantity(dto.getQuantity());
-        product.setDescription(dto.getMainImage());
+        // 상품 수정 시 설명과 이미지 URL이 서로 덮어쓰지 않도록 분리된 필드를 반영함
+        product.setDescription(dto.getDescription());
+        product.setMainImage(dto.getMainImage());
         product.setIsSoldOut(dto.getQuantity() <= 0);
         // 수정 요청의 sellerId는 상품 소유자 변경으로 악용될 수 있어 반영하지 않음
 
         productRepository.save(product);
+    }
+
+    @Transactional
+    public void updateProduct(ProductDto dto, Long requesterUserId, MultipartFile mainImageFile) {
+        // 이미지 파일이 포함된 상품 수정은 업로드된 URL만 교체하고 권한 검증은 기존 수정 흐름을 재사용함
+        applyMainImage(dto, mainImageFile);
+        updateProduct(dto, requesterUserId);
     }
 
     @Transactional
@@ -160,6 +180,15 @@ public class ProductService {
         if (!canManage) {
             throw new ResponseStatusException(FORBIDDEN, forbiddenMessage);
         }
+    }
+
+    private void applyMainImage(ProductDto dto, MultipartFile mainImageFile) {
+        // 빈 파일 요청은 기존 이미지 값을 유지하고 실제 파일이 있을 때만 S3 업로드를 수행함
+        if (mainImageFile == null || mainImageFile.isEmpty()) {
+            return;
+        }
+
+        dto.setMainImage(imageStorageService.upload(mainImageFile, ImageUploadType.PRODUCT));
     }
 
     @Transactional(readOnly = true)
