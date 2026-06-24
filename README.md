@@ -142,6 +142,11 @@
 - HTTPS 적용
 - Nginx 기반 Reverse Proxy 설정
 
+## ERD
+
+<img width="1640" height="642" alt="handmademarket-new" src="https://github.com/user-attachments/assets/3972b812-9853-41b3-a89f-945cdd10792d" />
+
+
 ## 인프라설계도
 
 <img width="1228" height="802" alt="hmarketver1 5 drawio" src="https://github.com/user-attachments/assets/75785d77-d388-43c1-a48e-02be6652a5d8" />
