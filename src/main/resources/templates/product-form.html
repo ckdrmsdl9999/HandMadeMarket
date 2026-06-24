@@ -254,6 +254,22 @@
             line-height: 1.5;
         }
 
+        .image-preview {
+            display: none;
+            overflow: hidden;
+            width: min(240px, 100%);
+            aspect-ratio: 4 / 3;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: #f8fbff;
+        }
+
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
         .row {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -608,6 +624,16 @@
                     <small>상품 이미지 URL은 S3/CloudFront 연동 후 별도 이미지 필드로 저장됩니다.</small>
                 </div>
 
+                <div class="field">
+                    <label for="mainImageFile">상품 이미지</label>
+                    <!-- 상품 등록 시 이미지 파일을 multipart 요청의 mainImageFile part로 함께 전송함 -->
+                    <input id="mainImageFile" name="mainImageFile" type="file" accept="image/png,image/jpeg,image/gif,image/webp">
+                    <small>JPG, PNG, GIF, WebP 이미지를 선택할 수 있습니다.</small>
+                    <div id="image-preview" class="image-preview" aria-live="polite">
+                        <img id="image-preview-img" alt="선택한 상품 이미지 미리보기">
+                    </div>
+                </div>
+
                 <div class="actions">
 
                     <button id="submit-button" class="btn btn-primary" type="submit">상품 등록하기</button>
@@ -657,6 +683,8 @@
     const previewButton = document.getElementById('preview-button');
     const submitButton = document.getElementById('submit-button');
     const feedback = document.getElementById('form-feedback');
+    const imagePreview = document.getElementById('image-preview');
+    const imagePreviewImg = document.getElementById('image-preview-img');
     const myProductsCount = document.getElementById('my-products-count');
     const myProductsList = document.getElementById('my-products-list');
     const myProductsFeedback = document.getElementById('my-products-feedback');
@@ -701,6 +729,42 @@
     }
 
 
+    function getSelectedImageFile() {
+        return form.mainImageFile.files && form.mainImageFile.files.length > 0
+            ? form.mainImageFile.files[0]
+            : null;
+    }
+
+
+    function validateImageFile(file) {
+        if (!file) {
+            return null;
+        }
+
+        if (!file.type || !file.type.startsWith('image/')) {
+            return '이미지 파일만 업로드할 수 있습니다.';
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            return '이미지 파일은 5MB 이하로 선택해주세요.';
+        }
+
+        return null;
+    }
+
+
+    function buildProductFormData(payload, imageFile) {
+        const formData = new FormData();
+        // 상품 JSON과 이미지 파일을 같은 multipart 요청으로 보내 백엔드 RequestPart 이름과 맞춤
+        formData.append('product', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+        if (imageFile) {
+            formData.append('mainImageFile', imageFile);
+        }
+
+        return formData;
+    }
+
+
     function renderFeedback(message, type) {
         feedback.textContent = message;
         feedback.className = `feedback ${type === 'success' ? 'is-success' : 'is-error'}`;
@@ -715,6 +779,8 @@
     // 등록 완료 뒤 입력 폼과 JSON 미리보기를 초기 상태로 되돌리게 초기화 함수를 추가
     function resetProductForm() {
         form.reset();
+        imagePreview.style.display = 'none';
+        imagePreviewImg.removeAttribute('src');
         preview.textContent = JSON.stringify({
             productName: '',
             category: '',
@@ -725,6 +791,20 @@
             sellerId: Number(document.body.dataset.currentUserId || 0)
         }, null, 2);
     }
+
+
+    form.mainImageFile.addEventListener('change', () => {
+        const imageFile = getSelectedImageFile();
+        if (!imageFile) {
+            imagePreview.style.display = 'none';
+            imagePreviewImg.removeAttribute('src');
+            return;
+        }
+
+        // 선택한 이미지를 업로드 전에 미리 보여줘 잘못 고른 파일을 바로 확인하게 함
+        imagePreviewImg.src = URL.createObjectURL(imageFile);
+        imagePreview.style.display = 'block';
+    });
 
 
     function escapeHtml(value) {
@@ -860,10 +940,16 @@
     form.addEventListener('submit', async () => {
         const payload = buildPayload();
         const validationMessage = validatePayload(payload);
+        const imageFile = getSelectedImageFile();
+        const imageValidationMessage = validateImageFile(imageFile);
         preview.textContent = JSON.stringify(payload, null, 2);
 
         if (validationMessage) {
             renderFeedback(validationMessage, 'error');
+            return;
+        }
+        if (imageValidationMessage) {
+            renderFeedback(imageValidationMessage, 'error');
             return;
         }
 
@@ -872,12 +958,10 @@
         submitButton.textContent = '등록 중...';
 
         try {
+            const requestBody = buildProductFormData(payload, imageFile);
             const response = await fetch('/api/products', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
+                body: requestBody
             });
 
             if (!response.ok) {
