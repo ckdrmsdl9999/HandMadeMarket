@@ -1,6 +1,7 @@
 package com.project.marketplace.common.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import com.project.marketplace.storage.ImageStorageException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -66,6 +67,23 @@ public class GlobalExceptionHandler {
                         HttpStatus.BAD_REQUEST.value(),
                         HttpStatus.BAD_REQUEST.getReasonPhrase(),
                         message,
+                        request.getRequestURI()
+                ));
+    }
+
+    // S3 저장소 설정이나 통신 실패는 사용자 입력 오류와 구분해 저장소 상태 코드로 응답함
+    @ExceptionHandler(ImageStorageException.class)
+    public ResponseEntity<ErrorResponse> handleImageStorageException(
+            ImageStorageException exception,
+            HttpServletRequest request
+    ) {
+        HttpStatus status = exception.getStatus();
+
+        return ResponseEntity.status(status)
+                .body(ErrorResponse.of(
+                        status.value(),
+                        status.getReasonPhrase(),
+                        resolveMessage(exception.getMessage(), "이미지 저장소 처리 중 오류가 발생했습니다."),
                         request.getRequestURI()
                 ));
     }

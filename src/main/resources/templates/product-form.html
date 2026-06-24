@@ -254,6 +254,22 @@
             line-height: 1.5;
         }
 
+        .image-preview {
+            display: none;
+            overflow: hidden;
+            width: min(240px, 100%);
+            aspect-ratio: 4 / 3;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: #f8fbff;
+        }
+
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
         .row {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -602,9 +618,20 @@
                 </div>
 
                 <div class="field">
-                    <label for="mainImage">상품 설명</label>
-                    <textarea id="mainImage" name="mainImage" placeholder="예: 제작 방식, 재질, 크기, 주의사항 등을 적어주세요."></textarea>
-                    <small>현재 DTO에서는 이 필드가 `mainImage` 이름이지만 실제로는 설명 문자열로 저장되고 있습니다.</small>
+                    <label for="description">상품 설명</label>
+                    <!-- 상품 설명을 이미지 경로와 분리된 description 필드로 전송하게 수정함 -->
+                    <textarea id="description" name="description" placeholder="예: 제작 방식, 재질, 크기, 주의사항 등을 적어주세요."></textarea>
+                    <small>상품 이미지 URL은 S3/CloudFront 연동 후 별도 이미지 필드로 저장됩니다.</small>
+                </div>
+
+                <div class="field">
+                    <label for="mainImageFile">상품 이미지</label>
+                    <!-- 상품 등록 시 이미지 파일을 multipart 요청의 mainImageFile part로 함께 전송함 -->
+                    <input id="mainImageFile" name="mainImageFile" type="file" accept="image/png,image/jpeg,image/gif,image/webp">
+                    <small>JPG, PNG, GIF, WebP 이미지를 선택할 수 있습니다.</small>
+                    <div id="image-preview" class="image-preview" aria-live="polite">
+                        <img id="image-preview-img" alt="선택한 상품 이미지 미리보기">
+                    </div>
                 </div>
 
                 <div class="actions">
@@ -620,6 +647,7 @@
   "category": "",
   "price": 0,
   "quantity": 0,
+  "description": "",
   "mainImage": "",
   "sellerId": 0
 }</pre>
@@ -655,6 +683,8 @@
     const previewButton = document.getElementById('preview-button');
     const submitButton = document.getElementById('submit-button');
     const feedback = document.getElementById('form-feedback');
+    const imagePreview = document.getElementById('image-preview');
+    const imagePreviewImg = document.getElementById('image-preview-img');
     const myProductsCount = document.getElementById('my-products-count');
     const myProductsList = document.getElementById('my-products-list');
     const myProductsFeedback = document.getElementById('my-products-feedback');
@@ -668,7 +698,9 @@
             category: form.category.value,
             price: Number(form.price.value || 0),
             quantity: Number(form.quantity.value || 0),
-            mainImage: form.mainImage.value.trim(),
+            // 상품 설명과 이미지 경로를 분리해 API payload를 구성함
+            description: form.description.value.trim(),
+            mainImage: '',
             sellerId: currentUserId
         };
     }
@@ -690,10 +722,46 @@
         if (!Number.isFinite(payload.quantity) || payload.quantity < 0) {
             return '재고 수량은 0 이상으로 입력해주세요.';
         }
-        if (!payload.mainImage) {
+        if (!payload.description) {
             return '상품 설명을 입력해주세요.';
         }
         return null;
+    }
+
+
+    function getSelectedImageFile() {
+        return form.mainImageFile.files && form.mainImageFile.files.length > 0
+            ? form.mainImageFile.files[0]
+            : null;
+    }
+
+
+    function validateImageFile(file) {
+        if (!file) {
+            return null;
+        }
+
+        if (!file.type || !file.type.startsWith('image/')) {
+            return '이미지 파일만 업로드할 수 있습니다.';
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            return '이미지 파일은 5MB 이하로 선택해주세요.';
+        }
+
+        return null;
+    }
+
+
+    function buildProductFormData(payload, imageFile) {
+        const formData = new FormData();
+        // 상품 JSON과 이미지 파일을 같은 multipart 요청으로 보내 백엔드 RequestPart 이름과 맞춤
+        formData.append('product', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+        if (imageFile) {
+            formData.append('mainImageFile', imageFile);
+        }
+
+        return formData;
     }
 
 
@@ -708,18 +776,51 @@
         feedback.className = 'feedback';
     }
 
+
+    async function resolveErrorMessage(response, fallbackMessage) {
+        const errorText = await response.text();
+        if (!errorText) {
+            return fallbackMessage;
+        }
+
+        try {
+            // 백엔드 공통 ErrorResponse의 message만 화면에 보여 JSON 원문 노출을 막음
+            const errorBody = JSON.parse(errorText);
+            return errorBody.message || fallbackMessage;
+        } catch (error) {
+            return errorText;
+        }
+    }
+
     // 등록 완료 뒤 입력 폼과 JSON 미리보기를 초기 상태로 되돌리게 초기화 함수를 추가
     function resetProductForm() {
         form.reset();
+        imagePreview.style.display = 'none';
+        imagePreviewImg.removeAttribute('src');
         preview.textContent = JSON.stringify({
             productName: '',
             category: '',
             price: 0,
             quantity: 0,
+            description: '',
             mainImage: '',
             sellerId: Number(document.body.dataset.currentUserId || 0)
         }, null, 2);
     }
+
+
+    form.mainImageFile.addEventListener('change', () => {
+        const imageFile = getSelectedImageFile();
+        if (!imageFile) {
+            imagePreview.style.display = 'none';
+            imagePreviewImg.removeAttribute('src');
+            return;
+        }
+
+        // 선택한 이미지를 업로드 전에 미리 보여줘 잘못 고른 파일을 바로 확인하게 함
+        imagePreviewImg.src = URL.createObjectURL(imageFile);
+        imagePreview.style.display = 'block';
+    });
 
 
     function escapeHtml(value) {
@@ -797,8 +898,8 @@
         try {
             const response = await fetch('/api/products/mine');
             if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(errorText || '등록 상품 목록을 불러오지 못했습니다.');
+                // 공통 에러 응답에서 message를 추출해 목록 조회 실패 사유를 간단히 표시함
+                throw new Error(await resolveErrorMessage(response, '등록 상품 목록을 불러오지 못했습니다.'));
             }
 
             const products = await response.json();
@@ -838,8 +939,8 @@
             });
 
             if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(errorText || '상품 삭제 요청이 실패했습니다.');
+                // 삭제 실패 응답도 message 중심으로 표시해 서버 JSON 구조를 화면에 노출하지 않음
+                throw new Error(await resolveErrorMessage(response, '상품 삭제 요청이 실패했습니다.'));
             }
 
             await loadMyProducts();
@@ -855,10 +956,16 @@
     form.addEventListener('submit', async () => {
         const payload = buildPayload();
         const validationMessage = validatePayload(payload);
+        const imageFile = getSelectedImageFile();
+        const imageValidationMessage = validateImageFile(imageFile);
         preview.textContent = JSON.stringify(payload, null, 2);
 
         if (validationMessage) {
             renderFeedback(validationMessage, 'error');
+            return;
+        }
+        if (imageValidationMessage) {
+            renderFeedback(imageValidationMessage, 'error');
             return;
         }
 
@@ -867,17 +974,15 @@
         submitButton.textContent = '등록 중...';
 
         try {
+            const requestBody = buildProductFormData(payload, imageFile);
             const response = await fetch('/api/products', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
+                body: requestBody
             });
 
             if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(errorText || '상품 등록 요청이 실패했습니다.');
+                // 이미지 업로드 실패 등 공통 에러 응답의 message만 사용자에게 안내함
+                throw new Error(await resolveErrorMessage(response, '상품 등록 요청이 실패했습니다.'));
             }
 
             const data = await response.json();

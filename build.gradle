@@ -35,6 +35,9 @@ dependencies {
 	implementation 'org.springframework.session:spring-session-data-redis'
 	// Spring Session Redis가 Redis 연결 팩토리와 클라이언트를 자동 구성할 수 있게 추가함
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	// S3 이미지 업로드를 AWS SDK v2 클라이언트로 처리하기 위해 SDK BOM과 S3 모듈을 추가함
+	implementation platform('software.amazon.awssdk:bom:2.29.52')
+	implementation 'software.amazon.awssdk:s3'
 	// API 명세와 Swagger UI를 자동 생성해 현재 구현된 REST API를 문서화함
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.11'
 	compileOnly 'org.projectlombok:lombok'
