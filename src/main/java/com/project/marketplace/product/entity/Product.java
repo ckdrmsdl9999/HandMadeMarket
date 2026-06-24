@@ -40,6 +40,9 @@ public class Product {
 
     private String description;
 
+    // 상품 설명과 이미지 저장 위치를 분리해 S3/CloudFront 이미지 URL을 별도 보관함
+    private String mainImage;
+
     // 품절 여부
     @Column(nullable = false)
     private Boolean isSoldOut;

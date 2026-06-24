@@ -602,9 +602,10 @@
                 </div>
 
                 <div class="field">
-                    <label for="mainImage">상품 설명</label>
-                    <textarea id="mainImage" name="mainImage" placeholder="예: 제작 방식, 재질, 크기, 주의사항 등을 적어주세요."></textarea>
-                    <small>현재 DTO에서는 이 필드가 `mainImage` 이름이지만 실제로는 설명 문자열로 저장되고 있습니다.</small>
+                    <label for="description">상품 설명</label>
+                    <!-- 상품 설명을 이미지 경로와 분리된 description 필드로 전송하게 수정함 -->
+                    <textarea id="description" name="description" placeholder="예: 제작 방식, 재질, 크기, 주의사항 등을 적어주세요."></textarea>
+                    <small>상품 이미지 URL은 S3/CloudFront 연동 후 별도 이미지 필드로 저장됩니다.</small>
                 </div>
 
                 <div class="actions">
@@ -620,6 +621,7 @@
   "category": "",
   "price": 0,
   "quantity": 0,
+  "description": "",
   "mainImage": "",
   "sellerId": 0
 }</pre>
@@ -668,7 +670,9 @@
             category: form.category.value,
             price: Number(form.price.value || 0),
             quantity: Number(form.quantity.value || 0),
-            mainImage: form.mainImage.value.trim(),
+            // 상품 설명과 이미지 경로를 분리해 API payload를 구성함
+            description: form.description.value.trim(),
+            mainImage: '',
             sellerId: currentUserId
         };
     }
@@ -690,7 +694,7 @@
         if (!Number.isFinite(payload.quantity) || payload.quantity < 0) {
             return '재고 수량은 0 이상으로 입력해주세요.';
         }
-        if (!payload.mainImage) {
+        if (!payload.description) {
             return '상품 설명을 입력해주세요.';
         }
         return null;
@@ -716,6 +720,7 @@
             category: '',
             price: 0,
             quantity: 0,
+            description: '',
             mainImage: '',
             sellerId: Number(document.body.dataset.currentUserId || 0)
         }, null, 2);

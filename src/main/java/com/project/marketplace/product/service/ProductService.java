@@ -101,7 +101,9 @@ public class ProductService {
         product.setCategory(dto.getCategory());
         product.setPrice(dto.getPrice());
         product.setQuantity(dto.getQuantity());
-        product.setDescription(dto.getMainImage());
+        // 상품 수정 시 설명과 이미지 URL이 서로 덮어쓰지 않도록 분리된 필드를 반영함
+        product.setDescription(dto.getDescription());
+        product.setMainImage(dto.getMainImage());
         product.setIsSoldOut(dto.getQuantity() <= 0);
         // 수정 요청의 sellerId는 상품 소유자 변경으로 악용될 수 있어 반영하지 않음
 
