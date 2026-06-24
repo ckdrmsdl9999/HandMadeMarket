@@ -46,9 +46,11 @@ sudo systemctl stop "$IDLE_CONTAINER" 2>/dev/null || true
 sleep 2
 
 echo "$IDLE_CONTAINER 컨테이너 시작..."
+# Redis 컨테이너와 같은 Docker 네트워크에서 서비스 이름으로 통신하게 맞춤
 docker_cmd run -d \
     --name "$IDLE_CONTAINER" \
     --restart unless-stopped \
+    --network handmade-market-net \
     --env-file "$BACKEND_ENV_FILE" \
     -e SPRING_PROFILES_ACTIVE=prod \
     --add-host=host.docker.internal:host-gateway \
