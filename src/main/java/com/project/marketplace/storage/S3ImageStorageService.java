@@ -1,6 +1,7 @@
 package com.project.marketplace.storage;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -17,6 +18,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class S3ImageStorageService implements ImageStorageService {
 
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "gif", "webp");
@@ -37,11 +39,20 @@ public class S3ImageStorageService implements ImageStorageService {
                 .build();
 
         try {
-            // S3에는 원본 파일 bytes를 저장하고 응답에는 CloudFront 기준 공개 URL만 반환함
+            // S3에는 원본 파일 bytes를 저장하고 응답에는 CloudFront 기준 공개 URL만 반환
             s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
         } catch (IOException e) {
             throw new ImageStorageException(HttpStatus.BAD_REQUEST, "이미지 파일을 읽지 못했습니다.", e);
-        } catch (S3Exception | SdkClientException e) {
+        } catch (S3Exception e) {
+            // S3가 반환한 에러 코드와 메시지만 기록해 운영 설정 문제를 추적
+            log.warn("S3 image upload failed. code={}, message={}",
+                    e.awsErrorDetails().errorCode(),
+                    e.awsErrorDetails().errorMessage(),
+                    e);
+            throw new ImageStorageException(HttpStatus.SERVICE_UNAVAILABLE, "이미지 저장소에 업로드하지 못했습니다.", e);
+        } catch (SdkClientException e) {
+            // AWS SDK 클라이언트 설정이나 네트워크 오류를 로그로 남김
+            log.warn("S3 image upload client failed. message={}", e.getMessage(), e);
             throw new ImageStorageException(HttpStatus.SERVICE_UNAVAILABLE, "이미지 저장소에 업로드하지 못했습니다.", e);
         }
 
