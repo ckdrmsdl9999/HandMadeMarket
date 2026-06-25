@@ -41,7 +41,9 @@
         linear-gradient(135deg, #5888ff, #2d57db);
 }
 
+/* 상세 이미지를 block으로 채워 inline 기준선 여백에 파란 배경이 보이지 않게 함 */
 .product-detail-image {
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
